@@ -33,6 +33,8 @@ jobs:
       - run: npm --workspace @thermoshift/web run lint
       - run: npm --workspace @thermoshift/web run test
       - run: npm --workspace @thermoshift/web run build
+      - name: Enforce production asset budget
+        run: npm run check:web-budget
       - name: Package web build
         run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - name: Generate SHA-256 checksum
