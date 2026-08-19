@@ -1,4 +1,5 @@
 import { en } from '../i18n/en';
+import { ProjectLinks } from './ProjectLinks';
 
 interface Props { engineVersion: string; }
 
@@ -12,13 +13,7 @@ export function AboutPanel({ engineVersion }: Props) {
         <p>{en.about.description}</p>
         <p><strong>{en.about.engineVersion}</strong> {engineVersion}</p>
         <p><strong>{en.madeBy}</strong></p>
-        <div className="link-list">
-          <a href="https://github.com/sanskarIN/thermoshift" target="_blank" rel="noreferrer">{en.about.github}</a>
-          <a href="https://buymeacoffee.com/sanskarIN" target="_blank" rel="noreferrer">{en.about.bmc}</a>
-          <a href="mailto:sanskarin@outlook.in">sanskarin@outlook.in</a>
-          <a href="mailto:sanskarin.business@gmail.com">sanskarin.business@gmail.com</a>
-          <a href="mailto:supportramsandesh@gmail.com">{en.about.support}</a>
-        </div>
+        <ProjectLinks />
       </div>
     </section>
   );
