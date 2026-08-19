@@ -37,10 +37,10 @@ cargo install wasm-pack --locked
 ```bash
 git clone https://github.com/sanskarIN/thermoshift.git
 cd thermoshift
-npm install --ignore-scripts
+npm ci --ignore-scripts
 ```
 
-The repository contains a native-tool lockfile-generation workflow but the current v0.2 candidate must not be described as lockfile-reproducible until `package-lock.json` and `Cargo.lock` actually exist in the candidate. When those files are committed, use `npm ci --ignore-scripts` and Cargo `--locked` for reproducibility-sensitive verification. See [`dependency-lockfiles.md`](dependency-lockfiles.md).
+The v0.2 candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
 
 ## Repository metadata checks
 
@@ -52,7 +52,7 @@ npm run check:desktop-config
 npm run check:docs
 ```
 
-They verify application version alignment, Tauri frontend paths/configuration, and internal Markdown file links.
+They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, and internal Markdown file links.
 
 ## Web/PWA development
 
@@ -75,8 +75,8 @@ npm run check:web-budget
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p thermoshift-core
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 npm --workspace @thermoshift/web run typecheck
 npm --workspace @thermoshift/web run lint
 npm --workspace @thermoshift/web run test
@@ -110,6 +110,7 @@ Verify the repository-side desktop configuration first:
 
 ```bash
 npm run check:desktop-config
+cargo check --locked -p thermoshift-desktop
 ```
 
 Then run:
@@ -128,13 +129,15 @@ The manual `Desktop Platform Verification` workflow provides unsigned Windows/ma
 
 ## Desktop branding
 
-The editable source logo is `apps/web/public/logo.svg`. Generate Tauri platform icons with:
+The editable source logo is `apps/web/public/logo.svg`. The candidate commits the generated Tauri platform icon set, including the primary PNG files plus Windows `icon.ico` and macOS `icon.icns`. `npm run check:desktop-config` verifies that the primary generated files remain non-empty.
+
+Regenerate icons intentionally with:
 
 ```bash
 npm --workspace @thermoshift/desktop run icons
 ```
 
-Do not claim generated desktop branding is complete until the resulting `apps/desktop/src-tauri/icons/` files actually exist in the candidate. The hosted `Refresh Desktop Icons` workflow provides a reproducible maintainer path.
+The hosted `Refresh Desktop Icons` workflow is manual-only and provides the reproducible maintainer path without rewriting branding on ordinary pushes.
 
 ## Environment and secrets
 
