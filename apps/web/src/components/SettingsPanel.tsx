@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 
 import { en } from '../i18n/en';
-import { createBackup, parseBackup } from '../lib/backup';
+import { BACKUP_MAX_BYTES, createBackup, parseBackup } from '../lib/backup';
 import { downloadText } from '../lib/export';
 import type { HistoryEntry, Settings } from '../types';
 
@@ -36,6 +36,7 @@ export function SettingsPanel({ settings, history, onChange, onRestoreData, onRe
     if (!file) return;
 
     try {
+      if (file.size > BACKUP_MAX_BYTES) throw new Error('The selected backup is larger than 256 KiB.');
       const backup = parseBackup(await file.text());
       onRestoreData(backup.settings, backup.history);
       setDataError(null);
