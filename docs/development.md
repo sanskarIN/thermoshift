@@ -170,7 +170,7 @@ Do not commit signing or notarization credentials.
 
 Do not hand-edit npm/Cargo lockfiles. See `docs/dependency-lockfiles.md`.
 
-Until the current candidate actually contains generated `package-lock.json` and `Cargo.lock`, ordinary dependency resolution remains the documented floating-resolution path. Once native tooling commits both lockfiles, switch reproducibility-sensitive CI/release commands to `npm ci` and Cargo `--locked` in one reviewed change.
+Until the current candidate actually contains generated `package-lock.json` and `Cargo.lock`, ordinary PR/local verification may use the documented temporary floating-resolution path. CI, security automation, and Makefile targets are already transition-safe: they automatically use `npm ci` and Cargo `--locked` when the committed lockfiles are present. Stable release/native/screenshot evidence remains fail-closed and requires the committed locks rather than silently falling back.
 
 ## Security changes
 
