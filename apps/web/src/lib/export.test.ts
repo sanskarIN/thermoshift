@@ -45,4 +45,18 @@ describe('export helpers', () => {
     vi.runAllTimers();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:test-export');
   });
+
+  it('removes the temporary anchor and schedules URL revocation when browser download dispatch fails', () => {
+    vi.useFakeTimers();
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:failed-export');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {
+      throw new Error('download dispatch failed');
+    });
+
+    expect(() => downloadText('sample.csv', 'a,b', 'text/csv')).toThrow('download dispatch failed');
+    expect(document.querySelector('a[download="sample.csv"]')).not.toBeInTheDocument();
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:failed-export');
+  });
 });
