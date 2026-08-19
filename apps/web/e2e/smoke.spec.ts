@@ -21,7 +21,7 @@ test('opens quick actions from the keyboard and navigates', async ({ page }) => 
   await completeOnboarding(page);
   await page.keyboard.press('Control+K');
   await expect(page.getByRole('dialog', { name: 'Quick actions' })).toBeVisible();
-  await page.getByRole('listitem', { name: /Open formula guide/i }).click();
+  await page.getByRole('button', { name: /Open formula guide/i }).click();
   await expect(page.getByRole('heading', { name: 'Formula guide' })).toBeVisible();
 });
 
