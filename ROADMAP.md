@@ -23,19 +23,20 @@
 - [x] Add versioned full-data backup and strict validated restore.
 - [x] Bound backup input to 256 KiB before file reading/parsing.
 - [x] Reject malformed backup settings/timestamps, duplicate IDs, invalid history, and unsupported schemas rather than silently normalizing imports.
+- [x] Distinguish trusted backup-validation failures from unexpected file-read/runtime failures so raw operational error details are not shown in Settings.
 - [x] Bound batch conversion to 32,768 characters and 1,000 lines before conversion work.
 - [x] Add selectable scale for reference cards.
 - [x] Add educational formula derivation notes.
 - [x] Externalize English product copy for internationalization-ready UI architecture.
 - [x] Add reusable dialog focus containment and expanded accessibility regression tests.
 - [x] Add PWA update controls without making conversion depend on connectivity.
-- [x] Keep startup/update operational errors out of user-facing copy while retaining redacted local diagnostics.
+- [x] Keep startup/update/backup operational errors out of user-facing copy while retaining redacted local diagnostics.
 
 ### Domain/test hardening
 
 - [x] Add dense cross-scale Rust conversion invariants.
 - [x] Add Unicode-aware unit parsing and alias/unknown-input regression tests.
-- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, and bounded batch input.
+- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, bounded batch input, and generic handling of unexpected backup file-read errors.
 - [x] Expand real-WASM browser E2E to cover local history persistence, service-worker offline reload/conversion, Settings/update controls, and axe scans.
 - [x] Add Chromium, Firefox, and WebKit compatibility smoke automation with independent engine results.
 - [x] Add internal Markdown link validation.
