@@ -2,6 +2,10 @@ name: Refresh Lockfiles
 
 on:
   workflow_dispatch:
+  push:
+    branches: [build/thermoshift-v0.2]
+    paths:
+      - '.github/workflows/lockfiles.yml'
 
 permissions:
   contents: write
