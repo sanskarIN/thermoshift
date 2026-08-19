@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { HistoryEntry } from '../types';
+import { BACKUP_MAX_BYTES, createBackup, parseBackup } from './backup';
 import { DEFAULT_SETTINGS } from './storage';
-import { createBackup, parseBackup } from './backup';
 
 const history: HistoryEntry[] = [{
   id: 'entry-1',
@@ -24,6 +24,10 @@ describe('ThermoShift backups', () => {
 
   it('rejects malformed JSON', () => {
     expect(() => parseBackup('{not-json')).toThrow(/valid JSON/i);
+  });
+
+  it('rejects oversized payloads before parsing', () => {
+    expect(() => parseBackup('x'.repeat(BACKUP_MAX_BYTES + 1))).toThrow(/larger than 256 KiB/i);
   });
 
   it('rejects unsupported schema versions', () => {
