@@ -14,7 +14,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - History search, source/destination filters, individual delete, clear, undo, and duplicate-ID sanitization.
 - User-selectable scale for temperature reference cards.
 - Formula derivation notes for all educational scale relationships shown in the UI.
-- Reusable dialog focus trap with initial focus, Tab wrapping, Escape handling where applicable, and focus restoration.
+- Reusable dialog focus trap with initial focus, Tab wrapping, escaped-focus recapture, Escape handling where applicable, and focus restoration.
 - Externalized English product-copy catalog to prepare the UI architecture for future locales.
 - Application update section showing the installed version and exposing an explicit service-worker update check.
 - Local structured JSON diagnostics with secret/PII-shaped metadata redaction and bounded values.
@@ -48,6 +48,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Clipboard and native-share rejections now show only localized generic outcomes while detailed Error objects stay behind the redacted local diagnostic boundary.
 - Native Web Share `AbortError` is treated as an ordinary user cancellation rather than a failed share or warning event.
 - Clipboard sharing remains available as the explicit fallback when the native Web Share API is unavailable, with separate success/failure feedback.
+- Active modal dialogs now recapture keyboard focus on Tab/Shift+Tab if focus is moved outside the dialog, and hidden/`aria-hidden` descendants are excluded from the focus cycle.
 - Rust unit parsing now uses Unicode-aware lowercase normalization so uppercase accented `RÉAUMUR`/`RØMER` input is accepted consistently.
 - Settings contains conversion, appearance/accessibility, application-update, privacy/data, and About/support sections.
 - Project/support links are implemented once and reused by Settings and About.
