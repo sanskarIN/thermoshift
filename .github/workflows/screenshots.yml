@@ -36,10 +36,7 @@ jobs:
       - name: Capture real product screenshots
         run: npm --workspace @thermoshift/web run screenshots
       - name: Verify screenshot set
-        shell: bash
-        run: |
-          test "$(find docs/screenshots -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 8
-          find docs/screenshots -maxdepth 1 -type f -name '*.png' -size 0 -print -quit | grep -q . && exit 1 || true
+        run: npm run check:screenshots
       - name: Commit screenshots when changed
         shell: bash
         run: |
