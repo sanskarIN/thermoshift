@@ -13,10 +13,10 @@ Use [`release-evidence.md`](release-evidence.md) as the exact-candidate evidence
 5. Install JavaScript dependencies from the committed graph with `npm ci --ignore-scripts`.
 6. Build the WASM bridge and run Rust formatting, `cargo test --locked -p thermoshift-core`, and locked Clippy for the core/WASM crates.
 7. Run web type checking, ESLint, Vitest coverage, production PWA build, and the enforced web asset budget.
-8. Run Playwright E2E/axe tests against the real production/WASM-backed app.
+8. Run the primary Playwright E2E/axe suite and the Chromium/Firefox/WebKit compatibility suite against the real production/WASM-backed app.
 9. Review the candidate's CodeQL, secret-scan, RustSec, and npm-audit results plus relevant dependency/security alerts.
 10. Verify local backup export/restore and invalid/oversized-file rejection.
-11. Verify keyboard-only navigation, dialog focus behavior, high contrast, reduced motion, zoom, and offline/update PWA behavior.
+11. Verify keyboard-only navigation, dialog focus behavior, page-change announcements, high contrast, reduced motion, zoom, and offline/update PWA behavior.
 12. Review the committed real product screenshots and run `npm run check:screenshots`; never substitute mockups and label them as product captures.
 13. Build unsigned Tauri packages on Windows, macOS, and Linux using each platform's actual prerequisites. The repository's desktop matrix workflow provides candidate-SHA-qualified CI artifacts when jobs actually succeed.
 14. Verify generated platform branding/icon assets exist in the exact candidate, including PNG, ICO, and ICNS outputs.
@@ -24,7 +24,7 @@ Use [`release-evidence.md`](release-evidence.md) as the exact-candidate evidence
 16. Sign/notarize native artifacts only with owner-controlled credentials stored outside source control.
 17. Create an annotated semantic version tag such as `v0.2.0` only after the candidate is approved.
 18. Push the tag and verify the automated GitHub web release workflow.
-19. Download the published web archive, verify its SHA-256 checksum, and review generated release notes before announcement.
+19. Download the published web archive, verify its SHA-256 checksum and provenance manifest/checksum, and review generated release notes before announcement.
 
 ## Exact release-input preflight
 
@@ -64,12 +64,15 @@ A pushed `vX.Y.Z` tag starts `.github/workflows/release.yml`. The current workfl
 12. builds the real WASM-backed production PWA;
 13. enforces the raw/gzip production asset budget;
 14. validates the committed screenshot evidence;
-15. installs Chromium and runs Playwright E2E/axe checks;
-16. packages `apps/web/dist` as `thermoshift-web-vX.Y.Z.tar.gz`;
-17. generates a SHA-256 checksum file;
-18. creates/updates the GitHub release with generated notes, archive, and checksum.
+15. installs Chromium, Firefox, and WebKit with their runner dependencies;
+16. runs the primary Playwright E2E/axe checks;
+17. runs the Chromium/Firefox/WebKit compatibility gate;
+18. packages `apps/web/dist` as `thermoshift-web-vX.Y.Z.tar.gz`;
+19. generates a SHA-256 checksum file;
+20. generates a candidate-SHA/ref provenance manifest and its SHA-256 checksum;
+21. creates/updates the GitHub release with generated notes and the archive/checksum/provenance files.
 
-A mismatched tag, missing generated evidence, dependency-lock mismatch, or failed quality command stops publication.
+A mismatched tag, missing generated evidence, dependency-lock mismatch, failed browser engine, or failed quality command stops publication.
 
 ## Screenshot evidence workflow
 
