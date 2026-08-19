@@ -69,7 +69,16 @@ export const isHistoryEntry = (value: unknown): value is HistoryEntry => {
 
 export const sanitizeHistory = (value: unknown): HistoryEntry[] => {
   if (!Array.isArray(value)) return [];
-  return value.filter(isHistoryEntry).slice(0, HISTORY_LIMIT);
+
+  const seen = new Set<string>();
+  const sanitized: HistoryEntry[] = [];
+  for (const candidate of value) {
+    if (!isHistoryEntry(candidate) || seen.has(candidate.id)) continue;
+    seen.add(candidate.id);
+    sanitized.push(candidate);
+    if (sanitized.length === HISTORY_LIMIT) break;
+  }
+  return sanitized;
 };
 
 export const loadHistory = (): HistoryEntry[] => {
