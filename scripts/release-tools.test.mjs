@@ -63,6 +63,29 @@ function seedReleaseInputs(root, { withScreenshots = false } = {}) {
   }
 }
 
+function writeArchiveAndChecksum(root, archiveContent = 'archive-bytes') {
+  write(root, 'artifact.tar.gz', archiveContent);
+  const digest = crypto.createHash('sha256').update(archiveContent).digest('hex');
+  write(root, 'artifact.tar.gz.sha256', `${digest}  artifact.tar.gz\n`);
+}
+
+function manifestCommand(root, extra = {}) {
+  return spawnSync(
+    process.execPath,
+    [manifestScript, '--archive', 'artifact.tar.gz', '--checksum', 'artifact.tar.gz.sha256', '--output', 'manifest.json'],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        THERMOSHIFT_GIT_SHA: 'abc123',
+        THERMOSHIFT_GIT_REF: 'v0.2.0',
+        ...extra
+      }
+    }
+  );
+}
+
 test('release-input preflight accepts a complete base candidate', () => {
   const root = tempRepo();
   seedReleaseInputs(root);
@@ -95,20 +118,11 @@ test('screenshot preflight requires the exact screenshot set', () => {
 test('provenance manifest records candidate identity and SHA-256 digests', () => {
   const root = tempRepo();
   seedReleaseInputs(root, { withScreenshots: true });
-  write(root, 'artifact.tar.gz', 'archive-bytes');
-  write(root, 'artifact.tar.gz.sha256', 'checksum-line');
+  writeArchiveAndChecksum(root);
 
-  const result = spawnSync(
-    process.execPath,
-    [manifestScript, '--archive', 'artifact.tar.gz', '--checksum', 'artifact.tar.gz.sha256', '--output', 'manifest.json'],
-    {
-      cwd: root,
-      encoding: 'utf8',
-      env: { ...process.env, THERMOSHIFT_GIT_SHA: 'abc123', THERMOSHIFT_GIT_REF: 'v0.2.0' }
-    }
-  );
-
+  const result = manifestCommand(root);
   assert.equal(result.status, 0, result.stderr);
+
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.product, 'ThermoShift');
@@ -121,19 +135,63 @@ test('provenance manifest records candidate identity and SHA-256 digests', () =>
   assert.equal(archive.sha256, crypto.createHash('sha256').update('archive-bytes').digest('hex'));
 });
 
+test('provenance manifest rejects a mismatched archive checksum', () => {
+  const root = tempRepo();
+  seedReleaseInputs(root, { withScreenshots: true });
+  writeArchiveAndChecksum(root);
+  write(root, 'artifact.tar.gz.sha256', `${'0'.repeat(64)}  artifact.tar.gz\n`);
+
+  const result = manifestCommand(root);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /checksum does not match/);
+});
+
+test('provenance manifest requires concrete candidate identity', () => {
+  const root = tempRepo();
+  seedReleaseInputs(root, { withScreenshots: true });
+  writeArchiveAndChecksum(root);
+
+  const env = { ...process.env };
+  delete env.GITHUB_SHA;
+  delete env.GITHUB_REF_NAME;
+  delete env.THERMOSHIFT_GIT_SHA;
+  delete env.THERMOSHIFT_GIT_REF;
+  const result = spawnSync(
+    process.execPath,
+    [manifestScript, '--archive', 'artifact.tar.gz', '--checksum', 'artifact.tar.gz.sha256'],
+    { cwd: root, encoding: 'utf8', env }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /concrete candidate SHA and ref/);
+});
+
+test('provenance manifest rejects output paths outside repository root', () => {
+  const root = tempRepo();
+  seedReleaseInputs(root, { withScreenshots: true });
+  writeArchiveAndChecksum(root);
+
+  const result = spawnSync(
+    process.execPath,
+    [manifestScript, '--archive', 'artifact.tar.gz', '--checksum', 'artifact.tar.gz.sha256', '--output', '../manifest.json'],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      env: { ...process.env, THERMOSHIFT_GIT_SHA: 'abc123', THERMOSHIFT_GIT_REF: 'v0.2.0' }
+    }
+  );
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /escapes repository root/);
+});
+
 test('provenance manifest fails closed when required evidence is missing', () => {
   const root = tempRepo();
   seedReleaseInputs(root, { withScreenshots: true });
   fs.rmSync(path.join(root, 'Cargo.lock'));
-  write(root, 'artifact.tar.gz', 'archive-bytes');
-  write(root, 'artifact.tar.gz.sha256', 'checksum-line');
+  writeArchiveAndChecksum(root);
 
-  const result = spawnSync(
-    process.execPath,
-    [manifestScript, '--archive', 'artifact.tar.gz', '--checksum', 'artifact.tar.gz.sha256'],
-    { cwd: root, encoding: 'utf8' }
-  );
-
+  const result = manifestCommand(root);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Cargo\.lock/);
 });
