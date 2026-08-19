@@ -4,16 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { ONBOARDING_KEY } from './lib/storage';
 
+const engineControl = vi.hoisted(() => ({ fail: false }));
+
 vi.mock('./lib/engine', () => ({
-  getTemperatureEngine: async () => ({
-    convert: (value: number, from: string, to: string) => from === to ? value : value + 32,
-    absoluteZero: () => -273.15,
-    version: () => 'test',
-  }),
+  getTemperatureEngine: async () => {
+    if (engineControl.fail) throw new Error('sensitive initialization detail');
+    return {
+      convert: (value: number, from: string, to: string) => from === to ? value : value + 32,
+      absoluteZero: () => -273.15,
+      version: () => 'test',
+    };
+  },
 }));
 
 describe('App', () => {
   beforeEach(() => {
+    engineControl.fail = false;
     localStorage.clear();
     localStorage.setItem(ONBOARDING_KEY, 'complete');
   });
@@ -22,6 +28,15 @@ describe('App', () => {
     render(<App />);
     expect(await screen.findByRole('heading', { name: 'Convert temperature' })).toBeInTheDocument();
     expect(screen.getByText('Made by the Sanskar')).toBeInTheDocument();
+  });
+
+  it('shows a generic startup failure without exposing raw initialization details', async () => {
+    engineControl.fail = true;
+    render(<App />);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('ThermoShift could not start');
+    expect(alert).toHaveTextContent('Reload the app');
+    expect(alert).not.toHaveTextContent('sensitive initialization detail');
   });
 
   it('supports Alt page shortcuts outside editable controls', async () => {
