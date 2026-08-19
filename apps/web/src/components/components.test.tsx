@@ -92,12 +92,13 @@ describe('HistoryPanel', () => {
 });
 
 describe('SettingsPanel', () => {
-  it('clamps precision and protects destructive reset', () => {
+  it('clamps precision, exposes the installed version, and protects destructive reset', () => {
     const onChange = vi.fn();
     const onResetData = vi.fn();
     vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
-    render(<SettingsPanel settings={DEFAULT_SETTINGS} history={history} onChange={onChange} onRestoreData={vi.fn()} onResetData={onResetData} />);
+    render(<SettingsPanel settings={DEFAULT_SETTINGS} history={history} appVersion="0.2.0" onChange={onChange} onRestoreData={vi.fn()} onResetData={onResetData} />);
 
+    expect(screen.getByText('0.2.0')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Decimal precision'), { target: { value: '99' } });
     expect(onChange).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, precision: 12 });
     fireEvent.click(screen.getByRole('button', { name: 'Reset local data' }));
