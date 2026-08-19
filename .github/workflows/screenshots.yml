@@ -37,6 +37,13 @@ jobs:
         run: npm --workspace @thermoshift/web run screenshots
       - name: Verify screenshot set
         run: npm run check:screenshots
+      - name: Upload verified screenshot evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-verified-screenshots
+          path: docs/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 14
       - name: Commit screenshots when changed
         shell: bash
         run: |
