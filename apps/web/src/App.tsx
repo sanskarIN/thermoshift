@@ -125,6 +125,8 @@ function App() {
     return <main className="loading-screen"><img src="/logo.svg" width="84" height="84" alt="" /><h1>{en.appName}</h1><p>{en.states.loadingEngine}</p></main>;
   }
 
+  const appVersion = engine.version();
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">{en.shell.skipToContent}</a>
@@ -145,8 +147,8 @@ function App() {
         {page === 'batch' && <BatchConverter engine={engine} settings={settings} />}
         {page === 'history' && <HistoryPanel history={history} settings={settings} onClear={() => setHistory([])} onDelete={deleteHistoryEntry} onRestore={restoreHistory} />}
         {page === 'formulas' && <FormulaPanel />}
-        {page === 'settings' && <SettingsPanel settings={settings} history={history} onChange={setSettings} onRestoreData={restoreLocalData} onResetData={resetLocalData} />}
-        {page === 'about' && <AboutPanel engineVersion={engine.version()} />}
+        {page === 'settings' && <SettingsPanel settings={settings} history={history} appVersion={appVersion} onChange={setSettings} onRestoreData={restoreLocalData} onResetData={resetLocalData} />}
+        {page === 'about' && <AboutPanel engineVersion={appVersion} />}
       </main>
 
       <footer><span>{en.madeBy}</span><a href="https://buymeacoffee.com/sanskarIN" target="_blank" rel="noreferrer">{en.shell.support}</a></footer>
