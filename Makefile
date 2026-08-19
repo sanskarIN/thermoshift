@@ -1,7 +1,7 @@
 .PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check check dev
 
 setup:
-	@if [ -s package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts --no-audit --no-fund; fi
+	npm ci --ignore-scripts
 	cargo install wasm-pack --locked
 
 wasm:
@@ -25,12 +25,12 @@ budget: web
 	npm run check:web-budget
 
 test:
-	@if [ -s Cargo.lock ]; then cargo test --locked -p thermoshift-core; else cargo test -p thermoshift-core; fi
+	cargo test --locked -p thermoshift-core
 	npm --workspace @thermoshift/web run test
 
 lint:
 	cargo fmt --all -- --check
-	@if [ -s Cargo.lock ]; then cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings; else cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings; fi
+	cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 	npm --workspace @thermoshift/web run lint
 	npm --workspace @thermoshift/web run typecheck
 
@@ -45,7 +45,7 @@ screenshots: web
 	npm run check:screenshots
 
 desktop-check:
-	@if [ -s Cargo.lock ]; then cargo check --locked -p thermoshift-desktop; else cargo check -p thermoshift-desktop; fi
+	cargo check --locked -p thermoshift-desktop
 
 check: metadata lint test budget
 
