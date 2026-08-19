@@ -2,6 +2,10 @@ name: Refresh Lockfiles
 
 on:
   workflow_dispatch:
+  push:
+    branches: ['build/thermoshift-v0.2']
+    paths:
+      - '.github/workflows/lockfiles.yml'
 
 permissions:
   contents: write
@@ -12,7 +16,9 @@ concurrency:
 
 jobs:
   refresh:
-    if: github.repository == 'sanskarIN/thermoshift'
+    if: >-
+      github.repository == 'sanskarIN/thermoshift' &&
+      (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'ci(lockfiles): trigger 2.8.2 lock refresh'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -56,11 +62,8 @@ jobs:
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
           git add package-lock.json Cargo.lock
-          git commit -m "build: refresh dependency lockfiles"
+          git commit -m "build: refresh dependency lockfiles for 2.8.2"
 
-          # Generated dependency evidence must remain attached to the exact source
-          # revision that produced it. If the branch advanced, fail and rerun on
-          # the new head instead of rebasing stale generated metadata forward.
           git fetch origin "${GITHUB_REF_NAME}"
           EXPECTED_PARENT="$(git rev-parse HEAD^)"
           REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
