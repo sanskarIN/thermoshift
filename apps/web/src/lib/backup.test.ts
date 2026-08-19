@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { HistoryEntry } from '../types';
-import { BACKUP_MAX_BYTES, createBackup, parseBackup } from './backup';
+import { BACKUP_MAX_BYTES, BackupValidationError, createBackup, parseBackup } from './backup';
 import { DEFAULT_SETTINGS } from './storage';
 
 const history: HistoryEntry[] = [{
@@ -28,6 +28,10 @@ describe('ThermoShift backups', () => {
     expect(parsed.schemaVersion).toBe(1);
     expect(parsed.settings).toEqual(settings);
     expect(parsed.history).toEqual(history);
+  });
+
+  it('uses a distinct error type for user-safe validation failures', () => {
+    expect(() => parseBackup('{not-json')).toThrow(BackupValidationError);
   });
 
   it('rejects malformed JSON', () => {
