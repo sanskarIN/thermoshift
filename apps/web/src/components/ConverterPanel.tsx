@@ -20,6 +20,7 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    setNotice(null);
     const parsed = Number(input);
     if (input.trim() === '' || !Number.isFinite(parsed)) {
       setResult(null);
@@ -63,9 +64,13 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
     if (result === null) return;
     const text = `${input} ${unitById(from).symbol} = ${formatted} ${unitById(to).symbol}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'ThermoShift conversion', text });
-      else await copyText(text);
-      setNotice(navigator.share ? 'Share sheet opened.' : 'Share text copied.');
+      if (navigator.share) {
+        await navigator.share({ title: 'ThermoShift conversion', text });
+        setNotice('Conversion shared.');
+      } else {
+        await copyText(text);
+        setNotice('Share text copied.');
+      }
     } catch (caught) {
       setNotice(caught instanceof Error ? caught.message : 'Share failed.');
     }
@@ -89,7 +94,8 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
             inputMode="decimal"
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            aria-describedby="absolute-zero-note conversion-error"
+            aria-describedby={`absolute-zero-note${error ? ' conversion-error' : ''}`}
+            aria-invalid={Boolean(error)}
           />
         </label>
         <label>
