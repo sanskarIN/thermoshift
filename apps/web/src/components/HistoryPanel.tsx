@@ -4,6 +4,7 @@ import { UNITS, unitById } from '../data/units';
 import { en } from '../i18n/en';
 import { downloadText, historyToJson } from '../lib/export';
 import { formatNumber } from '../lib/format';
+import { logEvent } from '../lib/logger';
 import type { HistoryEntry, Settings, UnitId } from '../types';
 
 interface Props {
@@ -22,6 +23,7 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
   const [toFilter, setToFilter] = useState<UnitFilter>('all');
   const [undoEntries, setUndoEntries] = useState<HistoryEntry[]>([]);
   const [undoLabel, setUndoLabel] = useState('');
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
@@ -67,15 +69,27 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
     setUndoLabel('');
   };
 
+  const exportHistory = () => {
+    try {
+      downloadText('thermoshift-history.json', historyToJson(history), 'application/json');
+      setExportError(null);
+    } catch (caught) {
+      logEvent('warn', 'history.export_failed', { error: caught });
+      setExportError(en.common.exportFailed);
+    }
+  };
+
   return (
     <section className="panel" aria-labelledby="history-title">
       <div className="panel-heading">
         <div><p className="eyebrow">{en.history.eyebrow}</p><h2 id="history-title">{en.history.title}</h2></div>
         <div className="action-row compact">
-          <button type="button" onClick={() => downloadText('thermoshift-history.json', historyToJson(history), 'application/json')} disabled={history.length === 0}>{en.common.export}</button>
+          <button type="button" onClick={exportHistory} disabled={history.length === 0}>{en.common.export}</button>
           <button className="danger-button" type="button" onClick={clearAll} disabled={history.length === 0}>{en.common.clear}</button>
         </div>
       </div>
+
+      {exportError && <p className="error" role="alert">{exportError}</p>}
 
       {undoEntries.length > 0 && (
         <div className="undo-banner" role="status">
