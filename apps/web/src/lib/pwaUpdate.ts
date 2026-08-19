@@ -1,18 +1,15 @@
-export type UpdateStatus = 'initializing' | 'ready' | 'checking' | 'checked' | 'offline-ready' | 'unavailable' | 'error';
+export type UpdateStatus = 'initializing' | 'ready' | 'checking' | 'checked' | 'offline-ready' | 'offline' | 'unavailable' | 'error';
 
 export interface UpdateState {
   status: UpdateStatus;
-  message: string;
+  errorDetail?: string;
 }
 
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
 let registration: ServiceWorkerRegistration | undefined;
-let state: UpdateState = {
-  status: 'initializing',
-  message: 'Update service is starting…',
-};
+let state: UpdateState = { status: 'initializing' };
 
 const emit = (next: UpdateState) => {
   state = next;
@@ -23,45 +20,42 @@ export const getUpdateState = (): UpdateState => state;
 
 export const subscribeToUpdates = (listener: Listener): (() => void) => {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 };
 
 export const setServiceWorkerRegistration = (nextRegistration: ServiceWorkerRegistration | undefined): void => {
   registration = nextRegistration;
-  emit(nextRegistration
-    ? { status: 'ready', message: 'Automatic updates are enabled.' }
-    : { status: 'unavailable', message: 'Update service is not available in this session.' });
+  emit({ status: nextRegistration ? 'ready' : 'unavailable' });
 };
 
 export const markOfflineReady = (): void => {
-  emit({ status: 'offline-ready', message: 'ThermoShift is ready to work offline.' });
+  emit({ status: 'offline-ready' });
 };
 
 export const markUpdateError = (error: unknown): void => {
   emit({
     status: 'error',
-    message: error instanceof Error ? `Update service error: ${error.message}` : 'Update service encountered an unknown error.',
+    errorDetail: error instanceof Error ? error.message : undefined,
   });
 };
 
 export const checkForUpdates = async (): Promise<void> => {
   if (!navigator.onLine) {
-    emit({ status: 'unavailable', message: 'Connect to the internet to check for a new app version.' });
+    emit({ status: 'offline' });
     return;
   }
 
   if (!registration) {
-    emit({ status: 'unavailable', message: 'Update service is not available in this session.' });
+    emit({ status: 'unavailable' });
     return;
   }
 
-  emit({ status: 'checking', message: 'Checking for an updated app…' });
+  emit({ status: 'checking' });
   try {
     await registration.update();
-    emit({
-      status: 'checked',
-      message: 'Update check completed. If a new version is available, ThermoShift will apply it automatically.',
-    });
+    emit({ status: 'checked' });
   } catch (error) {
     markUpdateError(error);
   }
@@ -69,6 +63,6 @@ export const checkForUpdates = async (): Promise<void> => {
 
 export const resetUpdateStateForTests = (): void => {
   registration = undefined;
-  state = { status: 'initializing', message: 'Update service is starting…' };
+  state = { status: 'initializing' };
   listeners.clear();
 };
