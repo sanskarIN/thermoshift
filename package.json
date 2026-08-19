@@ -13,6 +13,7 @@
     "check:versions": "node scripts/check-versions.mjs",
     "check:desktop-config": "node scripts/check-desktop-config.mjs",
     "check:web-budget": "node scripts/check-web-budget.mjs",
+    "check:screenshots": "node scripts/check-screenshot-set.mjs",
     "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
     "desktop:build": "npm --workspace @thermoshift/desktop run build"
   }
