@@ -36,7 +36,7 @@ const history: HistoryEntry[] = [{
 }];
 
 describe('ConverterPanel', () => {
-  it('converts, validates, swaps, and saves a result', () => {
+  it('converts, validates, and saves a result', () => {
     const onSave = vi.fn();
     render(<ConverterPanel engine={engine} settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
@@ -47,6 +47,7 @@ describe('ConverterPanel', () => {
 
     fireEvent.change(screen.getByLabelText('Value'), { target: { value: 'not-a-number' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a finite number.');
+    expect(screen.getByLabelText('Value')).toHaveAttribute('aria-invalid', 'true');
   });
 });
 
@@ -112,7 +113,7 @@ describe('QuickActions', () => {
     const onClose = vi.fn();
     render(<QuickActions open onClose={onClose} onNavigate={onNavigate} />);
     fireEvent.change(screen.getByLabelText('Search actions'), { target: { value: 'backup' } });
-    fireEvent.click(screen.getByRole('listitem', { name: /Open settings/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Open settings/i }));
     expect(onNavigate).toHaveBeenCalledWith('settings');
     expect(onClose).toHaveBeenCalled();
   });
@@ -130,10 +131,11 @@ describe('OnboardingDialog', () => {
 });
 
 describe('static information panels', () => {
-  it('renders formulas and project identity', () => {
+  it('renders formulas, derivations, and project identity', () => {
     render(<FormulaPanel />);
     expect(screen.getByRole('heading', { name: 'Formula guide' })).toBeInTheDocument();
     expect(screen.getByText('°F = (°C × 9/5) + 32')).toBeInTheDocument();
+    expect(screen.getAllByText('Derivation note')).toHaveLength(7);
   });
 
   it('renders About contacts and engine version', () => {
