@@ -1,0 +1,18 @@
+[package]
+name = "thermoshift-desktop"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+thermoshift-core = { path = "../../../crates/thermoshift-core" }
+
+[lints]
+workspace = true
