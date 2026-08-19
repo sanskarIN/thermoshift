@@ -3,7 +3,7 @@
 ## Current milestone
 
 **Version:** 0.1.0 development baseline  
-**Phase:** Phases 0–4 implementation baseline complete; Phases 5–6 are at release-verification stage.
+**Phase:** Phases 0–4 implementation baseline complete and merged to `main`; Phases 5–6 are at clean-build/release-verification stage.
 
 ## Completed work
 
@@ -19,6 +19,7 @@
 - Added Vitest, Testing Library, Playwright, and axe test coverage foundations.
 - Added GitHub Actions CI, CodeQL, Rust/npm dependency audits, Dependabot, release automation, issue templates, PR template, CODEOWNERS, release-note categories, and funding configuration.
 - Added the complete documentation baseline requested by the master prompt: README, contributing, code of conduct, security, support, privacy, changelog, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, and ADRs.
+- Merged implementation pull request #1 to `main` using a merge commit so the 24 meaningful feature-branch commits remain visible in history.
 
 ## Files/modules added or changed
 
@@ -32,7 +33,7 @@ Major areas:
 - `/docs`
 - root build/configuration/community files
 
-The pre-existing `LICENSE` was retained.
+The pre-existing `LICENSE` was retained. Pull request #1 contained **87 changed files** and **2,633 additions**.
 
 ## Tests added
 
@@ -59,8 +60,10 @@ Local execution sandbox:
 
 Repository verification:
 
-- Connector-created Git commits were inspected through GitHub's Git commit API. Commit `e35dbd7a6b23673d622557734a69e038475cd0aa` reports both author and committer email as `sanskarin@outlook.in`, confirming the requested commit email is being used by the connected GitHub identity.
-- CI workflows are configured to perform the full Rust, web, E2E, accessibility, and security quality gates in GitHub Actions once the feature branch is published/opened as a pull request.
+- Connector-created Git commits were inspected through GitHub's Git commit API. Commit `e35dbd7a6b23673d622557734a69e038475cd0aa` reports both author and committer email as `sanskarin@outlook.in`, confirming the requested commit email is used by the connected GitHub identity.
+- Before merge, `build/thermoshift-v0.1` was verified as 24 commits ahead of `main`, 0 behind, with no merge conflict.
+- Pull request #1 was merged successfully. Merge commit: `21638734e7d326b605975eef27c24b74e409f4a8`.
+- GitHub workflow runs had not yet surfaced through the connector immediately after the merge checks in this session; no passing status is claimed without evidence.
 
 ## Known limitations / release blockers
 
@@ -71,7 +74,7 @@ Repository verification:
 
 ## Next exact tasks
 
-1. Check the GitHub Actions runs for the implementation pull request and fix any dependency/API drift revealed by the live toolchains.
+1. Check the newest `main` GitHub Actions runs and fix any dependency/API drift revealed by the live toolchains.
 2. On a full toolchain machine, run `npm install`; review and commit the generated `package-lock.json`.
 3. Run Cargo dependency resolution; review and commit `Cargo.lock` for this application workspace.
 4. Run `cargo test -p thermoshift-core`, `cargo fmt --all -- --check`, Clippy, web typecheck/lint/test/build, and Playwright from a clean checkout.
@@ -115,5 +118,7 @@ Implementation history created in this work session:
 - `2535d5d` — `docs: add release accessibility troubleshooting and performance guides`
 - `620416f` — `docs(adr): record core delivery and persistence decisions`
 - `e35dbd7` — `docs: add changelog roadmap and release metadata`
+- `ea8fbbc` — `docs: add implementation handoff checkpoint`
+- `2163873` — merge commit for pull request #1
 
-The next commit adds this handoff file itself. GitHub history remains the source of truth for final hashes after merge.
+This file is the authoritative continuation checkpoint; GitHub history remains the source of truth for exact final hashes/messages.
