@@ -10,7 +10,7 @@ permissions:
 jobs:
   web-artifact:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,10 +58,12 @@ jobs:
         run: npm run check:web-budget
       - name: Verify committed screenshot evidence
         run: npm run check:screenshots
-      - name: Install Chromium for release E2E
-        run: npx playwright install --with-deps chromium
+      - name: Install release browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
       - name: Run release browser E2E and accessibility checks
         run: npm --workspace @thermoshift/web run e2e
+      - name: Run cross-browser compatibility gate
+        run: npm --workspace @thermoshift/web run e2e:cross-browser
       - name: Package web build
         run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - name: Generate web archive SHA-256 checksum
