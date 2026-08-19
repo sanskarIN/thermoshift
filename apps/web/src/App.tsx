@@ -65,6 +65,10 @@ function App() {
     root.classList.toggle('reduced-motion', settings.reducedMotion);
   }, [settings]);
 
+  useEffect(() => {
+    document.title = `${en.nav[page]} · ${en.appName}`;
+  }, [page]);
+
   const navigate = useCallback((nextPage: QuickActionPage) => setPage(nextPage), []);
   const openQuickActions = useCallback(() => setQuickActionsOpen(true), []);
   const closeQuickActions = useCallback(() => setQuickActionsOpen(false), []);
@@ -144,12 +148,13 @@ function App() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">{en.shell.skipToContent}</a>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{en.nav[page]}</p>
       <header className="topbar">
         <div className="brand"><img src="/logo.svg" width="40" height="40" alt="" /><div><strong>{en.appName}</strong><span>{en.tagline}</span></div></div>
         <div className="topbar-actions">
-          <button className="quick-actions-button" type="button" onClick={openQuickActions}>{en.shell.quickActions} <kbd>Ctrl K</kbd></button>
+          <button className="quick-actions-button" type="button" onClick={openQuickActions} aria-keyshortcuts="Control+K Meta+K">{en.shell.quickActions} <kbd>Ctrl K</kbd></button>
           <nav aria-label={en.shell.primaryNavigation}>
-            {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => navigate(item)} aria-current={page === item ? 'page' : undefined}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
+            {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => navigate(item)} aria-current={page === item ? 'page' : undefined} aria-keyshortcuts={`Alt+${index + 1}`}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
           </nav>
         </div>
       </header>
@@ -172,5 +177,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
