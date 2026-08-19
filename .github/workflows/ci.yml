@@ -15,11 +15,17 @@ concurrency:
 jobs:
   metadata:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Report dependency lock state
+        shell: bash
+        run: |
+          if test -s package-lock.json; then echo 'npm lock: committed'; else echo 'npm lock: pending'; fi
+          if test -s Cargo.lock; then echo 'Cargo lock: committed'; else echo 'Cargo lock: pending'; fi
       - name: Check version consistency
         run: npm run check:versions
       - name: Check desktop frontend configuration
@@ -29,6 +35,7 @@ jobs:
 
   rust-core:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -38,12 +45,25 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Test canonical engine
-        run: cargo test -p thermoshift-core
+        shell: bash
+        run: |
+          if test -s Cargo.lock; then
+            cargo test --locked -p thermoshift-core
+          else
+            cargo test -p thermoshift-core
+          fi
       - name: Lint canonical engine and WASM bridge
-        run: cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+        shell: bash
+        run: |
+          if test -s Cargo.lock; then
+            cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+          else
+            cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+          fi
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,7 +75,14 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - name: Install JavaScript dependencies
+        shell: bash
+        run: |
+          if test -s package-lock.json; then
+            npm ci --ignore-scripts
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
       - run: npm --workspace @thermoshift/web run wasm:build
       - run: npm --workspace @thermoshift/web run typecheck
       - run: npm --workspace @thermoshift/web run lint
@@ -66,6 +93,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [metadata, rust-core, web]
     steps:
       - uses: actions/checkout@v4
@@ -78,6 +106,13 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - name: Install JavaScript dependencies
+        shell: bash
+        run: |
+          if test -s package-lock.json; then
+            npm ci --ignore-scripts
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
       - run: npx playwright install --with-deps chromium
       - run: npm --workspace @thermoshift/web run e2e
