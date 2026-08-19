@@ -30,17 +30,19 @@ Restore reads only the file selected by the user. The UI rejects files larger th
 
 For the supported backup schema, ThermoShift validates the export timestamp, complete settings shape, history limit, every conversion record, supported unit IDs, finite values, timestamps, and duplicate conversion identifiers before accepting the backup. Malformed or unsupported backup files are rejected all-or-nothing instead of partially restoring or silently normalizing untrusted imported data.
 
+Known validation failures are represented separately from unexpected file-read/runtime failures. Safe validation guidance may be shown in Settings, but unexpected operational failures use a generic restore error. The selected backup contents, browser-provided raw error message, and file-read failure detail are not intentionally copied into the user-facing error or diagnostic payload.
+
 The selected file is processed locally and is not sent to a ThermoShift server.
 
 The History page also offers a history-only JSON export. Batch conversion offers CSV export. Those files are likewise controlled by the user after download.
 
 ## Local diagnostics
 
-ThermoShift may write structured operational diagnostic records to the browser console for events such as engine initialization, browser-storage failure, or service-worker update failure.
+ThermoShift may write structured operational diagnostic records to the browser console for events such as engine initialization, browser-storage failure, service-worker update failure, or unexpected backup restore failure.
 
-These diagnostics are local-only; ThermoShift does not intentionally transmit them to a telemetry/analytics server. Metadata passes through a redaction/bounding layer before console serialization. Credential/session-shaped fields, contact/identity fields, user-content/input/output/value-shaped fields, and raw Error messages are not intentionally serialized as diagnostic payloads.
+These diagnostics are local-only; ThermoShift does not intentionally transmit them to a telemetry/analytics server. Metadata passes through a redaction/bounding layer before console serialization. Credential/session-shaped fields, contact/identity fields, user-content/input/output/value-shaped fields, and raw Error messages are not intentionally serialized as diagnostic payloads. Error objects are reduced to their error type rather than their raw message.
 
-User-facing startup/update failure messages are generic rather than echoing raw operational error text.
+User-facing startup/update/backup operational failure messages are generic rather than echoing raw operational error text.
 
 ## Data not required by ThermoShift
 
