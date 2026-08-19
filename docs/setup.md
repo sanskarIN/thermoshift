@@ -40,7 +40,7 @@ cd thermoshift
 npm ci --ignore-scripts
 ```
 
-The v0.2 candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
+The `2.8.2` candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
 
 ## Repository metadata checks
 
