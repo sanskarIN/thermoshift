@@ -21,7 +21,17 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
+      - name: Check manifest versions
+        run: npm run check:versions
+      - name: Check tag matches package version
+        run: |
+          EXPECTED_TAG="v$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          test "$GITHUB_REF_NAME" = "$EXPECTED_TAG" || { echo "Tag $GITHUB_REF_NAME does not match $EXPECTED_TAG"; exit 1; }
       - run: npm install --ignore-scripts
+      - run: cargo test -p thermoshift-core
+      - run: npm --workspace @thermoshift/web run typecheck
+      - run: npm --workspace @thermoshift/web run lint
+      - run: npm --workspace @thermoshift/web run test
       - run: npm --workspace @thermoshift/web run build
       - run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - uses: softprops/action-gh-release@v2
