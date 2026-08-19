@@ -1,0 +1,60 @@
+name: Cross-browser E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'crates/thermoshift-core/**'
+      - 'crates/thermoshift-wasm/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/cross-browser.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.browser }}
+  cancel-in-progress: true
+
+jobs:
+  browser-smoke:
+    name: ${{ matrix.browser }} smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Install JavaScript dependencies
+        shell: bash
+        run: |
+          if test -s package-lock.json; then
+            npm ci --ignore-scripts
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run compatibility smoke tests
+        run: npm run e2e:cross-browser -- --project=${{ matrix.browser }}
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-browser-${{ matrix.browser }}-${{ github.sha }}
+          path: apps/web/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
