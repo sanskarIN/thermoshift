@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const preflightScript = path.join(scriptDir, 'check-release-inputs.mjs');
 const manifestScript = path.join(scriptDir, 'create-release-manifest.mjs');
+const candidateSha = 'a'.repeat(40);
 
 const releaseInputs = [
   'package.json',
@@ -78,7 +79,7 @@ function manifestCommand(root, extra = {}) {
       encoding: 'utf8',
       env: {
         ...process.env,
-        THERMOSHIFT_GIT_SHA: 'abc123',
+        THERMOSHIFT_GIT_SHA: candidateSha,
         THERMOSHIFT_GIT_REF: 'v0.2.0',
         ...extra
       }
@@ -127,7 +128,7 @@ test('provenance manifest records candidate identity and SHA-256 digests', () =>
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.product, 'ThermoShift');
   assert.equal(manifest.version, '0.2.0');
-  assert.deepEqual(manifest.git, { sha: 'abc123', ref: 'v0.2.0' });
+  assert.deepEqual(manifest.git, { sha: candidateSha, ref: 'v0.2.0' });
 
   const archive = manifest.files.find((entry) => entry.path === 'artifact.tar.gz');
   assert.ok(archive);
@@ -166,6 +167,26 @@ test('provenance manifest requires concrete candidate identity', () => {
   assert.match(result.stderr, /concrete candidate SHA and ref/);
 });
 
+test('provenance manifest rejects malformed candidate SHAs', () => {
+  const root = tempRepo();
+  seedReleaseInputs(root, { withScreenshots: true });
+  writeArchiveAndChecksum(root);
+
+  const result = manifestCommand(root, { THERMOSHIFT_GIT_SHA: 'abc123' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /40- or 64-character hexadecimal Git object ID/);
+});
+
+test('provenance manifest rejects malformed candidate refs', () => {
+  const root = tempRepo();
+  seedReleaseInputs(root, { withScreenshots: true });
+  writeArchiveAndChecksum(root);
+
+  const result = manifestCommand(root, { THERMOSHIFT_GIT_REF: 'v0.2.0\nnext' });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /single-line Git ref name/);
+});
+
 test('provenance manifest rejects output paths outside repository root', () => {
   const root = tempRepo();
   seedReleaseInputs(root, { withScreenshots: true });
@@ -177,7 +198,7 @@ test('provenance manifest rejects output paths outside repository root', () => {
     {
       cwd: root,
       encoding: 'utf8',
-      env: { ...process.env, THERMOSHIFT_GIT_SHA: 'abc123', THERMOSHIFT_GIT_REF: 'v0.2.0' }
+      env: { ...process.env, THERMOSHIFT_GIT_SHA: candidateSha, THERMOSHIFT_GIT_REF: 'v0.2.0' }
     }
   );
 
