@@ -41,6 +41,13 @@ jobs:
             apps/desktop/src-tauri/icons/icon.ico; do
             test -s "$icon" || { echo "Missing generated icon: $icon"; exit 1; }
           done
+      - name: Upload generated icon evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-desktop-icons
+          path: apps/desktop/src-tauri/icons/**
+          if-no-files-found: error
+          retention-days: 14
       - name: Commit generated icons when changed
         shell: bash
         run: |
