@@ -17,6 +17,7 @@
     "check:docs": "node scripts/check-doc-links.mjs",
     "check:release-inputs": "node scripts/check-release-inputs.mjs",
     "check:release-inputs:screenshots": "node scripts/check-release-inputs.mjs --screenshots",
+    "test:release-tools": "node --test scripts/release-tools.test.mjs",
     "release:manifest": "node scripts/create-release-manifest.mjs",
     "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
     "desktop:build": "npm --workspace @thermoshift/desktop run build"
