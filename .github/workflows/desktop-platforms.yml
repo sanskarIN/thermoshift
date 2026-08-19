@@ -23,8 +23,11 @@ jobs:
           - os: macos-14
             artifact: macos
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install Linux native prerequisites
         if: runner.os == 'Linux'
         run: |
@@ -40,20 +43,29 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
+      - name: Require exact release inputs
+        run: npm run check:release-inputs
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts
       - name: Verify repository metadata
         run: npm run check:versions
       - name: Verify desktop frontend configuration
         run: npm run check:desktop-config
+      - name: Verify internal documentation links
+        run: npm run check:docs
       - name: Check desktop Rust crate
         run: cargo check --locked -p thermoshift-desktop
       - name: Build unsigned native package
         run: npm run desktop:build
+      - name: Write candidate metadata
+        shell: bash
+        run: |
+          mkdir -p apps/desktop/src-tauri/target/release/bundle
+          printf 'sha=%s\nref=%s\nos=%s\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "${{ matrix.artifact }}" > apps/desktop/src-tauri/target/release/bundle/THERMOSHIFT_BUILD.txt
       - name: Upload native bundle evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-${{ matrix.artifact }}-bundle
+          name: thermoshift-${{ matrix.artifact }}-bundle-${{ github.sha }}
           path: apps/desktop/src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 14
