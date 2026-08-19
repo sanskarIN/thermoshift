@@ -11,7 +11,7 @@ Thank you for improving ThermoShift.
 
 ## Local quality gate
 
-Install dependencies as described in `docs/setup.md`, then run the checks relevant to your change.
+Install dependencies as described in `docs/setup.md`, then run the checks relevant to your change. The repository commits npm and Cargo lockfiles; normal verification should consume them rather than silently resolving a different graph.
 
 Repository metadata/documentation:
 
@@ -25,13 +25,14 @@ Rust/domain:
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p thermoshift-core
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 ```
 
 Web/PWA:
 
 ```bash
+npm ci --ignore-scripts
 npm --workspace @thermoshift/web run typecheck
 npm --workspace @thermoshift/web run lint
 npm --workspace @thermoshift/web run test
@@ -60,7 +61,7 @@ npm --workspace @thermoshift/web run screenshots
 npm run check:screenshots
 ```
 
-Do not weaken coverage, performance, accessibility, documentation, or security gates merely to make a pull request green.
+Do not weaken coverage, performance, accessibility, documentation, reproducibility, or security gates merely to make a pull request green.
 
 ## Domain and data rules
 
@@ -85,6 +86,6 @@ git config user.email sanskarin@outlook.in
 
 Use the pull request template. Explain the problem and solution, list verification actually performed, add real screenshots when UI evidence materially helps, and update documentation when behavior/setup/release requirements change.
 
-Do not claim a generated lockfile, platform package, screenshot, signing result, browser/security result, or release gate exists merely because automation for it has been added. Evidence must correspond to the exact candidate commit.
+Do not claim a generated lockfile, platform package, screenshot, signing result, browser/security result, or release gate exists merely because automation for it has been added. Evidence must correspond to the exact candidate commit. Committed generated inputs such as lockfiles/icons are inputs to verification, not substitutes for successful candidate checks.
 
 For release-candidate work, follow `docs/release.md` and `docs/release-evidence.md`.
