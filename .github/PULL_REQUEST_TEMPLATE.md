@@ -12,13 +12,15 @@ Check only what you actually ran or reviewed for this change.
 - [ ] Rust formatting/tests/Clippy pass where relevant.
 - [ ] Web TypeScript/ESLint/Vitest coverage passes where relevant.
 - [ ] Production PWA build and `npm run check:web-budget` pass for runtime/bundle changes.
-- [ ] Relevant Playwright E2E/axe journeys pass for user-facing behavior.
+- [ ] Relevant primary Playwright E2E/axe journeys pass for user-facing behavior.
+- [ ] `npm --workspace @thermoshift/web run e2e:cross-browser` passes for browser-compatibility-sensitive changes.
 - [ ] Native desktop build/check evidence is included for platform-specific changes when practical.
 
 ## Data, privacy, and security
 
 - [ ] Untrusted inputs are validated at the appropriate boundary.
 - [ ] Persistence/backup schema compatibility or migration impact was considered.
+- [ ] User-controlled input sizes/work are bounded where an accidental large payload could cause avoidable CPU, memory, storage, or DOM pressure.
 - [ ] Logs/errors do not expose secrets, credentials, PII, or unnecessary user content.
 - [ ] No secrets, signing keys, private endpoints, personal data, or generated credentials are included.
 - [ ] Dependency/permission/CSP changes were reviewed for security impact.
@@ -26,6 +28,7 @@ Check only what you actually ran or reviewed for this change.
 ## Accessibility and UX
 
 - [ ] Keyboard/focus behavior was considered.
+- [ ] Client-side navigation and dynamic status changes remain understandable to assistive technology where relevant.
 - [ ] Status/error states are not color-only and use appropriate semantics.
 - [ ] Reduced motion, contrast, zoom/responsive behavior, and touch targets were considered where relevant.
 - [ ] User-visible static copy remains externalized through the locale module where appropriate.
