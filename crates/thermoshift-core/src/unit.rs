@@ -74,7 +74,8 @@ impl FromStr for Unit {
     type Err = TemperatureError;
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value.trim().to_ascii_lowercase().as_str() {
+        let normalized = value.trim().to_lowercase();
+        match normalized.as_str() {
             "celsius" | "c" | "°c" => Ok(Self::Celsius),
             "fahrenheit" | "f" | "°f" => Ok(Self::Fahrenheit),
             "kelvin" | "k" => Ok(Self::Kelvin),
