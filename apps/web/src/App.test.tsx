@@ -61,6 +61,27 @@ describe('App', () => {
     expect(screen.getByRole('dialog', { name: 'Quick actions' })).toBeInTheDocument();
   });
 
+  it('does not open Quick Actions behind first-run onboarding', async () => {
+    localStorage.removeItem(ONBOARDING_KEY);
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Convert temperature' });
+    expect(screen.getByRole('dialog', { name: /Precise conversion without an account/i })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { ctrlKey: true, key: 'k' });
+    expect(screen.queryByRole('dialog', { name: 'Quick actions' })).not.toBeInTheDocument();
+  });
+
+  it('does not navigate the background page while Quick Actions is open', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Convert temperature' });
+    fireEvent.keyDown(window, { ctrlKey: true, key: 'k' });
+    expect(screen.getByRole('dialog', { name: 'Quick actions' })).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { altKey: true, key: '5' });
+    expect(screen.getByRole('heading', { name: 'Convert temperature' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Settings' })).not.toBeInTheDocument();
+  });
+
   it('shows onboarding on a clean first run', async () => {
     localStorage.removeItem(ONBOARDING_KEY);
     render(<App />);
