@@ -11,6 +11,7 @@
     "typecheck": "npm --workspace @thermoshift/web run typecheck",
     "e2e": "npm --workspace @thermoshift/web run e2e",
     "check:versions": "node scripts/check-versions.mjs",
+    "check:web-budget": "node scripts/check-web-budget.mjs",
     "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
     "desktop:build": "npm --workspace @thermoshift/desktop run build"
   }
