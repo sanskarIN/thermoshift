@@ -4,6 +4,10 @@ All notable changes to ThermoShift are documented here. The project follows sema
 
 ## [Unreleased]
 
+No changes are intentionally queued beyond the current `2.8.2` release candidate. New work should remain separate from the frozen candidate once exact-candidate release verification begins.
+
+## [2.8.2] — release candidate
+
 ### Added
 
 - Accessible first-run onboarding for local-first privacy, offline behavior, and settings discovery.
@@ -43,36 +47,36 @@ All notable changes to ThermoShift are documented here. The project follows sema
 
 ### Changed
 
+- Product/package version metadata is aligned to `2.8.2` across the root npm workspace, web workspace, desktop npm workspace, Rust core crate, WASM crate, Tauri Rust crate, and Tauri product configuration.
 - Local persistence sanitization validates timestamps, enforces retention limits, deduplicates history identifiers, handles browser-storage write failures gracefully, and stores onboarding state separately.
-- Backup restore now rejects malformed settings, invalid/missing export timestamps, duplicate conversion identifiers, oversized payloads, invalid records, unsupported schemas, and over-limit histories rather than silently normalizing imported corruption.
+- Backup restore rejects malformed settings, invalid/missing export timestamps, duplicate conversion identifiers, oversized payloads, invalid records, unsupported schemas, and over-limit histories rather than silently normalizing imported corruption.
 - Unexpected backup file-read/runtime failures no longer expose raw browser error messages in Settings; they are recorded only through the redacted local diagnostic boundary while the UI shows a generic restore failure.
 - Converter validation exposes `aria-invalid`, resets stale action notices after input changes, and reports clearer share/copy outcomes.
-- Decimal `half-up` presentation rounding now uses decimal exponent shifting so binary floating-point representation does not mis-round values such as `±1.005`; formatting and rounding share the same 0–12 precision clamp and preserve huge finite values when a presentation-only shift would overflow.
-- Clipboard and native-share rejections now show only localized generic outcomes while detailed Error objects stay behind the redacted local diagnostic boundary.
+- Decimal `half-up` presentation rounding uses decimal exponent shifting so binary floating-point representation does not mis-round values such as `±1.005`; formatting and rounding share the same 0–12 precision clamp and preserve huge finite values when a presentation-only shift would overflow.
+- Clipboard and native-share rejections show only localized generic outcomes while detailed Error objects stay behind the redacted local diagnostic boundary.
 - Native Web Share `AbortError` is treated as an ordinary user cancellation rather than a failed share or warning event.
 - Clipboard sharing remains available as the explicit fallback when the native Web Share API is unavailable, with separate success/failure feedback.
-- Active modal dialogs now recapture keyboard focus on Tab/Shift+Tab if focus is moved outside the dialog, and hidden/`aria-hidden` descendants are excluded from the focus cycle.
-- Text-download helpers now remove temporary anchors and schedule object-URL revocation even when browser download dispatch throws.
-- Batch CSV, history JSON, and full-backup export actions now turn download-dispatch exceptions into localized generic feedback and redacted local diagnostics instead of unhandled click errors.
-- Rust unit parsing now uses Unicode-aware lowercase normalization so uppercase accented `RÉAUMUR`/`RØMER` input is accepted consistently.
+- Active modal dialogs recapture keyboard focus on Tab/Shift+Tab if focus is moved outside the dialog, and hidden/`aria-hidden` descendants are excluded from the focus cycle.
+- Text-download helpers remove temporary anchors and schedule object-URL revocation even when browser download dispatch throws.
+- Batch CSV, history JSON, and full-backup export actions turn download-dispatch exceptions into localized generic feedback and redacted local diagnostics instead of unhandled click errors.
+- Rust unit parsing uses Unicode-aware lowercase normalization so uppercase accented `RÉAUMUR`/`RØMER` input is accepted consistently.
 - Settings contains conversion, appearance/accessibility, application-update, privacy/data, and About/support sections.
 - Project/support links are implemented once and reused by Settings and About.
 - PWA update lifecycle state is locale-neutral; UI feedback is sourced from the English locale catalog.
 - Raw service-worker update errors no longer appear in user-facing Settings copy; failures remain available only through the redacted operational logging boundary.
 - Raw engine-initialization errors no longer appear on the startup failure screen; the user receives localized recovery guidance while diagnostics remain redacted/local.
 - Global page-navigation shortcuts no longer fire while focus is in an editable control or while onboarding/Quick Actions owns modal interaction.
-- Client-side page navigation now synchronizes the document title, announces the active page through a polite live region, and exposes `aria-keyshortcuts` while keeping visible `<kbd>` hints out of accessible button names.
-- Stable tagged releases now install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
-- All npm, Rust, desktop, and Tauri product version metadata is aligned at `0.2.0`.
-- Fixed Tauri pre-development/pre-build web workspace paths so they resolve to `apps/web` from `src-tauri`.
+- Client-side page navigation synchronizes the document title, announces the active page through a polite live region, and exposes `aria-keyshortcuts` while keeping visible `<kbd>` hints out of accessible button names.
+- Stable tagged releases install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
+- Tauri pre-development/pre-build web workspace paths resolve to `apps/web` from `src-tauri` and are statically verified.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
-- CI, cross-browser, and dependency-security workflows now fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
+- CI, cross-browser, and dependency-security workflows fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
 - Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
-- Lockfile, desktop-icon, and screenshot generator workflows now refuse to rebase generated evidence onto a branch that advanced after generation; they fail and require regeneration from the new exact head.
-- Release provenance generation now requires a full 40- or 64-character hexadecimal Git object ID and a non-empty single-line candidate ref before publishing identity metadata.
-- CI metadata now enforces version consistency, Tauri frontend configuration, generated desktop icon presence, and internal documentation-link integrity.
-- Release workflow now runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
-- Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance now match the v0.2 quality/evidence model.
+- Lockfile, desktop-icon, and screenshot generator workflows refuse to rebase generated evidence onto a branch that advanced after generation; they fail and require regeneration from the new exact head.
+- Release provenance generation requires a full 40- or 64-character hexadecimal Git object ID and a non-empty single-line candidate ref before publishing identity metadata.
+- CI metadata enforces version consistency, Tauri frontend configuration, generated desktop icon presence, and internal documentation-link integrity.
+- Release workflow runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
+- Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance match the `2.8.2` quality/evidence model.
 - Removed an unused persistence hook to keep the frontend surface smaller and coverage meaningful.
 
 ### Security and privacy
@@ -95,13 +99,14 @@ All notable changes to ThermoShift are documented here. The project follows sema
 
 The following are not considered complete merely because supporting workflows or generated inputs exist:
 
+- regenerated `2.8.2` npm/Cargo lock metadata and exact-head locked verification;
 - generated and committed verified product screenshots;
 - current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
 - successful unsigned native package evidence for every intended desktop platform;
 - representative real-device/browser PWA install/offline/update verification required by the release plan;
 - owner-controlled signing/notarization and final stable tag/release evidence.
 
-Committed `package-lock.json`, `Cargo.lock`, and the required primary PNG/ICO/ICNS desktop icon set are now release inputs, but their presence does not by itself prove the remaining candidate checks passed.
+Committed icon assets remain release inputs, but their presence does not by itself prove the remaining candidate checks passed.
 
 ## 0.1 development baseline
 
