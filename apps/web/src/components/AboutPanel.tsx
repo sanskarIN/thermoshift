@@ -5,7 +5,7 @@ interface Props { engineVersion: string; }
 export function AboutPanel({ engineVersion }: Props) {
   return (
     <section className="panel about-panel" aria-labelledby="about-title">
-      <img src="/logo.svg" width="96" height="96" alt="ThermoShift logo" />
+      <img src="/logo.svg" width="96" height="96" alt={en.shell.logoAlt} />
       <div>
         <p className="eyebrow">{en.about.eyebrow}</p>
         <h2 id="about-title">{en.about.title}</h2>
