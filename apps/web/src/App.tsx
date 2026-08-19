@@ -71,11 +71,16 @@ function App() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === 'k') {
+      const commandPaletteShortcut = (event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === 'k';
+      if (commandPaletteShortcut) {
+        if (showOnboarding) return;
         event.preventDefault();
         openQuickActions();
         return;
       }
+
+      if (showOnboarding || quickActionsOpen) return;
+
       if (event.altKey && /^[1-6]$/.test(event.key) && !isEditableTarget(event.target)) {
         const target = PAGES[Number(event.key) - 1];
         if (target) {
@@ -86,7 +91,7 @@ function App() {
     };
     addEventListener('keydown', onKeyDown);
     return () => removeEventListener('keydown', onKeyDown);
-  }, [navigate, openQuickActions]);
+  }, [navigate, openQuickActions, quickActionsOpen, showOnboarding]);
 
   const saveConversion = (result: ConversionResult) => {
     const entry: HistoryEntry = { ...result, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
