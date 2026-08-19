@@ -22,6 +22,8 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
+      - name: Require exact release inputs
+        run: npm run check:release-inputs
       - name: Check manifest versions
         run: npm run check:versions
       - name: Check desktop frontend configuration
@@ -32,14 +34,14 @@ jobs:
         run: |
           EXPECTED_TAG="v$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
           test "$GITHUB_REF_NAME" = "$EXPECTED_TAG" || { echo "Tag $GITHUB_REF_NAME does not match $EXPECTED_TAG"; exit 1; }
-      - name: Install JavaScript dependencies
-        run: npm install --ignore-scripts
+      - name: Install JavaScript dependencies reproducibly
+        run: npm ci --ignore-scripts
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Test canonical Rust engine
-        run: cargo test -p thermoshift-core
+        run: cargo test --locked -p thermoshift-core
       - name: Lint Rust core and WASM bridge
-        run: cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+        run: cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
       - name: Type-check web application
         run: npm --workspace @thermoshift/web run typecheck
       - name: Lint web application
