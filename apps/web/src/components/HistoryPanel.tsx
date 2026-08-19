@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { UNITS, unitById } from '../data/units';
+import { en } from '../i18n/en';
 import { downloadText, historyToJson } from '../lib/export';
 import { formatNumber } from '../lib/format';
 import type { HistoryEntry, Settings, UnitId } from '../types';
@@ -49,13 +50,13 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
   };
 
   const removeOne = (entry: HistoryEntry) => {
-    rememberUndo([entry], 'Conversion removed.');
+    rememberUndo([entry], en.history.removed);
     onDelete(entry.id);
   };
 
   const clearAll = () => {
     if (history.length === 0) return;
-    rememberUndo(history, `${history.length} saved conversion${history.length === 1 ? '' : 's'} cleared.`);
+    rememberUndo(history, en.history.cleared(history.length));
     onClear();
   };
 
@@ -69,30 +70,30 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
   return (
     <section className="panel" aria-labelledby="history-title">
       <div className="panel-heading">
-        <div><p className="eyebrow">Stored only on this device</p><h2 id="history-title">Conversion history</h2></div>
+        <div><p className="eyebrow">{en.history.eyebrow}</p><h2 id="history-title">{en.history.title}</h2></div>
         <div className="action-row compact">
-          <button type="button" onClick={() => downloadText('thermoshift-history.json', historyToJson(history), 'application/json')} disabled={history.length === 0}>Export</button>
-          <button className="danger-button" type="button" onClick={clearAll} disabled={history.length === 0}>Clear</button>
+          <button type="button" onClick={() => downloadText('thermoshift-history.json', historyToJson(history), 'application/json')} disabled={history.length === 0}>{en.common.export}</button>
+          <button className="danger-button" type="button" onClick={clearAll} disabled={history.length === 0}>{en.common.clear}</button>
         </div>
       </div>
 
       {undoEntries.length > 0 && (
         <div className="undo-banner" role="status">
           <span>{undoLabel}</span>
-          <button className="ghost-button" type="button" onClick={undo}>Undo</button>
+          <button className="ghost-button" type="button" onClick={undo}>{en.common.undo}</button>
         </div>
       )}
 
       <div className="history-tools" aria-label="History filters">
-        <label><span>Search history</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Value, scale, or date…" /></label>
-        <label><span>From scale</span><select value={fromFilter} onChange={(event) => setFromFilter(event.target.value as UnitFilter)}><option value="all">All scales</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
-        <label><span>To scale</span><select value={toFilter} onChange={(event) => setToFilter(event.target.value as UnitFilter)}><option value="all">All scales</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
+        <label><span>{en.history.search}</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en.history.searchPlaceholder} /></label>
+        <label><span>{en.history.from}</span><select value={fromFilter} onChange={(event) => setFromFilter(event.target.value as UnitFilter)}><option value="all">{en.common.allScales}</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
+        <label><span>{en.history.to}</span><select value={toFilter} onChange={(event) => setToFilter(event.target.value as UnitFilter)}><option value="all">{en.common.allScales}</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
       </div>
 
       {history.length === 0 ? (
-        <div className="empty-state"><strong>No saved conversions yet.</strong><span>Use “Save to history” from the converter.</span></div>
+        <div className="empty-state"><strong>{en.history.emptyTitle}</strong><span>{en.history.emptyHelp}</span></div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state"><strong>No history matches these filters.</strong><span>Change the search text or scale filters.</span></div>
+        <div className="empty-state"><strong>{en.history.noMatchesTitle}</strong><span>{en.history.noMatchesHelp}</span></div>
       ) : (
         <ol className="history-list">
           {filtered.map((entry) => (
@@ -103,7 +104,7 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
                 <strong>{formatNumber(entry.output, settings.precision, settings.roundingMode)} {unitById(entry.to).symbol}</strong>
               </div>
               <time dateTime={entry.createdAt}>{new Date(entry.createdAt).toLocaleString()}</time>
-              <button className="ghost-button history-delete" type="button" onClick={() => removeOne(entry)} aria-label={`Delete conversion from ${unitById(entry.from).name} to ${unitById(entry.to).name}`}>Delete</button>
+              <button className="ghost-button history-delete" type="button" onClick={() => removeOne(entry)} aria-label={en.history.deleteLabel(unitById(entry.from).name, unitById(entry.to).name)}>{en.common.delete}</button>
             </li>
           ))}
         </ol>
