@@ -1,10 +1,10 @@
 # Testing Strategy
 
-ThermoShift uses layered verification so formula correctness, state safety, UI behavior, accessibility, documentation integrity, production size, and platform packaging fail independently and produce useful diagnostics.
+ThermoShift uses layered verification so formula correctness, state safety, UI behavior, accessibility, documentation integrity, production size, reproducibility, and platform packaging fail independently and produce useful diagnostics.
 
 ## Rust unit/domain tests
 
-`cargo test -p thermoshift-core` verifies:
+`cargo test --locked -p thermoshift-core` verifies:
 
 - canonical reference points;
 - all-scale round trips;
@@ -126,7 +126,7 @@ npm run check:desktop-config
 npm run check:docs
 ```
 
-They verify version alignment, Tauri frontend configuration, and relative Markdown link targets.
+They verify version alignment, Tauri frontend/security paths, required generated primary desktop icon artifacts, and relative Markdown link targets.
 
 ## Production asset budget
 
@@ -155,21 +155,21 @@ Source-controlled security automation includes:
 
 - CodeQL JavaScript/TypeScript analysis;
 - Gitleaks repository secret scanning;
-- RustSec audit;
-- npm audit at high severity or greater;
+- RustSec audit of the committed Cargo graph;
+- npm audit of the committed npm graph at high severity or greater;
 - Dependabot dependency maintenance.
 
-A security workflow definition is not evidence that the current candidate passed. Review the current workflow result before marking the release-evidence row successful.
+Security verification fails closed if the committed lockfile required for an audit disappears. A security workflow definition is not evidence that the current candidate passed; review the current workflow result before marking the release-evidence row successful.
 
 ## Desktop/platform verification
 
-Repository-side checks include `npm run check:desktop-config` and `cargo check -p thermoshift-desktop` when the platform toolchain is installed.
+Repository-side checks include `npm run check:desktop-config` and `cargo check --locked -p thermoshift-desktop` when the platform toolchain is installed. The desktop-config check also fails when required primary generated icon artifacts are missing or empty.
 
 The manual `Desktop Platform Verification` workflow defines unsigned native package jobs on Linux, Windows, and macOS and uploads each native bundle directory as workflow evidence. Each operating-system job must succeed independently; one operating system cannot stand in for another.
 
 ## CI expectations
 
-Pull requests should fail when applicable formatting, configuration, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, or accessibility checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
+Pull requests should fail when applicable lockfile, formatting, configuration, generated-icon, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, or accessibility checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
 
 When fixing a surfaced defect, add or retain a regression test when the failure represents real application behavior rather than only a transient infrastructure problem.
 
@@ -177,7 +177,7 @@ When fixing a surfaced defect, add or retain a regression test when the failure 
 
 Before a stable release, manually or platform-specifically verify what automation cannot fully establish:
 
-1. clean installation from an exact candidate checkout;
+1. clean installation from an exact candidate checkout using the committed dependency graphs;
 2. keyboard-only navigation and visible focus;
 3. screen-reader labels/dialog behavior, including focus recapture if focus is moved outside an active modal;
 4. 200% zoom, high contrast, and reduced motion;
