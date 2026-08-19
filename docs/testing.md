@@ -36,7 +36,7 @@ Testing Library exercises:
 
 - instant conversion and invalid-input semantics;
 - copy/share/save outcomes;
-- batch rows and line-level errors;
+- batch rows, line-level errors, and bounded batch input safeguards;
 - reference-scale switching;
 - history search/filter/delete/clear/undo;
 - Settings precision bounds and destructive reset confirmation;
@@ -46,7 +46,8 @@ Testing Library exercises:
 - dialog initial focus, Escape behavior, Tab/Shift+Tab wrapping, and focus restoration;
 - formula derivation and About/support identity surfaces;
 - application update controls;
-- top-level keyboard navigation (`Alt+1` through `Alt+6`, `Ctrl/⌘+K`).
+- top-level keyboard navigation (`Alt+1` through `Alt+6`, `Ctrl/⌘+K`);
+- page-change live-region announcements, document titles, and `aria-keyshortcuts` metadata.
 
 The application engine is mocked only at the presentation boundary in UI tests; formula correctness remains owned by Rust tests.
 
@@ -62,9 +63,29 @@ The application engine is mocked only at the presentation boundary in UI tests; 
 - Settings installed-version/update controls;
 - axe scans for the primary converter, onboarding, and Settings surfaces.
 
-The Playwright configuration defines desktop Chromium and Pixel 7 mobile-emulation projects, so these journeys execute at both configured form factors.
+The primary Playwright configuration defines desktop Chromium and Pixel 7 mobile-emulation projects, so these journeys execute at both configured form factors.
 
-A successful emulation run is not a substitute for all real-device/browser evidence. Stable release evidence may add further engines/devices as defined by `release-evidence.md`.
+### Cross-browser compatibility smoke suite
+
+A separate compatibility configuration keeps browser-engine coverage focused and independently diagnosable:
+
+```bash
+npm run e2e:cross-browser
+# or
+make e2e-cross-browser
+```
+
+`apps/web/playwright.cross-browser.config.ts` runs `apps/web/e2e/cross-browser.spec.ts` against:
+
+- Chromium;
+- Firefox;
+- WebKit.
+
+Each engine verifies a real WASM-backed reference conversion, saved-history persistence across reload, and an axe scan of the primary converter. The `Cross-browser E2E` GitHub Actions workflow runs those engines as independent matrix jobs and uploads the Playwright report when an engine fails.
+
+A workflow definition is not passing evidence. For release decisions, record the exact candidate SHA and the actual completed engine results rather than assuming compatibility from source configuration alone.
+
+A successful emulation or browser-engine run is not a substitute for all real-device evidence. Stable release evidence may add further devices as defined by `release-evidence.md`.
 
 ## Screenshot evidence tests
 
@@ -139,7 +160,7 @@ The manual `Desktop Platform Verification` workflow defines unsigned native pack
 
 ## CI expectations
 
-Pull requests should fail when applicable formatting, configuration, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, or accessibility checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
+Pull requests should fail when applicable formatting, configuration, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, or accessibility checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
 
 When fixing a surfaced defect, add or retain a regression test when the failure represents real application behavior rather than only a transient infrastructure problem.
 
