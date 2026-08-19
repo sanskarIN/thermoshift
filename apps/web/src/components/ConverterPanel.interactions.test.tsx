@@ -22,8 +22,8 @@ const setNavigatorProperty = (name: 'clipboard' | 'share', value: unknown) => {
 const renderConverter = () => render(<ConverterPanel engine={engine} settings={DEFAULT_SETTINGS} onSave={vi.fn()} />);
 
 afterEach(() => {
-  delete (navigator as Navigator & { clipboard?: Clipboard }).clipboard;
-  delete (navigator as Navigator & { share?: Navigator['share'] }).share;
+  Reflect.deleteProperty(navigator, 'clipboard');
+  Reflect.deleteProperty(navigator, 'share');
   vi.restoreAllMocks();
 });
 
