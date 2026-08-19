@@ -57,12 +57,14 @@ function App() {
   }, [settings]);
 
   const navigate = useCallback((nextPage: QuickActionPage) => setPage(nextPage), []);
+  const openQuickActions = useCallback(() => setQuickActionsOpen(true), []);
+  const closeQuickActions = useCallback(() => setQuickActionsOpen(false), []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === 'k') {
         event.preventDefault();
-        setQuickActionsOpen(true);
+        openQuickActions();
         return;
       }
       if (event.altKey && /^[1-6]$/.test(event.key)) {
@@ -75,7 +77,7 @@ function App() {
     };
     addEventListener('keydown', onKeyDown);
     return () => removeEventListener('keydown', onKeyDown);
-  }, [navigate]);
+  }, [navigate, openQuickActions]);
 
   const saveConversion = (result: ConversionResult) => {
     const entry: HistoryEntry = { ...result, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
@@ -116,21 +118,21 @@ function App() {
   };
 
   if (engineError) {
-    return <main className="app-shell"><section className="panel error" role="alert"><h1>ThermoShift could not start</h1><p>{engineError}</p><p>Reload the app. If the problem persists, see the troubleshooting guide in the repository.</p></section></main>;
+    return <main className="app-shell"><section className="panel error" role="alert"><h1>{en.states.startErrorTitle}</h1><p>{engineError}</p><p>{en.states.startErrorHelp}</p></section></main>;
   }
 
   if (!engine) {
-    return <main className="loading-screen"><img src="/logo.svg" width="84" height="84" alt="" /><h1>ThermoShift</h1><p>{en.states.loadingEngine}</p></main>;
+    return <main className="loading-screen"><img src="/logo.svg" width="84" height="84" alt="" /><h1>{en.appName}</h1><p>{en.states.loadingEngine}</p></main>;
   }
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content">{en.shell.skipToContent}</a>
       <header className="topbar">
         <div className="brand"><img src="/logo.svg" width="40" height="40" alt="" /><div><strong>{en.appName}</strong><span>{en.tagline}</span></div></div>
         <div className="topbar-actions">
-          <button className="quick-actions-button" type="button" onClick={() => setQuickActionsOpen(true)}>Quick actions <kbd>Ctrl K</kbd></button>
-          <nav aria-label="Primary">
+          <button className="quick-actions-button" type="button" onClick={openQuickActions}>{en.shell.quickActions} <kbd>Ctrl K</kbd></button>
+          <nav aria-label={en.shell.primaryNavigation}>
             {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => navigate(item)} aria-current={page === item ? 'page' : undefined}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
           </nav>
         </div>
@@ -147,9 +149,9 @@ function App() {
         {page === 'about' && <AboutPanel engineVersion={engine.version()} />}
       </main>
 
-      <footer><span>{en.madeBy}</span><a href="https://buymeacoffee.com/sanskarIN" target="_blank" rel="noreferrer">Support ThermoShift ☕</a></footer>
+      <footer><span>{en.madeBy}</span><a href="https://buymeacoffee.com/sanskarIN" target="_blank" rel="noreferrer">{en.shell.support}</a></footer>
 
-      <QuickActions open={quickActionsOpen} onClose={() => setQuickActionsOpen(false)} onNavigate={navigate} />
+      <QuickActions open={quickActionsOpen} onClose={closeQuickActions} onNavigate={navigate} />
       {showOnboarding && <OnboardingDialog onComplete={() => completeOnboarding()} onOpenSettings={() => completeOnboarding('settings')} />}
     </div>
   );
