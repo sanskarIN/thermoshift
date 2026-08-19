@@ -32,12 +32,13 @@
 - [x] Add PWA update controls without making conversion depend on connectivity.
 - [x] Keep startup/update/backup operational errors out of user-facing copy while retaining redacted local diagnostics.
 - [x] Keep rejected clipboard/share error details behind the redacted diagnostic boundary and treat native-share cancellation as a normal user action.
+- [x] Clean temporary download resources and show localized/redacted failure feedback when batch/history/backup export dispatch fails.
 
 ### Domain/test hardening
 
 - [x] Add dense cross-scale Rust conversion invariants.
 - [x] Add Unicode-aware unit parsing and alias/unknown-input regression tests.
-- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, bounded batch input, generic handling of unexpected backup file-read errors, clipboard/share capability outcomes, and escaped-focus dialog recovery.
+- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, bounded batch input, generic handling of unexpected backup file-read errors, clipboard/share capability outcomes, escaped-focus dialog recovery, and component download failures.
 - [x] Expand real-WASM browser E2E to cover local history persistence, service-worker offline reload/conversion, Settings/update controls, and axe scans.
 - [x] Add Chromium, Firefox, and WebKit compatibility smoke automation with independent engine results.
 - [x] Add internal Markdown link validation.
