@@ -1,3 +1,5 @@
+import { logEvent } from './logger';
+
 export type UpdateStatus = 'initializing' | 'ready' | 'checking' | 'checked' | 'offline-ready' | 'offline' | 'unavailable' | 'error';
 
 export interface UpdateState {
@@ -35,6 +37,7 @@ export const markOfflineReady = (): void => {
 };
 
 export const markUpdateError = (error: unknown): void => {
+  logEvent('warn', 'pwa.update_failed', { error });
   emit({
     status: 'error',
     errorDetail: error instanceof Error ? error.message : undefined,
