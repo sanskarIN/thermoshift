@@ -5,7 +5,7 @@ import type { TemperatureEngine } from '../lib/engine';
 import { DEFAULT_SETTINGS } from '../lib/storage';
 import type { HistoryEntry } from '../types';
 import { AboutPanel } from './AboutPanel';
-import { BatchConverter } from './BatchConverter';
+import { BATCH_MAX_CHARACTERS, BATCH_MAX_LINES, BatchConverter } from './BatchConverter';
 import { ConverterPanel } from './ConverterPanel';
 import { FormulaPanel } from './FormulaPanel';
 import { HistoryPanel } from './HistoryPanel';
@@ -58,6 +58,24 @@ describe('BatchConverter', () => {
     expect(screen.getByText(/32/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('One value per line'), { target: { value: '10\nbad\n20' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Line 2: not a finite number.');
+  });
+
+  it('rejects character-heavy batches before conversion work', () => {
+    render(<BatchConverter engine={engine} settings={DEFAULT_SETTINGS} />);
+    const input = screen.getByLabelText('One value per line');
+    fireEvent.change(input, { target: { value: '1'.repeat(BATCH_MAX_CHARACTERS + 1) } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch input is limited');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+  });
+
+  it('rejects batches above the line-count ceiling', () => {
+    render(<BatchConverter engine={engine} settings={DEFAULT_SETTINGS} />);
+    fireEvent.change(screen.getByLabelText('One value per line'), {
+      target: { value: Array.from({ length: BATCH_MAX_LINES + 1 }, () => '1').join('\n') },
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch input is limited');
+    expect(screen.getByRole('button', { name: 'Export CSV' })).toBeDisabled();
   });
 });
 
