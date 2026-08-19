@@ -33,7 +33,7 @@ const isEditableTarget = (target: EventTarget | null): boolean => {
 
 function App() {
   const [engine, setEngine] = useState<TemperatureEngine>();
-  const [engineError, setEngineError] = useState<string>();
+  const [engineFailed, setEngineFailed] = useState(false);
   const [page, setPage] = useState<QuickActionPage>('converter');
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
@@ -44,7 +44,7 @@ function App() {
   useEffect(() => {
     void getTemperatureEngine().then(setEngine).catch((error: unknown) => {
       logEvent('error', 'engine.init_failed', { error });
-      setEngineError(error instanceof Error ? error.message : String(error));
+      setEngineFailed(true);
     });
   }, []);
 
@@ -131,8 +131,8 @@ function App() {
     setPage(destination);
   };
 
-  if (engineError) {
-    return <main className="app-shell"><section className="panel error" role="alert"><h1>{en.states.startErrorTitle}</h1><p>{engineError}</p><p>{en.states.startErrorHelp}</p></section></main>;
+  if (engineFailed) {
+    return <main className="app-shell"><section className="panel error" role="alert"><h1>{en.states.startErrorTitle}</h1><p>{en.states.startErrorHelp}</p></section></main>;
   }
 
   if (!engine) {
