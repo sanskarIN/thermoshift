@@ -4,9 +4,9 @@
   "version": "0.2.0",
   "identifier": "in.sanskar.thermoshift",
   "build": {
-    "beforeDevCommand": "npm --prefix ../web run dev:web",
+    "beforeDevCommand": "npm --prefix ../../web run dev:web",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm --prefix ../web run build",
+    "beforeBuildCommand": "npm --prefix ../../web run build",
     "frontendDist": "../../web/dist"
   },
   "app": {
