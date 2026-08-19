@@ -20,7 +20,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Local structured JSON diagnostics with secret/PII-shaped metadata redaction and bounded values.
 - Dense Rust conversion invariant tests across every supported scale pair.
 - Unit-parser regression coverage for names, symbols, aliases, whitespace, unknown values, and uppercase accented scale names.
-- Expanded component, backup, export, PWA update, logging, accessibility, first-run, keyboard, restore, offline, persistence, Settings, clipboard, share, and download-failure interaction tests.
+- Expanded component, backup, export, PWA update, logging, accessibility, first-run, keyboard, restore, offline, persistence, Settings, clipboard, share, download-failure, decimal-rounding, and release-provenance regression tests.
 - Interactive batch-conversion resource bounds of 32,768 characters and 1,000 lines before per-line conversion work.
 - Chromium/Firefox/WebKit compatibility smoke tests covering real WASM conversion, history persistence, and axe checks.
 - A dedicated cross-browser GitHub Actions matrix with engine-specific failure reports and post-merge `main` verification.
@@ -47,6 +47,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Backup restore now rejects malformed settings, invalid/missing export timestamps, duplicate conversion identifiers, oversized payloads, invalid records, unsupported schemas, and over-limit histories rather than silently normalizing imported corruption.
 - Unexpected backup file-read/runtime failures no longer expose raw browser error messages in Settings; they are recorded only through the redacted local diagnostic boundary while the UI shows a generic restore failure.
 - Converter validation exposes `aria-invalid`, resets stale action notices after input changes, and reports clearer share/copy outcomes.
+- Decimal `half-up` presentation rounding now uses decimal exponent shifting so binary floating-point representation does not mis-round values such as `±1.005`; formatting and rounding share the same 0–12 precision clamp and preserve huge finite values when a presentation-only shift would overflow.
 - Clipboard and native-share rejections now show only localized generic outcomes while detailed Error objects stay behind the redacted local diagnostic boundary.
 - Native Web Share `AbortError` is treated as an ordinary user cancellation rather than a failed share or warning event.
 - Clipboard sharing remains available as the explicit fallback when the native Web Share API is unavailable, with separate success/failure feedback.
@@ -67,6 +68,8 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
 - CI, cross-browser, and dependency-security workflows now fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
 - Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
+- Lockfile, desktop-icon, and screenshot generator workflows now refuse to rebase generated evidence onto a branch that advanced after generation; they fail and require regeneration from the new exact head.
+- Release provenance generation now requires a full 40- or 64-character hexadecimal Git object ID and a non-empty single-line candidate ref before publishing identity metadata.
 - CI metadata now enforces version consistency, Tauri frontend configuration, generated desktop icon presence, and internal documentation-link integrity.
 - Release workflow now runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
 - Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance now match the v0.2 quality/evidence model.
@@ -83,6 +86,8 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Share cancellation is not logged as an operational warning.
 - Failed download dispatch cannot leave the helper-created temporary anchor mounted indefinitely, and the allocated object URL is still scheduled for revocation.
 - Batch paste floods are bounded before conversion work to reduce accidental client-side resource exhaustion.
+- Generated release evidence is prevented from silently drifting to a newer candidate via automatic rebase.
+- Provenance manifests reject malformed candidate Git identities before release metadata is written.
 - Security automation includes CodeQL, Gitleaks repository secret scanning, RustSec audit, and npm audit.
 - Desktop signing/notarization remains explicitly outside source control and requires owner-controlled credentials.
 
