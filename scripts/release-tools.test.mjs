@@ -57,7 +57,7 @@ function write(root, relativePath, content = 'fixture') {
 
 function seedReleaseInputs(root, { withScreenshots = false } = {}) {
   for (const file of releaseInputs) {
-    write(root, file, file === 'package.json' ? '{"version":"0.2.0"}\n' : `fixture:${file}`);
+    write(root, file, file === 'package.json' ? '{"version":"2.8.2"}\n' : `fixture:${file}`);
   }
   if (withScreenshots) {
     for (const file of screenshots) write(root, file, `fixture:${file}`);
@@ -80,7 +80,7 @@ function manifestCommand(root, extra = {}) {
       env: {
         ...process.env,
         THERMOSHIFT_GIT_SHA: candidateSha,
-        THERMOSHIFT_GIT_REF: 'v0.2.0',
+        THERMOSHIFT_GIT_REF: 'v2.8.2',
         ...extra
       }
     }
@@ -127,8 +127,8 @@ test('provenance manifest records candidate identity and SHA-256 digests', () =>
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.product, 'ThermoShift');
-  assert.equal(manifest.version, '0.2.0');
-  assert.deepEqual(manifest.git, { sha: candidateSha, ref: 'v0.2.0' });
+  assert.equal(manifest.version, '2.8.2');
+  assert.deepEqual(manifest.git, { sha: candidateSha, ref: 'v2.8.2' });
 
   const archive = manifest.files.find((entry) => entry.path === 'artifact.tar.gz');
   assert.ok(archive);
@@ -182,7 +182,7 @@ test('provenance manifest rejects malformed candidate refs', () => {
   seedReleaseInputs(root, { withScreenshots: true });
   writeArchiveAndChecksum(root);
 
-  const result = manifestCommand(root, { THERMOSHIFT_GIT_REF: 'v0.2.0\nnext' });
+  const result = manifestCommand(root, { THERMOSHIFT_GIT_REF: 'v2.8.2\nnext' });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /single-line Git ref name/);
 });
@@ -198,7 +198,7 @@ test('provenance manifest rejects output paths outside repository root', () => {
     {
       cwd: root,
       encoding: 'utf8',
-      env: { ...process.env, THERMOSHIFT_GIT_SHA: candidateSha, THERMOSHIFT_GIT_REF: 'v0.2.0' }
+      env: { ...process.env, THERMOSHIFT_GIT_SHA: candidateSha, THERMOSHIFT_GIT_REF: 'v2.8.2' }
     }
   );
 
