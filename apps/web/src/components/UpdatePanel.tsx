@@ -17,7 +17,7 @@ const updateMessage = (update: UpdateState): string => {
     case 'offline-ready': return copy.offlineReady;
     case 'offline': return copy.offline;
     case 'unavailable': return copy.unavailable;
-    case 'error': return update.errorDetail ? `${copy.error} ${update.errorDetail}` : copy.error;
+    case 'error': return copy.error;
   }
 };
 
