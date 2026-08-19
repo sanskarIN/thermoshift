@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+
+import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap';
 
 interface Props {
   onComplete: () => void;
@@ -6,15 +8,13 @@ interface Props {
 }
 
 export function OnboardingDialog({ onComplete, onOpenSettings }: Props) {
+  const dialogRef = useRef<HTMLElement>(null);
   const primaryButton = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    primaryButton.current?.focus();
-  }, []);
+  useDialogFocusTrap(dialogRef, true, primaryButton);
 
   return (
     <div className="modal-backdrop" role="presentation">
-      <section className="modal-card onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-description">
+      <section ref={dialogRef} className="modal-card onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-description" tabIndex={-1}>
         <img src="/logo.svg" width="72" height="72" alt="" />
         <p className="eyebrow">Welcome to ThermoShift</p>
         <h1 id="onboarding-title">Precise conversion without an account</h1>
