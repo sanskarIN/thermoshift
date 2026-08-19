@@ -17,11 +17,11 @@ Important presentation/infrastructure modules include:
 
 - `src/lib/engine.ts`: lazy WebAssembly engine adapter.
 - `src/lib/storage.ts`: versioned local-storage parsing, forgiving local recovery, strict shape helpers, limits, and write resilience.
-- `src/lib/backup.ts`: versioned full-data backup serialization and strict untrusted-file restore validation.
+- `src/lib/backup.ts`: versioned full-data backup serialization, strict untrusted-file restore validation, and stable validation codes.
 - `src/lib/export.ts`: user-triggered history/batch file exports.
 - `src/lib/pwaUpdate.ts`: locale-neutral service-worker registration/update state.
 - `src/lib/logger.ts`: local structured diagnostics with redaction and bounded metadata.
-- `src/i18n/en.ts`: English product copy and educational presentation strings.
+- `src/i18n/en.ts`: English product copy, validation guidance, and educational presentation strings.
 - `src/hooks/useDialogFocusTrap.ts`: reusable modal keyboard-focus behavior.
 - `src/components/*`: feature surfaces that receive domain/persistence dependencies through explicit props where useful.
 
@@ -63,13 +63,17 @@ Restore is intentionally stricter than local-storage recovery. Before applicatio
 - invalid history records/non-finite values/unsupported units/timestamps;
 - duplicate conversion identifiers.
 
+Known parser failures are represented as `BackupValidationError` values with stable machine-readable codes. The parser does not own English product copy and does not preserve reflected untrusted schema-version text in the error. Settings maps the code to locale-owned guidance, using the same source constants for the 256 KiB and 50-entry limits.
+
+Unexpected browser file-read/runtime errors are not relabeled as validation errors. They pass through the redacted local diagnostic boundary and produce only generic localized restore-failure UI text.
+
 A valid backup may be normalized into the canonical settings/history output shape only after the complete imported structure passes validation. This prevents partial restoration or silent data loss from malformed files.
 
 Future backup schema changes must introduce an explicit compatibility/migration path rather than weakening the current schema validator.
 
 ## Internationalization boundary
 
-English ships first. User-facing static product copy is centralized in `apps/web/src/i18n/en.ts` instead of being scattered through feature components. New locales should match the same typed structure and must not alter executable conversion formulas or stable persistence identifiers.
+English ships first. User-facing static product copy, including safe backup validation guidance, is centralized in `apps/web/src/i18n/en.ts` instead of being scattered through feature components or infrastructure parsers. New locales should match the same typed structure and must not alter executable conversion formulas, validation codes, or stable persistence identifiers.
 
 Temperature scale names/symbols currently live with unit presentation metadata. If additional locales require translated scale descriptions, move that presentation metadata behind the locale layer while preserving stable `UnitId` values.
 
@@ -86,17 +90,21 @@ Global shortcut ownership follows these rules:
 - onboarding blocks background global shortcuts;
 - Quick Actions blocks background page-navigation shortcuts while its modal is open.
 
+Client-side page navigation updates the document title and a polite live region. Shortcut-capable navigation controls expose `aria-keyshortcuts`, while decorative visible `<kbd>` hints are hidden from the accessibility tree to avoid duplicate spoken shortcut text.
+
 This keeps modal/focus ownership deterministic and prevents background UI changes during an active dialog.
 
 ## Failure and diagnostic boundaries
 
 Invalid temperatures fail in the Rust domain before a result is emitted. Rust/WASM conversion errors may be shown when they directly describe user input validation.
 
-Operational failures such as engine initialization, storage access, or service-worker updates follow a different path:
+Operational failures such as engine initialization, storage access, service-worker updates, or unexpected backup file reads follow a different path:
 
 - detailed failure objects go only to the local structured logger;
 - the logger redacts sensitive/identity/content/value-shaped metadata and reduces Error objects to safe type information;
-- startup/update UI uses localized generic recovery/status text rather than echoing raw operational error messages.
+- startup/update/backup operational UI uses localized generic recovery/status text rather than echoing raw operational error messages.
+
+Known backup content validation is separate from operational failure handling: stable parser codes map to safe locale-owned guidance, while arbitrary imported values are not reflected into that guidance.
 
 Persistence parsing treats malformed browser-managed local data as recoverable and falls back to safe defaults. Backup restoration fails closed because selected files are an explicit untrusted input boundary.
 
@@ -106,13 +114,13 @@ Core conversion never waits for an update/network request. `pwaUpdate.ts` tracks
 
 ## Security boundary
 
-The conversion engine is pure computation. The web app does not request network data for core conversion. Tauri uses a minimal capability set and restrictive CSP. File import is limited to user-selected JSON handled as bounded text and schema-validated before use. External support/funding links are explicit user actions.
+The conversion engine is pure computation. The web app does not request network data for core conversion. Tauri uses a minimal capability set and restrictive CSP. File import is limited to user-selected JSON handled as bounded text and schema-validated before use. Interactive batch work is also bounded before per-line conversion. External support/funding links are explicit user actions.
 
-Source-controlled repository checks cover manifest/Tauri configuration, internal documentation links, production bundle budgets, CodeQL, Gitleaks, dependency audits, and release gates. Native signing/notarization credentials remain outside source control.
+Source-controlled repository checks cover manifest/Tauri configuration, internal documentation links, production bundle budgets, CodeQL, Gitleaks, dependency audits, browser-engine compatibility, and release gates. Native signing/notarization credentials remain outside source control.
 
 ## Build/release evidence boundary
 
-Generated files and platform evidence are not inferred from workflow definitions. Lockfiles, desktop icons, screenshots, and native bundles are considered present/verified only when the exact candidate contains the generated files or the relevant workflow artifact/result exists.
+Generated files and platform evidence are not inferred from workflow definitions. Lockfiles, desktop icons, screenshots, browser results, and native bundles are considered present/verified only when the exact candidate contains the generated files or the relevant workflow artifact/result exists.
 
 The release process/evidence contract lives in `docs/release.md` and `docs/release-evidence.md`.
 
