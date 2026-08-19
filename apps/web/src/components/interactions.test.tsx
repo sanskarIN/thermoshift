@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createBackup } from '../lib/backup';
+import { BACKUP_MAX_BYTES, createBackup } from '../lib/backup';
 import { DEFAULT_SETTINGS } from '../lib/storage';
 import type { HistoryEntry } from '../types';
 import { QuickActions } from './QuickActions';
@@ -57,6 +57,28 @@ describe('backup restoration', () => {
 
     fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
     expect(await screen.findByRole('alert')).toHaveTextContent('not valid JSON');
+    expect(onRestoreData).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized files before reading their contents', async () => {
+    const onRestoreData = vi.fn();
+    const file = new File(['x'.repeat(BACKUP_MAX_BYTES + 1)], 'too-large.json', { type: 'application/json' });
+    const read = vi.fn(async () => '{}');
+    Object.defineProperty(file, 'text', { value: read });
+
+    render(
+      <SettingsPanel
+        settings={DEFAULT_SETTINGS}
+        history={history}
+        onChange={vi.fn()}
+        onRestoreData={onRestoreData}
+        onResetData={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('larger than 256 KiB');
+    expect(read).not.toHaveBeenCalled();
     expect(onRestoreData).not.toHaveBeenCalled();
   });
 });
