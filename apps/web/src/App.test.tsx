@@ -106,4 +106,21 @@ describe('App', () => {
     expect(screen.queryByRole('dialog', { name: /Precise conversion without an account/i })).not.toBeInTheDocument();
     expect(localStorage.getItem(ONBOARDING_KEY)).toBe('complete');
   });
+
+  it('announces page changes and keeps the document title in sync', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Convert temperature' });
+    expect(document.title).toBe('Converter · ThermoShift');
+
+    fireEvent.click(screen.getByRole('button', { name: /^Settings/ }));
+    expect(screen.getByRole('status')).toHaveTextContent('Settings');
+    expect(document.title).toBe('Settings · ThermoShift');
+  });
+
+  it('publishes discoverable keyboard shortcut metadata', async () => {
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Convert temperature' });
+    expect(screen.getByRole('button', { name: /^Quick actions/ })).toHaveAttribute('aria-keyshortcuts', 'Control+K Meta+K');
+    expect(screen.getByRole('button', { name: /^Settings/ })).toHaveAttribute('aria-keyshortcuts', 'Alt+5');
+  });
 });
