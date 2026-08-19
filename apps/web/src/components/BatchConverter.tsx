@@ -70,7 +70,7 @@ export function BatchConverter({ engine, settings }: Props) {
           onChange={(event) => setText(event.target.value)}
         />
       </label>
-      <p id="batch-input-limits" className="field-help">{en.batch.limitsHelp(BATCH_MAX_LINES, BATCH_MAX_CHARACTERS)}</p>
+      <p id="batch-input-limits" className="helper">{en.batch.limitsHelp(BATCH_MAX_LINES, BATCH_MAX_CHARACTERS)}</p>
       {errors.length > 0 && <div className="error-list" role="alert">{errors.map((error) => <p key={error}>{error}</p>)}</div>}
       <div className="table-wrap">
         <table>
