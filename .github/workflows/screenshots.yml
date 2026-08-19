@@ -1,0 +1,54 @@
+name: Verified Product Screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: github.repository == 'sanskarIN/thermoshift'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture real product screenshots
+        run: npm --workspace @thermoshift/web run screenshots
+      - name: Verify screenshot set
+        shell: bash
+        run: |
+          test "$(find docs/screenshots -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 8
+          find docs/screenshots -maxdepth 1 -type f -name '*.png' -size 0 -print -quit | grep -q . && exit 1 || true
+      - name: Commit screenshots when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/screenshots && git ls-files --error-unmatch docs/screenshots/*.png >/dev/null 2>&1; then
+            echo "Verified screenshots are already current."
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add docs/screenshots/*.png
+          git commit -m "docs: refresh verified product screenshots"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
