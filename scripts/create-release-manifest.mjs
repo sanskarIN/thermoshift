@@ -71,8 +71,8 @@ const manifest = {
   product: 'ThermoShift',
   version: packageJson.version,
   git: {
-    sha: process.env.GITHUB_SHA ?? process.env.THEROMSHIFT_GIT_SHA ?? 'unknown',
-    ref: process.env.GITHUB_REF_NAME ?? process.env.THEROMSHIFT_GIT_REF ?? 'unknown'
+    sha: process.env.GITHUB_SHA ?? process.env.THERMOSHIFT_GIT_SHA ?? 'unknown',
+    ref: process.env.GITHUB_REF_NAME ?? process.env.THERMOSHIFT_GIT_REF ?? 'unknown'
   },
   generatedAt: new Date().toISOString(),
   files: required.map(fileDigest).sort((a, b) => a.path.localeCompare(b.path))
