@@ -28,7 +28,7 @@
 - [x] Add selectable scale for reference cards.
 - [x] Add educational formula derivation notes.
 - [x] Externalize English product copy for internationalization-ready UI architecture.
-- [x] Add reusable dialog focus containment and expanded accessibility regression tests.
+- [x] Add reusable dialog focus containment, escaped-focus recapture, and expanded accessibility regression tests.
 - [x] Add PWA update controls without making conversion depend on connectivity.
 - [x] Keep startup/update/backup operational errors out of user-facing copy while retaining redacted local diagnostics.
 - [x] Keep rejected clipboard/share error details behind the redacted diagnostic boundary and treat native-share cancellation as a normal user action.
@@ -37,7 +37,7 @@
 
 - [x] Add dense cross-scale Rust conversion invariants.
 - [x] Add Unicode-aware unit parsing and alias/unknown-input regression tests.
-- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, bounded batch input, generic handling of unexpected backup file-read errors, and clipboard/share capability outcomes.
+- [x] Expand frontend unit/component tests for persistence, backup, update, logging, accessibility, keyboard behavior, bounded batch input, generic handling of unexpected backup file-read errors, clipboard/share capability outcomes, and escaped-focus dialog recovery.
 - [x] Expand real-WASM browser E2E to cover local history persistence, service-worker offline reload/conversion, Settings/update controls, and axe scans.
 - [x] Add Chromium, Firefox, and WebKit compatibility smoke automation with independent engine results.
 - [x] Add internal Markdown link validation.
