@@ -22,8 +22,8 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - name: Require exact release inputs
-        run: npm run check:release-inputs
+      - name: Require exact release inputs and verified screenshots
+        run: npm run check:release-inputs:screenshots
       - name: Check manifest versions
         run: npm run check:versions
       - name: Check desktop frontend configuration
@@ -52,6 +52,8 @@ jobs:
         run: npm --workspace @thermoshift/web run build
       - name: Enforce production asset budget
         run: npm run check:web-budget
+      - name: Verify committed screenshot evidence
+        run: npm run check:screenshots
       - name: Install Chromium for release E2E
         run: npx playwright install --with-deps chromium
       - name: Run release browser E2E and accessibility checks
