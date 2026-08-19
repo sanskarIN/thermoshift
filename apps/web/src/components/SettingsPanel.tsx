@@ -1,8 +1,9 @@
 import { useState, type ChangeEvent } from 'react';
 
 import { en } from '../i18n/en';
-import { BACKUP_MAX_BYTES, createBackup, parseBackup } from '../lib/backup';
+import { BACKUP_MAX_BYTES, BackupValidationError, createBackup, parseBackup } from '../lib/backup';
 import { downloadText } from '../lib/export';
+import { logEvent } from '../lib/logger';
 import type { HistoryEntry, Settings } from '../types';
 import { ProjectLinks } from './ProjectLinks';
 import { UpdatePanel } from './UpdatePanel';
@@ -39,14 +40,19 @@ export function SettingsPanel({ settings, history, appVersion, onChange, onResto
     if (!file) return;
 
     try {
-      if (file.size > BACKUP_MAX_BYTES) throw new Error('The selected backup is larger than 256 KiB.');
+      if (file.size > BACKUP_MAX_BYTES) throw new BackupValidationError('The selected backup is larger than 256 KiB.');
       const backup = parseBackup(await file.text());
       onRestoreData(backup.settings, backup.history);
       setDataError(null);
       setDataNotice(en.settings.backupRestored(backup.history.length));
     } catch (caught) {
       setDataNotice(null);
-      setDataError(caught instanceof Error ? caught.message : en.settings.backupFailed);
+      if (caught instanceof BackupValidationError) {
+        setDataError(caught.message);
+      } else {
+        logEvent('error', 'backup.restore_failed', { error: caught });
+        setDataError(en.settings.backupFailed);
+      }
     } finally {
       input.value = '';
     }
