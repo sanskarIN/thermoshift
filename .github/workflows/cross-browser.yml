@@ -41,20 +41,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - name: Install JavaScript dependencies
-        shell: bash
-        run: |
-          if test -s package-lock.json; then
-            npm ci --ignore-scripts
-          else
-            npm install --ignore-scripts --no-audit --no-fund
-          fi
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
       - name: Install Playwright browser
         run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Run compatibility smoke tests
