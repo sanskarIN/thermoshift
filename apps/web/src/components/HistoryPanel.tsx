@@ -84,7 +84,7 @@ export function HistoryPanel({ history, settings, onClear, onDelete, onRestore }
         </div>
       )}
 
-      <div className="history-tools" aria-label="History filters">
+      <div className="history-tools" aria-label={en.shell.historyFilters}>
         <label><span>{en.history.search}</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en.history.searchPlaceholder} /></label>
         <label><span>{en.history.from}</span><select value={fromFilter} onChange={(event) => setFromFilter(event.target.value as UnitFilter)}><option value="all">{en.common.allScales}</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
         <label><span>{en.history.to}</span><select value={toFilter} onChange={(event) => setToFilter(event.target.value as UnitFilter)}><option value="all">{en.common.allScales}</option>{UNITS.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
