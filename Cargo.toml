@@ -1,0 +1,19 @@
+[workspace]
+members = [
+  "crates/thermoshift-core",
+  "crates/thermoshift-wasm",
+  "apps/desktop/src-tauri",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/sanskarIN/thermoshift"
+rust-version = "1.85"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"

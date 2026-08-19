@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support
+    url: https://github.com/sanskarIN/thermoshift/issues
+    about: For product support, use the support details in SUPPORT.md if no template fits.
+  - name: Security vulnerability
+    url: https://github.com/sanskarIN/thermoshift/security/advisories/new
+    about: Report vulnerabilities privately when possible.

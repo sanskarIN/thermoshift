@@ -1,0 +1,16 @@
+{
+  "name": "thermoshift-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/web", "apps/desktop"],
+  "scripts": {
+    "dev": "npm --workspace @thermoshift/web run dev",
+    "build": "npm --workspace @thermoshift/web run build",
+    "test": "npm --workspace @thermoshift/web run test",
+    "lint": "npm --workspace @thermoshift/web run lint",
+    "typecheck": "npm --workspace @thermoshift/web run typecheck",
+    "e2e": "npm --workspace @thermoshift/web run e2e",
+    "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
+    "desktop:build": "npm --workspace @thermoshift/desktop run build"
+  }
+}
