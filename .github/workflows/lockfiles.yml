@@ -37,6 +37,15 @@ jobs:
           test -s Cargo.lock
           npm run check:versions
           npm run check:desktop-config
+      - name: Upload generated lockfile evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-generated-lockfiles
+          path: |
+            package-lock.json
+            Cargo.lock
+          if-no-files-found: error
+          retention-days: 14
       - name: Commit lockfiles when changed
         shell: bash
         run: |
