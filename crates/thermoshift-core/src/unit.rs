@@ -88,3 +88,43 @@ impl FromStr for Unit {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_names_symbols_aliases_and_surrounding_whitespace() {
+        let cases = [
+            (" Celsius ", Unit::Celsius),
+            ("°F", Unit::Fahrenheit),
+            ("k", Unit::Kelvin),
+            ("°R", Unit::Rankine),
+            ("Ré", Unit::Reaumur),
+            ("de", Unit::Delisle),
+            ("°N", Unit::Newton),
+            ("Rø", Unit::Romer),
+        ];
+
+        for (input, expected) in cases {
+            assert_eq!(Unit::from_str(input).unwrap(), expected, "failed to parse {input:?}");
+        }
+    }
+
+    #[test]
+    fn parses_uppercase_accented_scale_names() {
+        assert_eq!(Unit::from_str("RÉAUMUR").unwrap(), Unit::Reaumur);
+        assert_eq!(Unit::from_str("RØMER").unwrap(), Unit::Romer);
+        assert_eq!(Unit::from_str("°RÉ").unwrap(), Unit::Reaumur);
+        assert_eq!(Unit::from_str("°RØ").unwrap(), Unit::Romer);
+    }
+
+    #[test]
+    fn unknown_unit_error_preserves_original_input() {
+        let original = "  mystery-scale  ";
+        assert_eq!(
+            Unit::from_str(original).unwrap_err(),
+            TemperatureError::UnknownUnit(original.to_owned())
+        );
+    }
+}
