@@ -74,9 +74,12 @@ npm --workspace @thermoshift/web run test
 npm --workspace @thermoshift/web run build
 npm run check:web-budget
 npm --workspace @thermoshift/web run e2e
+npm --workspace @thermoshift/web run e2e:cross-browser
 ```
 
-The E2E result must come from the real production/WASM-backed app and include the configured axe accessibility checks.
+The primary E2E result must come from the real production/WASM-backed app and include the configured axe accessibility checks. The cross-browser compatibility result must record completed Chromium, Firefox, and WebKit results for the same exact candidate SHA.
+
+The stable tagged release workflow installs all three engines and runs both the primary E2E suite and the cross-browser compatibility suite before packaging. A workflow definition alone is not evidence that those checks passed.
 
 ## Screenshot evidence
 
@@ -175,7 +178,7 @@ For a `vX.Y.Z` candidate, verify:
 
 - `npm run check:release-inputs:screenshots` passes;
 - source/package version matches the exact tag;
-- the release workflow completes its full quality gate;
+- the release workflow completes its full quality gate, including Chromium/Firefox/WebKit compatibility;
 - the produced web archive is non-empty;
 - the web archive SHA-256 checksum is published and validates;
 - the provenance manifest is published and references the exact candidate SHA/tag;
@@ -192,7 +195,8 @@ For a `vX.Y.Z` candidate, verify:
 | Rust fmt/test/Clippy | | | Pending | |
 | Web type/lint/coverage/build | | | Pending | |
 | PWA asset budget | | | Pending | |
-| Browser E2E/axe | | | Pending | |
+| Primary browser E2E/axe | | | Pending | |
+| Chromium/Firefox/WebKit compatibility | | | Pending | |
 | CodeQL | | | Pending | |
 | Secret scan | | | Pending | |
 | Rust/npm audit | | | Pending | |
