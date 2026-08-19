@@ -17,6 +17,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "e2e:cross-browser": "playwright test --config=playwright.cross-browser.config.ts",
     "screenshots": "playwright test --config=screenshot.config.ts"
   },
   "dependencies": {
