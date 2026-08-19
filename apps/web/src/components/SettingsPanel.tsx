@@ -45,9 +45,15 @@ export function SettingsPanel({ settings, history, appVersion, onChange, onResto
 
   const exportBackup = () => {
     const day = new Date().toISOString().slice(0, 10);
-    downloadText(`thermoshift-backup-${day}.json`, createBackup(settings, history), 'application/json');
-    setDataError(null);
-    setDataNotice(en.settings.backupExported);
+    try {
+      downloadText(`thermoshift-backup-${day}.json`, createBackup(settings, history), 'application/json');
+      setDataError(null);
+      setDataNotice(en.settings.backupExported);
+    } catch (caught) {
+      logEvent('warn', 'backup.export_failed', { error: caught });
+      setDataNotice(null);
+      setDataError(en.settings.backupExportFailed);
+    }
   };
 
   const restoreBackup = async (event: ChangeEvent<HTMLInputElement>) => {
