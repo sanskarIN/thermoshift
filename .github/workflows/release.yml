@@ -17,24 +17,43 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
         with:
+          components: rustfmt, clippy
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
       - name: Check manifest versions
         run: npm run check:versions
+      - name: Check desktop frontend configuration
+        run: npm run check:desktop-config
+      - name: Check internal documentation links
+        run: npm run check:docs
       - name: Check tag matches package version
         run: |
           EXPECTED_TAG="v$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
           test "$GITHUB_REF_NAME" = "$EXPECTED_TAG" || { echo "Tag $GITHUB_REF_NAME does not match $EXPECTED_TAG"; exit 1; }
-      - run: npm install --ignore-scripts
-      - run: cargo test -p thermoshift-core
-      - run: npm --workspace @thermoshift/web run typecheck
-      - run: npm --workspace @thermoshift/web run lint
-      - run: npm --workspace @thermoshift/web run test
-      - run: npm --workspace @thermoshift/web run build
+      - name: Install JavaScript dependencies
+        run: npm install --ignore-scripts
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Test canonical Rust engine
+        run: cargo test -p thermoshift-core
+      - name: Lint Rust core and WASM bridge
+        run: cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+      - name: Type-check web application
+        run: npm --workspace @thermoshift/web run typecheck
+      - name: Lint web application
+        run: npm --workspace @thermoshift/web run lint
+      - name: Run web unit/component coverage
+        run: npm --workspace @thermoshift/web run test
+      - name: Build production PWA
+        run: npm --workspace @thermoshift/web run build
       - name: Enforce production asset budget
         run: npm run check:web-budget
+      - name: Install Chromium for release E2E
+        run: npx playwright install --with-deps chromium
+      - name: Run release browser E2E and accessibility checks
+        run: npm --workspace @thermoshift/web run e2e
       - name: Package web build
         run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - name: Generate SHA-256 checksum
