@@ -50,13 +50,14 @@ describe('PWA update service', () => {
     expect(getUpdateState()).toEqual({ status: 'checked' });
   });
 
-  it('reports update failures without throwing to the UI', async () => {
+  it('reports update failures without exposing raw Error messages in state', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
-    const update = vi.fn(() => Promise.reject(new Error('network failed')));
+    const update = vi.fn(() => Promise.reject(new Error('sensitive network detail')));
     setServiceWorkerRegistration({ update } as unknown as ServiceWorkerRegistration);
 
     await expect(checkForUpdates()).resolves.toBeUndefined();
-    expect(getUpdateState()).toEqual({ status: 'error', errorDetail: 'network failed' });
+    expect(getUpdateState()).toEqual({ status: 'error' });
+    expect(JSON.stringify(getUpdateState())).not.toContain('sensitive network detail');
   });
 
   it('reports an unavailable update service when registration is absent', async () => {
@@ -65,8 +66,8 @@ describe('PWA update service', () => {
     expect(getUpdateState()).toEqual({ status: 'unavailable' });
   });
 
-  it('does not expose non-Error values as user-facing detail', () => {
-    markUpdateError('unknown');
-    expect(getUpdateState()).toEqual({ status: 'error', errorDetail: undefined });
+  it('keeps non-Error failures out of public update state too', () => {
+    markUpdateError('private detail');
+    expect(getUpdateState()).toEqual({ status: 'error' });
   });
 });
