@@ -1,5 +1,6 @@
 import { UNIT_IDS } from '../data/units';
 import type { HistoryEntry, Settings, UnitId } from '../types';
+import { logEvent } from './logger';
 
 export const SETTINGS_KEY = 'thermoshift.settings.v1';
 export const HISTORY_KEY = 'thermoshift.history.v1';
@@ -37,7 +38,8 @@ export const loadSettings = (): Settings => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     return raw ? sanitizeSettings(JSON.parse(raw) as unknown) : DEFAULT_SETTINGS;
-  } catch {
+  } catch (error) {
+    logEvent('warn', 'storage.settings_read_failed', { error });
     return DEFAULT_SETTINGS;
   }
 };
@@ -45,8 +47,8 @@ export const loadSettings = (): Settings => {
 export const saveSettings = (settings: Settings): void => {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(sanitizeSettings(settings)));
-  } catch {
-    // Browser storage can be unavailable or full. The in-memory app remains usable.
+  } catch (error) {
+    logEvent('warn', 'storage.settings_write_failed', { error });
   }
 };
 
@@ -85,7 +87,8 @@ export const loadHistory = (): HistoryEntry[] => {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     return raw ? sanitizeHistory(JSON.parse(raw) as unknown) : [];
-  } catch {
+  } catch (error) {
+    logEvent('warn', 'storage.history_read_failed', { error });
     return [];
   }
 };
@@ -93,15 +96,16 @@ export const loadHistory = (): HistoryEntry[] => {
 export const saveHistory = (history: HistoryEntry[]): void => {
   try {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(sanitizeHistory(history)));
-  } catch {
-    // Keep conversions available in memory when storage cannot be written.
+  } catch (error) {
+    logEvent('warn', 'storage.history_write_failed', { error });
   }
 };
 
 export const loadOnboardingComplete = (): boolean => {
   try {
     return localStorage.getItem(ONBOARDING_KEY) === 'complete';
-  } catch {
+  } catch (error) {
+    logEvent('warn', 'storage.onboarding_read_failed', { error });
     return false;
   }
 };
@@ -110,8 +114,8 @@ export const saveOnboardingComplete = (complete: boolean): void => {
   try {
     if (complete) localStorage.setItem(ONBOARDING_KEY, 'complete');
     else localStorage.removeItem(ONBOARDING_KEY);
-  } catch {
-    // Onboarding state is non-critical and can remain session-only.
+  } catch (error) {
+    logEvent('warn', 'storage.onboarding_write_failed', { error });
   }
 };
 
@@ -120,7 +124,7 @@ export const clearStoredData = (): void => {
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(HISTORY_KEY);
     localStorage.removeItem(ONBOARDING_KEY);
-  } catch {
-    // No-op when storage is unavailable.
+  } catch (error) {
+    logEvent('warn', 'storage.clear_failed', { error });
   }
 };
