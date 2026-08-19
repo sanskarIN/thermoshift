@@ -4,16 +4,18 @@ import { en } from '../i18n/en';
 import { BACKUP_MAX_BYTES, createBackup, parseBackup } from '../lib/backup';
 import { downloadText } from '../lib/export';
 import type { HistoryEntry, Settings } from '../types';
+import { UpdatePanel } from './UpdatePanel';
 
 interface Props {
   settings: Settings;
   history: HistoryEntry[];
+  appVersion: string;
   onChange: (settings: Settings) => void;
   onRestoreData: (settings: Settings, history: HistoryEntry[]) => void;
   onResetData: () => void;
 }
 
-export function SettingsPanel({ settings, history, onChange, onRestoreData, onResetData }: Props) {
+export function SettingsPanel({ settings, history, appVersion, onChange, onRestoreData, onResetData }: Props) {
   const [dataNotice, setDataNotice] = useState<string | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const patch = (next: Partial<Settings>) => onChange({ ...settings, ...next });
@@ -76,6 +78,8 @@ export function SettingsPanel({ settings, history, onChange, onRestoreData, onRe
           <label className="toggle"><input type="checkbox" checked={settings.reducedMotion} onChange={(event) => patch({ reducedMotion: event.target.checked })} /><span>{en.settings.reducedMotion}</span></label>
         </div>
       </div>
+
+      <UpdatePanel version={appVersion} />
 
       <div className="settings-section">
         <h3>{en.settings.privacy}</h3>
