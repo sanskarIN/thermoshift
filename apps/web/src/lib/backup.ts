@@ -4,10 +4,27 @@ import { HISTORY_LIMIT, isHistoryEntry, isSettings, sanitizeHistory, sanitizeSet
 export const BACKUP_SCHEMA_VERSION = 1 as const;
 export const BACKUP_MAX_BYTES = 256 * 1024;
 
+export type BackupValidationCode =
+  | 'too-large'
+  | 'invalid-json'
+  | 'not-backup'
+  | 'unsupported-schema'
+  | 'invalid-exported-at'
+  | 'invalid-settings'
+  | 'invalid-history'
+  | 'history-limit'
+  | 'invalid-history-entry'
+  | 'duplicate-history-id';
+
 export class BackupValidationError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly code: BackupValidationCode;
+  readonly detail?: string | number;
+
+  constructor(code: BackupValidationCode, detail?: string | number) {
+    super(`Backup validation failed: ${code}`);
     this.name = 'BackupValidationError';
+    this.code = code;
+    this.detail = detail;
   }
 }
 
@@ -19,7 +36,7 @@ export interface ThermoShiftBackup {
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-const invalidBackup = (message: string): BackupValidationError => new BackupValidationError(message);
+const invalidBackup = (code: BackupValidationCode, detail?: string | number): BackupValidationError => new BackupValidationError(code, detail);
 
 export const createBackup = (settings: Settings, history: HistoryEntry[]): string => {
   const backup: ThermoShiftBackup = {
@@ -33,31 +50,31 @@ export const createBackup = (settings: Settings, history: HistoryEntry[]): strin
 
 export const parseBackup = (text: string): ThermoShiftBackup => {
   if (new TextEncoder().encode(text).byteLength > BACKUP_MAX_BYTES) {
-    throw invalidBackup('The selected backup is larger than 256 KiB.');
+    throw invalidBackup('too-large', BACKUP_MAX_BYTES);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(text) as unknown;
   } catch {
-    throw invalidBackup('The selected file is not valid JSON.');
+    throw invalidBackup('invalid-json');
   }
 
-  if (!isRecord(parsed)) throw invalidBackup('The selected file is not a ThermoShift backup.');
+  if (!isRecord(parsed)) throw invalidBackup('not-backup');
   if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) {
-    throw invalidBackup(`Unsupported backup schema version: ${String(parsed.schemaVersion)}.`);
+    throw invalidBackup('unsupported-schema', String(parsed.schemaVersion));
   }
   if (typeof parsed.exportedAt !== 'string' || !Number.isFinite(Date.parse(parsed.exportedAt))) {
-    throw invalidBackup('Backup export timestamp is missing or invalid.');
+    throw invalidBackup('invalid-exported-at');
   }
-  if (!isSettings(parsed.settings)) throw invalidBackup('Backup settings are missing or invalid.');
-  if (!Array.isArray(parsed.history)) throw invalidBackup('Backup history is missing or invalid.');
-  if (parsed.history.length > HISTORY_LIMIT) throw invalidBackup(`Backup contains more than ${HISTORY_LIMIT} history entries.`);
-  if (!parsed.history.every(isHistoryEntry)) throw invalidBackup('Backup history contains an invalid conversion entry.');
+  if (!isSettings(parsed.settings)) throw invalidBackup('invalid-settings');
+  if (!Array.isArray(parsed.history)) throw invalidBackup('invalid-history');
+  if (parsed.history.length > HISTORY_LIMIT) throw invalidBackup('history-limit', HISTORY_LIMIT);
+  if (!parsed.history.every(isHistoryEntry)) throw invalidBackup('invalid-history-entry');
 
   const historyIds = parsed.history.map((entry) => entry.id);
   if (new Set(historyIds).size !== historyIds.length) {
-    throw invalidBackup('Backup history contains duplicate conversion identifiers.');
+    throw invalidBackup('duplicate-history-id');
   }
 
   return {
