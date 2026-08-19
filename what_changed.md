@@ -1305,3 +1305,289 @@ This is still a **release-candidate implementation**, not a stable-release claim
 10. Keep changes atomic/meaningful and update this file again at the next real milestone.
 
 GitHub history, current repository files, current PR metadata, and current workflow results are the source of truth for exact hashes, file presence, merge status, and release evidence.
+
+---
+
+# Continuation checkpoint — release preflight, provenance, and reproducibility hardening
+
+This section was appended on 2026-08-19 without deleting or shortening the earlier handoff history. Where this checkpoint conflicts with an earlier historical status statement, this newer checkpoint is authoritative for the later branch state.
+
+## Exact checkpoint identity before this handoff commit
+
+- Pull request: **#11**, `build/thermoshift-v0.2` → `main`.
+- Base/merge-base SHA: `648662788597dcfbbc0db7eb9021f1863c764fb5`.
+- Pre-handoff head: `20274d733a60e4851e26d6dba6e6d598d469d0bb`.
+- Compare: **193 commits ahead, 0 behind**.
+- PR metadata at that head: **193 commits, 85 changed files, 6352 additions, 459 deletions**.
+- PR state: open, non-draft, mergeable, not merged.
+- Source version remains `0.2.0`.
+- No stable `v0.2.0` tag/release is claimed.
+
+## Exact generated-evidence state at this checkpoint
+
+GitHub file checks confirm:
+
+- `apps/desktop/src-tauri/icons/32x32.png` exists;
+- `apps/desktop/src-tauri/icons/128x128.png` exists;
+- `apps/desktop/src-tauri/icons/128x128@2x.png` exists;
+- `package-lock.json` is **absent**;
+- `Cargo.lock` is **absent**;
+- `apps/desktop/src-tauri/icons/icon.ico` is **absent**;
+- `apps/desktop/src-tauri/icons/icon.icns` is **absent**;
+- `docs/screenshots/converter-desktop.png` is **absent**, so the verified screenshot set is not complete.
+
+This corrects the older blanket statement that the generated icon directory was absent: three generated PNG icon files have now landed, but the complete Windows/macOS icon set is still incomplete.
+
+No missing binary, lockfile, screenshot, native bundle, checksum, signing credential, or hosted-pass status was fabricated.
+
+## Current hosted check state for the exact pre-handoff head
+
+For `20274d733a60e4851e26d6dba6e6d598d469d0bb`, GitHub reported:
+
+- **CI** — run `32223527891` — `queued`;
+- **CodeQL** — run `32223527912` — `queued`;
+- **Dependency Security** — run `32223527898` — `queued`.
+
+These are not failures, but they are also not passing release evidence. Older cancelled/superseded runs remain unsuitable evidence for this newer candidate.
+
+## Lockfile generator bootstrap defect fixed
+
+A concrete workflow defect was identified in `.github/workflows/lockfiles.yml`: the generator configured `actions/setup-node` npm caching with `cache-dependency-path: package.json` before the repository had a package lockfile. That contradicted the workflow’s purpose and could prevent the generator from reaching its lockfile-generation commands.
+
+Commit `20274d733a60e4851e26d6dba6e6d598d469d0bb` (`ci(lockfiles): avoid cache before lockfile exists`) removes npm caching from the bootstrap generator.
+
+The lockfile workflow now:
+
+- runs on `workflow_dispatch` plus its temporary branch-scoped self-trigger;
+- checks out the feature branch with persistent credentials;
+- uses Node 22 without pre-lock caching;
+- generates npm lock metadata with `npm install --ignore-scripts --package-lock-only --no-audit --no-fund`;
+- generates Cargo lock metadata with `cargo generate-lockfile`;
+- requires both generated files to be non-empty;
+- verifies version consistency, Tauri frontend configuration, and internal documentation links;
+- uploads SHA-qualified lockfile evidence;
+- configures Git author `Sanskar <sanskarin@outlook.in>`;
+- commits only when the lockfiles changed;
+- rebases once before pushing so concurrent documentation commits do not turn a valid generated result into a non-fast-forward loss.
+
+Until both lockfiles actually appear on the branch, the release blocker stays open.
+
+## Desktop icon generator hardened
+
+The desktop icon workflow was hardened with:
+
+- a 20-minute timeout;
+- persistent checkout credentials;
+- dependency install without audit/fund side work;
+- explicit required output checks for PNG, ICO, and ICNS files;
+- SHA-qualified artifact names;
+- the requested Git author identity;
+- a one-time rebase before branch push to preserve generated output across concurrent documentation commits.
+
+Three PNG outputs are already present, but `icon.ico` and `icon.icns` remain absent at this checkpoint. The workflow’s temporary self-trigger remains appropriate until the complete generated set lands; after that it should return to manual-only mode.
+
+A local rendering experiment from the repository’s existing editable `apps/web/public/logo.svg` successfully produced structurally valid ICO and ICNS files in the execution container, but those local binaries were **not** treated as committed repository evidence. The GitHub branch remains authoritative.
+
+## Verified screenshot workflow hardened
+
+`.github/workflows/screenshots.yml` remains manual-only and now:
+
+- has a 30-minute timeout;
+- requires the non-screenshot release-input preflight before dependency installation;
+- uses `npm ci --ignore-scripts` when run against a lockfile-complete candidate;
+- uploads candidate-SHA-qualified screenshot evidence;
+- validates the eight-image set before commit;
+- rebases once before pushing changed screenshots so a concurrent documentation update cannot discard valid captures.
+
+The workflow is intentionally not auto-run while the npm lockfile is missing.
+
+## Native desktop evidence bound to candidate SHA
+
+`.github/workflows/desktop-platforms.yml` was hardened so Linux, Windows, and macOS unsigned package evidence is attributable to one exact candidate.
+
+Each matrix job now:
+
+- has a 45-minute timeout;
+- runs the release-input preflight;
+- installs the committed npm graph with `npm ci`;
+- checks versions, Tauri configuration, and documentation links;
+- checks the desktop Rust crate with Cargo `--locked`;
+- builds the unsigned native package;
+- writes `THERMOSHIFT_BUILD.txt` containing the candidate SHA, ref, and platform label;
+- uploads an artifact whose name includes `${{ github.sha }}`.
+
+No platform is marked passed until its exact job actually succeeds.
+
+## Exact release-input preflight added
+
+Added `scripts/check-release-inputs.mjs` and root commands:
+
+- `npm run check:release-inputs`;
+- `npm run check:release-inputs:screenshots`.
+
+The base preflight requires non-empty committed:
+
+- npm/Cargo lockfiles;
+- core npm/Rust/Tauri manifests;
+- primary generated desktop PNG files;
+- Windows `icon.ico`;
+- macOS `icon.icns`;
+- README/changelog/security/privacy/release documentation.
+
+The screenshot-complete mode additionally requires all eight verified product screenshot files.
+
+The preflight fails closed and explicitly tells maintainers to generate real evidence instead of creating placeholders.
+
+## Stable tagged release is now fail-closed on missing evidence
+
+`.github/workflows/release.yml` now requires `npm run check:release-inputs:screenshots` before dependency installation or publication.
+
+A stable tag therefore cannot publish while any required lockfile, icon, or screenshot is missing.
+
+Once inputs exist, the tagged workflow uses:
+
+- `npm ci --ignore-scripts`;
+- `cargo test --locked -p thermoshift-core`;
+- locked Clippy;
+- version/Tauri/docs checks;
+- TypeScript, ESLint, Vitest coverage;
+- real WASM-backed production PWA build;
+- asset-budget verification;
+- committed screenshot-set verification;
+- Chromium Playwright E2E/axe;
+- compressed web archive;
+- SHA-256 checksums.
+
+This makes an accidental premature `v0.2.0` tag fail rather than silently publish from an incomplete dependency/evidence graph.
+
+## CI/security/Makefile transition safely to committed locks
+
+Ordinary PR CI remains usable while generator work is incomplete, but automatically consumes committed locks as soon as they appear.
+
+CI now:
+
+- reports whether npm/Cargo locks are committed;
+- uses `npm ci --ignore-scripts` when `package-lock.json` exists, otherwise the temporary floating install path;
+- uses Cargo `--locked` for tests/Clippy when `Cargo.lock` exists, otherwise the temporary unlocked verification path;
+- includes explicit job timeouts;
+- runs the dependency-free release-tool regression suite in the metadata job.
+
+Dependency Security now:
+
+- audits the committed `Cargo.lock` when present, otherwise generates only an ephemeral audit lockfile;
+- audits the committed `package-lock.json` when present, otherwise generates only an ephemeral audit lockfile;
+- retains CodeQL/Gitleaks/RustSec/npm audit roles without pretending ephemeral audit locks are committed release evidence.
+
+The root Makefile now follows the same transition-safe policy and exposes:
+
+- `release-preflight`;
+- `release-preflight-screenshots`.
+
+## Cryptographic release provenance added
+
+Added `scripts/create-release-manifest.mjs` and root command:
+
+`npm run release:manifest`
+
+The release provenance manifest is fail-closed and records:
+
+- manifest schema version;
+- ThermoShift source version;
+- concrete candidate Git SHA;
+- candidate ref/tag;
+- generation timestamp;
+- byte length and SHA-256 digest of the committed npm/Cargo lockfiles;
+- byte length and SHA-256 digest of the required PNG/ICO/ICNS desktop icons;
+- byte length and SHA-256 digest of all eight verified screenshots;
+- byte length and SHA-256 digest of the packaged web archive;
+- byte length and SHA-256 digest of the archive checksum file.
+
+The generator additionally:
+
+- rejects missing candidate SHA/ref identity;
+- rejects required evidence that is missing or empty;
+- rejects paths that escape the repository root;
+- verifies that the declared archive SHA-256 checksum actually matches the archive before writing provenance.
+
+The tagged release workflow now publishes four related evidence files:
+
+1. `thermoshift-web-vX.Y.Z.tar.gz`;
+2. `thermoshift-web-vX.Y.Z.tar.gz.sha256`;
+3. `thermoshift-release-vX.Y.Z.manifest.json`;
+4. `thermoshift-release-vX.Y.Z.manifest.json.sha256`.
+
+`docs/release.md` and `docs/release-evidence.md` were updated to make this provenance contract part of the stable-release process.
+
+## Dependency-free release-tool regression suite
+
+Added `scripts/release-tools.test.mjs` and:
+
+`npm run test:release-tools`
+
+Current tests cover:
+
+1. complete base release-input preflight success;
+2. rejection of missing generated icon evidence;
+3. screenshot-complete preflight and exact-set rejection;
+4. provenance candidate identity plus file SHA-256 recording;
+5. archive checksum mismatch rejection;
+6. missing candidate identity rejection;
+7. repository-root path-escape rejection;
+8. missing required evidence rejection.
+
+The exact current script/test source was reconstructed in a clean local temporary directory and run with Node’s built-in test runner after the latest provenance hardening.
+
+Result: **8 tests passed, 0 failed, 0 cancelled, 0 skipped**.
+
+This is valid dependency-free verification of the release helper logic. It is not a substitute for the still-queued hosted Rust/web/security/native release matrix.
+
+## Container/network limitation retained honestly
+
+A clean direct Git clone fallback was attempted from the execution container, but that environment could not resolve `github.com`. No npm/Cargo lock metadata was copied from stale local data or fabricated to bypass that limitation.
+
+GitHub repository files, generated workflow output, and exact branch state remain authoritative.
+
+## New meaningful commits in this continuation
+
+- `c9ea8f11fce8fc50ca6428a3ddf6cd7a61d54adc` — `ci(lockfiles): harden hosted lockfile generation`
+- `62a2cea0c20f814bce16ff004ab9fdb77c1d0b70` — `build: add release input preflight`
+- `97e2b09ac067062f02f7d3124e83e01942e1f4e6` — `build: expose release preflight commands`
+- `65889db0488ff8f93c66a230aa13feed112c5e83` — `ci(release): require exact release inputs`
+- `723f1360b2c12d9fd9a44efad395ed2bee405a02` — `ci(handoff): add one-shot continuation recorder`
+- `29fb4f097d712c8be6a6077f180c19fe27479b10` — `ci(desktop): harden hosted icon generation`
+- `ccf558d118f78146ced2d3f9bdda1df85638ffd9` — `ci(screenshots): harden evidence capture commits`
+- `1b555bbbaab419aa0f2a04ac5e6d857302c44337` — `ci(desktop): bind native evidence to candidate sha`
+- `df66966513d9115a56fc44809a34fff9b32fd039` — `build(release): require complete desktop icon set`
+- `3037d6c46b99c23563d0f116351906c8d2506f54` — `ci(release): require verified screenshots before tag publish`
+- `8441031b67ce85f4650eb061506a36b0af7ccc6c` — `docs(release): document exact input preflight`
+- `af3cd50d34ad075b10729ba475a2b7fbabca8fa3` — `docs(release): align stable tag preflight`
+- `e0373c54a2d96386d07880890c50e835d8758b5c` — `ci: adopt lockfiles automatically when present`
+- `091e04e3b57108b3a808d398379c8a6c3492a8f8` — `ci(security): audit committed locks when available`
+- `976e1491276c043d9e6125021f9196261fc41a48` — `build: align Makefile with release reproducibility`
+- `1499540820f403d4735219784f9f7cba279ec49f` — `build(release): add provenance manifest generator`
+- `1eb020fbc434da9a1d7f4b62f3744d9c5d469359` — `fix(release): correct provenance fallback env names`
+- `95c80131a0ba52bd701e6c1abf0aa2cc9f0b3cdc` — `build(release): expose provenance manifest command`
+- `925d73b2ca6317e97843f95f88d325ed247cc914` — `ci(release): publish provenance manifest`
+- `c3d168e12579c1a58e99b5a30b189e16ee015375` — `test(release): cover preflight and provenance tools`
+- `e37f35fcdb5045be1b9dca5091fe443e2c21e8c8` — `test(release): expose dependency-free release tool tests`
+- `12c9b68a8f80b5ee1f28cd12f54712e86214ee31` — `ci: test release tooling in metadata gate`
+- `f52bc39121d64a258340a8e29a2358f41c76ec4e` — `docs(release): document provenance manifest evidence`
+- `c731518dfe2e2772ade8ede864c0615b31ffb976` — `build(release): validate provenance inputs`
+- `79e65fc02c98fa8e4c9b133d4319e9883ddb52aa` — `test(release): cover checksum and identity failures`
+- `20274d733a60e4851e26d6dba6e6d598d469d0bb` — `ci(lockfiles): avoid cache before lockfile exists`
+
+## Remaining exact next work
+
+1. Check whether the newly re-triggered lockfile workflow lands `package-lock.json` and `Cargo.lock`. If both land, review them and restore `lockfiles.yml` to manual-only mode.
+2. Check whether the hardened icon workflow lands `icon.ico` and `icon.icns`. If the complete set lands, restore `icons.yml` to manual-only mode and explicitly verify Tauri bundle icon configuration.
+3. Once locks and complete icons exist, run the manual verified screenshot workflow and commit only its validated eight-image result.
+4. Inspect the newest exact-head CI, CodeQL, Gitleaks/RustSec/npm-audit results; fix only real surfaced failures.
+5. Run/review candidate-SHA-qualified unsigned Linux/Windows/macOS native bundle artifacts.
+6. Record exact passing evidence in `docs/release-evidence.md` without carrying results forward across candidate SHA changes.
+7. Remove the temporary `.github/workflows/handoff-sync.yml` helper after this direct handoff commit is confirmed; it is no longer needed.
+8. Keep PR #11 open while required exact-candidate evidence is queued/missing.
+9. Do not create or publish `v0.2.0` until the stable release-input preflight, hosted quality/security checks, screenshots, native target evidence, and documented release gates are satisfied.
+
+## Continuation rule after this checkpoint
+
+Read this newest section first, then verify the current branch rather than assuming generators completed. The branch may advance automatically if a generator successfully commits real output. Never convert workflow intent into artifact evidence, never call queued/cancelled checks passed, and never replace a real release blocker with a placeholder file.
