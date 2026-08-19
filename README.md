@@ -35,7 +35,8 @@ ThermoShift is a production-oriented temperature converter for Web/PWA with a Ta
 - English UI copy externalized into a locale module for future language expansion.
 - Local-only structured diagnostics with secret/PII-shaped metadata redaction and generic user-facing operational errors.
 - Static version/Tauri configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, and production asset budgets.
-- CodeQL, Gitleaks, RustSec/npm dependency auditing, Dependabot, and release checksum automation.
+- CodeQL, Gitleaks, RustSec/npm dependency auditing, Dependabot, and fail-closed release automation.
+- Exact release-input preflight plus cryptographic release provenance manifest/checksum generation.
 - Dedicated workflows for real product screenshots, generated desktop icons, dependency lockfiles, and unsigned Windows/macOS/Linux native build evidence.
 - Open-source MIT license and no required account.
 
@@ -48,6 +49,7 @@ Once the generated evidence exists, captures are expected under `docs/screenshot
 ```bash
 npm --workspace @thermoshift/web run screenshots
 npm run check:screenshots
+npm run check:release-inputs:screenshots
 ```
 
 ## Platform targets
@@ -84,7 +86,7 @@ npm install --ignore-scripts
 npm run dev
 ```
 
-The current v0.2 branch does **not** yet contain committed npm/Cargo lockfiles, so documentation does not claim a locked install. A native-tool generation workflow exists; when `package-lock.json` and `Cargo.lock` actually land in the candidate, reproducibility-sensitive commands will switch to `npm ci` and Cargo `--locked`.
+The current v0.2 branch does **not** yet contain committed npm/Cargo lockfiles, so documentation does not claim a locked install. A native-tool generation workflow exists; when `package-lock.json` and `Cargo.lock` actually land in the candidate, reproducibility-sensitive paths automatically consume them with `npm ci` and Cargo `--locked`.
 
 Open the Vite URL (normally `http://localhost:5173`). On first run, choose **Start converting** or **Review settings first**.
 
@@ -117,6 +119,7 @@ See [`docs/setup.md`](docs/setup.md) and [`docs/development.md`](docs/developmen
 npm run check:versions
 npm run check:desktop-config
 npm run check:docs
+npm run test:release-tools
 cargo fmt --all -- --check
 cargo test -p thermoshift-core
 cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
@@ -152,7 +155,7 @@ npm run desktop:dev
 npm run desktop:build
 ```
 
-The manual `Desktop Platform Verification` workflow defines unsigned Linux/Windows/macOS package jobs and uploads native bundle evidence. Signing/notarization remains a separate owner-controlled release gate.
+The manual `Desktop Platform Verification` workflow defines unsigned Linux/Windows/macOS package jobs and uploads candidate-SHA-qualified native bundle evidence. Signing/notarization remains a separate owner-controlled release gate.
 
 Generate Tauri platform icons from the editable SVG logo with:
 
@@ -160,7 +163,7 @@ Generate Tauri platform icons from the editable SVG logo with:
 npm --workspace @thermoshift/desktop run icons
 ```
 
-Generated desktop icons are not claimed complete until `apps/desktop/src-tauri/icons/` actually exists in the candidate.
+The current branch contains generated `32x32.png`, `128x128.png`, and `128x128@2x.png` icon assets. Platform branding is **not yet complete** because the required Windows `icon.ico` and macOS `icon.icns` files are still absent at the latest verified checkpoint.
 
 ## Architecture
 
@@ -178,7 +181,22 @@ Repository automation includes CodeQL, Gitleaks, RustSec/npm audits, and secret-
 
 ## Release process
 
-A `vX.Y.Z` tag triggers the web release workflow, which validates version/tag consistency, repository config/docs, Rust quality, web type/lint/coverage, production PWA build/budget, Playwright E2E/axe, and then produces a compressed web artifact plus SHA-256 checksum.
+Before a stable tag, run the fail-closed candidate checks:
+
+```bash
+npm run check:release-inputs:screenshots
+npm run check:versions
+npm run check:desktop-config
+npm run check:docs
+npm run test:release-tools
+```
+
+A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfiles, complete PNG/ICO/ICNS desktop icon set, and verified eight-screenshot set exist. The workflow validates version/tag consistency, repository config/docs, Rust quality using the locked graph, web type/lint/coverage, production PWA build/budget, committed screenshots, Playwright E2E/axe, and then produces:
+
+- the compressed web archive;
+- its SHA-256 checksum;
+- a candidate-SHA/ref release provenance manifest containing SHA-256 digests for release evidence;
+- the provenance manifest's SHA-256 checksum.
 
 Do not create `v0.2.0` merely because source metadata is 0.2.0. Follow [`docs/release.md`](docs/release.md) and record exact-candidate evidence in [`docs/release-evidence.md`](docs/release-evidence.md).
 
