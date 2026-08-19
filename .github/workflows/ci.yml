@@ -22,6 +22,8 @@ jobs:
           node-version: 22
       - name: Check version consistency
         run: npm run check:versions
+      - name: Check desktop frontend configuration
+        run: npm run check:desktop-config
 
   rust-core:
     runs-on: ubuntu-latest
