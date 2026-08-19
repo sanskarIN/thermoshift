@@ -26,6 +26,11 @@ import type { ConversionResult, HistoryEntry, Settings } from './types';
 
 const PAGES: readonly QuickActionPage[] = ['converter', 'batch', 'history', 'formulas', 'settings', 'about'];
 
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || target.matches('input, textarea, select');
+};
+
 function App() {
   const [engine, setEngine] = useState<TemperatureEngine>();
   const [engineError, setEngineError] = useState<string>();
@@ -71,7 +76,7 @@ function App() {
         openQuickActions();
         return;
       }
-      if (event.altKey && /^[1-6]$/.test(event.key)) {
+      if (event.altKey && /^[1-6]$/.test(event.key) && !isEditableTarget(event.target)) {
         const target = PAGES[Number(event.key) - 1];
         if (target) {
           event.preventDefault();
