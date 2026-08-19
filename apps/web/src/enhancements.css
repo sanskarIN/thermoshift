@@ -1,0 +1,28 @@
+.command-list {
+  list-style: none;
+  padding: 0;
+}
+
+.command-list li {
+  margin: 0;
+}
+
+.formula-card details {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.formula-card summary {
+  color: var(--primary-strong);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.formula-card details p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.modal-card:focus {
+  outline: none;
+}
