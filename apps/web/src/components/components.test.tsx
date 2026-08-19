@@ -125,6 +125,21 @@ describe('SettingsPanel', () => {
     expect(onResetData).toHaveBeenCalledTimes(1);
   });
 
+  it('shows locale-owned guidance for a known backup validation failure', async () => {
+    const onRestoreData = vi.fn();
+    const file = {
+      size: 9,
+      text: vi.fn().mockResolvedValue('{not-json'),
+    } as unknown as File;
+
+    render(<SettingsPanel settings={DEFAULT_SETTINGS} history={history} appVersion="0.2.0" onChange={vi.fn()} onRestoreData={onRestoreData} onResetData={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('The selected file is not valid JSON.'));
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Backup validation failed');
+    expect(onRestoreData).not.toHaveBeenCalled();
+  });
+
   it('keeps unexpected backup file-read details out of the UI', async () => {
     const onRestoreData = vi.fn();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
