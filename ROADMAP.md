@@ -37,6 +37,7 @@
 - [x] Expand real-WASM browser E2E to cover local history persistence, service-worker offline reload/conversion, Settings/update controls, and axe scans.
 - [x] Add internal Markdown link validation.
 - [x] Add production PWA raw/gzip asset budgets.
+- [x] Add dependency-free tests for release-input validation and provenance generation.
 
 ### Security/automation implementation
 
@@ -44,24 +45,29 @@
 - [x] Fix and statically verify Tauri frontend workspace paths.
 - [x] Add Gitleaks repository secret scanning alongside CodeQL and dependency audits.
 - [x] Add concurrency cancellation to current PR CI/security workflow definitions.
-- [x] Expand tagged web release quality gates before archive/checksum publication.
+- [x] Expand tagged web release quality gates before publication.
 - [x] Add a native-tool lockfile generation workflow with artifact evidence and requested Git author identity.
-- [x] Add a real-product screenshot capture/validation workflow with artifact evidence.
-- [x] Add an unsigned Windows/macOS/Linux Tauri package verification matrix with bundle artifacts.
-- [x] Add reproducible desktop icon generation from the editable SVG with artifact evidence.
+- [x] Remove npm-cache bootstrapping from the lockfile generator so it can create the first lockfile without depending on one.
+- [x] Make CI/security/Makefile commands automatically consume committed locks when present while preserving current pre-lock verification.
+- [x] Add a real-product screenshot capture/validation workflow with SHA-qualified artifact evidence.
+- [x] Add an unsigned Windows/macOS/Linux Tauri package verification matrix with candidate-SHA metadata and bundle artifacts.
+- [x] Add reproducible desktop icon generation from the editable SVG with SHA-qualified artifact evidence.
+- [x] Add fail-closed release-input preflight requiring lockfiles, complete PNG/ICO/ICNS branding inputs, release documentation, and—at stable-tag time—the verified screenshot set.
+- [x] Add cryptographic release provenance manifest generation plus manifest checksum publication.
 - [x] Add exact-candidate release-evidence and repository-settings guidance.
 
 ### v0.2 release evidence still open
 
-- [ ] Wait for the hosted lockfile generator to actually produce and commit `package-lock.json` and `Cargo.lock`; then switch applicable CI/security/release/setup commands to locked dependency resolution.
-- [ ] Wait for the hosted desktop-icon generator to actually produce/commit the expected Tauri icon set; then pin/verify icon paths in desktop configuration.
+- [ ] Hosted lockfile generator must actually produce and commit `package-lock.json` and `Cargo.lock`; until then the release preflight intentionally fails.
+- [ ] Complete desktop icon evidence: generated PNGs exist, but Windows `icon.ico` and macOS `icon.icns` are still absent at the latest verified checkpoint.
 - [ ] Run the verified screenshot workflow after the npm lockfile exists; review/commit the real desktop/mobile captures and update README screenshot presentation.
 - [ ] Review current-head CI, CodeQL, Gitleaks, RustSec, and npm-audit workflow results; fix any actual failure rather than inferring success from workflow definitions.
 - [ ] Run/review unsigned native bundle evidence on Linux, Windows, and macOS for the exact release candidate.
 - [ ] Verify PWA install/offline/update behavior on real target browser/device environments required by the release plan.
 - [ ] Configure intended `main` branch protection/rulesets and optional Discussions/labels/milestones in GitHub settings where available.
 - [ ] Configure owner-controlled platform signing/notarization credentials before signed desktop publication.
-- [ ] Tag/publish `v0.2.0` only after the exact candidate satisfies `docs/release.md` and `docs/release-evidence.md`.
+- [ ] Tag/publish `v0.2.0` only after `npm run check:release-inputs:screenshots`, exact-candidate hosted checks, native evidence, and `docs/release-evidence.md` are satisfied.
+- [ ] Verify the published archive checksum plus the candidate-SHA/ref provenance manifest and its checksum after the tagged release runs.
 
 ## 1.0 — Stable
 
@@ -70,7 +76,7 @@
 - [ ] Verify PWA install/offline/update behavior on representative real desktop and mobile devices.
 - [ ] Verify backup compatibility from exported fixtures and document future migration rules.
 - [ ] Complete signed/notarized native publication strategy where distribution requires it.
-- [ ] Publish stable release notes, checksums, verified screenshots, and reproducible release evidence.
+- [ ] Publish stable release notes, checksums, provenance manifest, verified screenshots, and reproducible release evidence.
 
 ## Future/optional engineering
 
