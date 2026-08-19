@@ -14,6 +14,7 @@ export const en = {
     undo: 'Undo',
     delete: 'Delete',
     export: 'Export',
+    exportFailed: 'Export could not be downloaded.',
     clear: 'Clear',
     allScales: 'All scales',
   },
@@ -173,6 +174,7 @@ export const en = {
     restoreBackup: 'Restore backup',
     reset: 'Reset local data',
     backupExported: 'Backup exported. Keep the file somewhere you trust.',
+    backupExportFailed: 'Backup could not be downloaded.',
     backupRestored: (count: number) => `Backup restored with ${count} saved conversion${count === 1 ? '' : 's'}.`,
     backupFailed: 'Backup restore failed.',
     backupErrors: {
