@@ -14,7 +14,7 @@
 
 ThermoShift is a production-oriented temperature converter for Web/PWA with a Tauri desktop target for Windows, macOS, and Linux. Its conversion rules live in one Rust domain engine exposed to the browser through WebAssembly. Core conversion needs no account, server, analytics service, or network request.
 
-> **Release status:** source metadata is currently `0.2.0`, but the v0.2 release candidate remains untagged while exact-candidate hosted checks, verified product screenshots, and cross-platform release evidence are completed. See [`ROADMAP.md`](ROADMAP.md) and [`docs/release-evidence.md`](docs/release-evidence.md).
+> **Release status:** source metadata is currently `2.8.2`, but the `v2.8.2` release candidate remains untagged while exact-candidate hosted checks, verified product screenshots, and cross-platform release evidence are completed. See [`ROADMAP.md`](ROADMAP.md) and [`docs/release-evidence.md`](docs/release-evidence.md).
 
 ## Highlights
 
@@ -44,7 +44,7 @@ ThermoShift is a production-oriented temperature converter for Web/PWA with a Ta
 
 ## Screenshots
 
-ThermoShift includes a real-product screenshot capture/validation pipeline, but verified PNG captures are not committed yet on the current v0.2 branch. No mockup or placeholder is presented here as a real product screenshot.
+ThermoShift includes a real-product screenshot capture/validation pipeline, but verified PNG captures are not committed yet for the current `2.8.2` candidate. No mockup or placeholder is presented here as a real product screenshot.
 
 Once the generated evidence exists, captures are expected under `docs/screenshots/` and validated with:
 
@@ -203,7 +203,7 @@ A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfi
 - a candidate-SHA/ref release provenance manifest containing SHA-256 digests for release evidence;
 - the provenance manifest's SHA-256 checksum.
 
-Do not create `v0.2.0` merely because source metadata is 0.2.0. Follow [`docs/release.md`](docs/release.md) and record exact-candidate evidence in [`docs/release-evidence.md`](docs/release-evidence.md).
+Do not create `v2.8.2` merely because source metadata is `2.8.2`. Follow [`docs/release.md`](docs/release.md) and record exact-candidate evidence in [`docs/release-evidence.md`](docs/release-evidence.md).
 
 Recommended GitHub repository settings are documented in [`docs/repository-settings.md`](docs/repository-settings.md).
 
