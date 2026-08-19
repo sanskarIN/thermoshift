@@ -4,6 +4,7 @@ import { en } from '../i18n/en';
 import { BACKUP_MAX_BYTES, BackupValidationError, createBackup, parseBackup } from '../lib/backup';
 import { downloadText } from '../lib/export';
 import { logEvent } from '../lib/logger';
+import { HISTORY_LIMIT } from '../lib/storage';
 import type { HistoryEntry, Settings } from '../types';
 import { ProjectLinks } from './ProjectLinks';
 import { UpdatePanel } from './UpdatePanel';
@@ -16,6 +17,21 @@ interface Props {
   onRestoreData: (settings: Settings, history: HistoryEntry[]) => void;
   onResetData: () => void;
 }
+
+const backupValidationMessage = (error: BackupValidationError): string => {
+  switch (error.code) {
+    case 'too-large': return en.settings.backupErrors.tooLarge(BACKUP_MAX_BYTES / 1024);
+    case 'invalid-json': return en.settings.backupErrors.invalidJson;
+    case 'not-backup': return en.settings.backupErrors.notBackup;
+    case 'unsupported-schema': return en.settings.backupErrors.unsupportedSchema;
+    case 'invalid-exported-at': return en.settings.backupErrors.invalidExportedAt;
+    case 'invalid-settings': return en.settings.backupErrors.invalidSettings;
+    case 'invalid-history': return en.settings.backupErrors.invalidHistory;
+    case 'history-limit': return en.settings.backupErrors.historyLimit(HISTORY_LIMIT);
+    case 'invalid-history-entry': return en.settings.backupErrors.invalidHistoryEntry;
+    case 'duplicate-history-id': return en.settings.backupErrors.duplicateHistoryId;
+  }
+};
 
 export function SettingsPanel({ settings, history, appVersion, onChange, onRestoreData, onResetData }: Props) {
   const [dataNotice, setDataNotice] = useState<string | null>(null);
@@ -40,7 +56,7 @@ export function SettingsPanel({ settings, history, appVersion, onChange, onResto
     if (!file) return;
 
     try {
-      if (file.size > BACKUP_MAX_BYTES) throw new BackupValidationError('The selected backup is larger than 256 KiB.');
+      if (file.size > BACKUP_MAX_BYTES) throw new BackupValidationError('too-large');
       const backup = parseBackup(await file.text());
       onRestoreData(backup.settings, backup.history);
       setDataError(null);
@@ -48,7 +64,7 @@ export function SettingsPanel({ settings, history, appVersion, onChange, onResto
     } catch (caught) {
       setDataNotice(null);
       if (caught instanceof BackupValidationError) {
-        setDataError(caught.message);
+        setDataError(backupValidationMessage(caught));
       } else {
         logEvent('error', 'backup.restore_failed', { error: caught });
         setDataError(en.settings.backupFailed);
