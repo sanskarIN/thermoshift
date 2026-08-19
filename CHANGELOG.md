@@ -20,7 +20,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Local structured JSON diagnostics with secret/PII-shaped metadata redaction and bounded values.
 - Dense Rust conversion invariant tests across every supported scale pair.
 - Unit-parser regression coverage for names, symbols, aliases, whitespace, unknown values, and uppercase accented scale names.
-- Expanded component, backup, export, PWA update, logging, accessibility, first-run, keyboard, restore, offline, persistence, Settings, clipboard, and share interaction tests.
+- Expanded component, backup, export, PWA update, logging, accessibility, first-run, keyboard, restore, offline, persistence, Settings, clipboard, share, and download-failure interaction tests.
 - Interactive batch-conversion resource bounds of 32,768 characters and 1,000 lines before per-line conversion work.
 - Chromium/Firefox/WebKit compatibility smoke tests covering real WASM conversion, history persistence, and axe checks.
 - A dedicated cross-browser GitHub Actions matrix with engine-specific failure reports and post-merge `main` verification.
@@ -49,6 +49,8 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Native Web Share `AbortError` is treated as an ordinary user cancellation rather than a failed share or warning event.
 - Clipboard sharing remains available as the explicit fallback when the native Web Share API is unavailable, with separate success/failure feedback.
 - Active modal dialogs now recapture keyboard focus on Tab/Shift+Tab if focus is moved outside the dialog, and hidden/`aria-hidden` descendants are excluded from the focus cycle.
+- Text-download helpers now remove temporary anchors and schedule object-URL revocation even when browser download dispatch throws.
+- Batch CSV, history JSON, and full-backup export actions now turn download-dispatch exceptions into localized generic feedback and redacted local diagnostics instead of unhandled click errors.
 - Rust unit parsing now uses Unicode-aware lowercase normalization so uppercase accented `RÉAUMUR`/`RØMER` input is accepted consistently.
 - Settings contains conversion, appearance/accessibility, application-update, privacy/data, and About/support sections.
 - Project/support links are implemented once and reused by Settings and About.
@@ -73,8 +75,9 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Full backup/export files remain local and user-controlled; ThermoShift does not upload them.
 - Operational diagnostics stay local to the browser console and redact credential/session, identity/contact, content, input/output, and value-shaped metadata before serialization.
 - Error objects are reduced to their type for structured logged metadata rather than logging raw error messages.
-- User-facing startup/update/backup/clipboard/share operational error surfaces no longer echo raw operational error messages.
+- User-facing startup/update/backup/clipboard/share/export operational error surfaces no longer echo raw operational error messages.
 - Share cancellation is not logged as an operational warning.
+- Failed download dispatch cannot leave the helper-created temporary anchor mounted indefinitely, and the allocated object URL is still scheduled for revocation.
 - Batch paste floods are bounded before conversion work to reduce accidental client-side resource exhaustion.
 - Security automation includes CodeQL, Gitleaks repository secret scanning, RustSec audit, and npm audit.
 - Desktop signing/notarization remains explicitly outside source control and requires owner-controlled credentials.
