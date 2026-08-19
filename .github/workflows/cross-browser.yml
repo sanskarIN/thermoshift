@@ -2,6 +2,15 @@ name: Cross-browser E2E
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - 'crates/thermoshift-core/**'
+      - 'crates/thermoshift-wasm/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/cross-browser.yml'
   pull_request:
     paths:
       - 'apps/web/**'
