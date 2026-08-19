@@ -4,6 +4,7 @@ import { UNITS, unitById } from '../data/units';
 import { en } from '../i18n/en';
 import { formatNumber } from '../lib/format';
 import type { TemperatureEngine } from '../lib/engine';
+import { logEvent } from '../lib/logger';
 import type { ConversionResult, Settings, UnitId } from '../types';
 
 interface Props {
@@ -11,6 +12,11 @@ interface Props {
   settings: Settings;
   onSave: (result: ConversionResult) => void;
 }
+
+const hasErrorName = (value: unknown, name: string): boolean => {
+  if (!value || typeof value !== 'object' || !('name' in value)) return false;
+  return value.name === name;
+};
 
 export function ConverterPanel({ engine, settings, onSave }: Props) {
   const [input, setInput] = useState('0');
@@ -46,34 +52,52 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
     if (result !== null) setInput(String(result));
   };
 
-  const copyText = async (text: string) => {
-    if (!navigator.clipboard?.writeText) throw new Error(en.converter.clipboardUnavailable);
-    await navigator.clipboard.writeText(text);
-  };
-
   const copy = async () => {
     if (result === null) return;
+    if (!navigator.clipboard?.writeText) {
+      setNotice(en.converter.clipboardUnavailable);
+      return;
+    }
+
     try {
-      await copyText(`${formatted} ${unitById(to).symbol}`);
+      await navigator.clipboard.writeText(`${formatted} ${unitById(to).symbol}`);
       setNotice(en.converter.copied);
     } catch (caught) {
-      setNotice(caught instanceof Error ? caught.message : en.converter.copyFailed);
+      logEvent('warn', 'clipboard.write_failed', { error: caught });
+      setNotice(en.converter.copyFailed);
     }
   };
 
   const share = async () => {
     if (result === null) return;
     const text = `${input} ${unitById(from).symbol} = ${formatted} ${unitById(to).symbol}`;
-    try {
-      if (navigator.share) {
+
+    if (navigator.share) {
+      try {
         await navigator.share({ title: `${en.appName} conversion`, text });
         setNotice(en.converter.shared);
-      } else {
-        await copyText(text);
-        setNotice(en.converter.shareCopied);
+      } catch (caught) {
+        if (hasErrorName(caught, 'AbortError')) {
+          setNotice(null);
+          return;
+        }
+        logEvent('warn', 'share.failed', { error: caught });
+        setNotice(en.converter.shareFailed);
       }
+      return;
+    }
+
+    if (!navigator.clipboard?.writeText) {
+      setNotice(en.converter.clipboardUnavailable);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice(en.converter.shareCopied);
     } catch (caught) {
-      setNotice(caught instanceof Error ? caught.message : en.converter.shareFailed);
+      logEvent('warn', 'share.fallback_copy_failed', { error: caught });
+      setNotice(en.converter.shareFailed);
     }
   };
 
