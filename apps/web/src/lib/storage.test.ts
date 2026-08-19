@@ -6,6 +6,7 @@ import {
   ONBOARDING_KEY,
   SETTINGS_KEY,
   clearStoredData,
+  isSettings,
   loadHistory,
   loadOnboardingComplete,
   loadSettings,
@@ -32,7 +33,18 @@ describe('local persistence', () => {
     expect(loadSettings()).toEqual(settings);
   });
 
-  it('normalizes malformed settings fields independently', () => {
+  it('validates the complete settings shape for strict import boundaries', () => {
+    expect(isSettings(DEFAULT_SETTINGS)).toBe(true);
+    expect(isSettings({ ...DEFAULT_SETTINGS, precision: 12, roundingMode: 'truncate', theme: 'dark' })).toBe(true);
+    expect(isSettings({ ...DEFAULT_SETTINGS, precision: 13 })).toBe(false);
+    expect(isSettings({ ...DEFAULT_SETTINGS, roundingMode: 'nearest' })).toBe(false);
+    expect(isSettings({ ...DEFAULT_SETTINGS, theme: 'neon' })).toBe(false);
+    expect(isSettings({ ...DEFAULT_SETTINGS, highContrast: 'yes' })).toBe(false);
+    expect(isSettings({ precision: 2 })).toBe(false);
+    expect(isSettings(null)).toBe(false);
+  });
+
+  it('normalizes malformed settings fields independently for local-storage recovery', () => {
     expect(sanitizeSettings({ precision: -1, roundingMode: 'wat', theme: 'dark', highContrast: true, reducedMotion: 'yes' })).toEqual({
       ...DEFAULT_SETTINGS,
       theme: 'dark',
