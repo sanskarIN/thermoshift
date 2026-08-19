@@ -14,7 +14,9 @@ Do not open a public issue for an unpatched vulnerability. Include the affected 
 
 ThermoShift has no required backend, authentication service, cloud account, or server-side conversion path. Core conversion is local computation in the canonical Rust engine.
 
-The browser/PWA treats imported backup files as untrusted input. Full backups are bounded to 256 KiB, schema-versioned, and completely validated before state replacement. Malformed or unsupported files are rejected rather than partially imported.
+The browser/PWA treats imported backup files as untrusted input. Full backups are bounded to 256 KiB, schema-versioned, and completely validated before state replacement. Known validation failures use a dedicated `BackupValidationError` boundary so safe validation guidance can be shown to the user. Unexpected file-read/runtime failures are not echoed back with raw browser error details; they are routed through the redacted local diagnostic boundary and Settings shows a generic restore failure message instead.
+
+Interactive batch conversion is also bounded before conversion work. Input above 32,768 characters or 1,000 lines is rejected before the per-line conversion loop, limiting avoidable CPU/DOM pressure from accidental paste floods.
 
 The desktop application uses a minimal Tauri capability set. Desktop web content is constrained by the Content Security Policy in `apps/desktop/src-tauri/tauri.conf.json`. Tauri frontend paths are checked by `npm run check:desktop-config` so packaging cannot silently point at the wrong workspace.
 
@@ -30,11 +32,12 @@ Repository automation includes:
 - npm vulnerability auditing at high severity or greater;
 - Dependabot update configuration;
 - Rust formatting, Clippy, and domain tests in CI;
-- TypeScript checking, ESLint, Vitest coverage, PWA production build, Playwright/axe checks, and production-asset budgets;
+- TypeScript checking, ESLint, Vitest coverage, PWA production build, Playwright/axe checks, Chromium/Firefox/WebKit compatibility smoke tests, and production-asset budgets;
+- regression tests for trusted backup-validation failures and generic handling of unexpected backup file-read errors;
 - manifest-version and desktop-path consistency checks;
-- tagged-release version/tag consistency checks and SHA-256 web artifact checksum generation.
+- tagged-release version/tag consistency checks, three-engine browser compatibility, and SHA-256 web artifact/provenance checksum generation.
 
-Passing automation reduces risk but does not replace review of new permissions, CSP changes, file-import paths, external network behavior, logging fields, dependencies, or release credentials.
+Passing automation reduces risk but does not replace review of new permissions, CSP changes, file-import paths, external network behavior, logging fields, dependencies, resource-boundary changes, or release credentials.
 
 ## Secrets and release credentials
 
