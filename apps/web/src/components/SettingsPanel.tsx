@@ -4,6 +4,7 @@ import { en } from '../i18n/en';
 import { BACKUP_MAX_BYTES, createBackup, parseBackup } from '../lib/backup';
 import { downloadText } from '../lib/export';
 import type { HistoryEntry, Settings } from '../types';
+import { ProjectLinks } from './ProjectLinks';
 import { UpdatePanel } from './UpdatePanel';
 
 interface Props {
@@ -94,6 +95,13 @@ export function SettingsPanel({ settings, history, appVersion, onChange, onResto
         </div>
         {dataNotice && <p className="helper" role="status">{dataNotice}</p>}
         {dataError && <p className="error" role="alert">{dataError}</p>}
+      </div>
+
+      <div className="settings-section" aria-labelledby="settings-about-title">
+        <h3 id="settings-about-title">{en.about.title}</h3>
+        <p className="helper">{en.about.description}</p>
+        <p><strong>{en.madeBy}</strong></p>
+        <ProjectLinks />
       </div>
     </section>
   );
