@@ -36,7 +36,7 @@ function App() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
   useEffect(() => {
-    getTemperatureEngine().then(setEngine).catch((error: unknown) => setEngineError(error instanceof Error ? error.message : String(error)));
+    void getTemperatureEngine().then(setEngine).catch((error: unknown) => setEngineError(error instanceof Error ? error.message : String(error)));
   }, []);
 
   useEffect(() => saveSettings(settings), [settings]);
