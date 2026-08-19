@@ -18,13 +18,11 @@ export type BackupValidationCode =
 
 export class BackupValidationError extends Error {
   readonly code: BackupValidationCode;
-  readonly detail?: string | number;
 
-  constructor(code: BackupValidationCode, detail?: string | number) {
+  constructor(code: BackupValidationCode) {
     super(`Backup validation failed: ${code}`);
     this.name = 'BackupValidationError';
     this.code = code;
-    this.detail = detail;
   }
 }
 
@@ -36,7 +34,7 @@ export interface ThermoShiftBackup {
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-const invalidBackup = (code: BackupValidationCode, detail?: string | number): BackupValidationError => new BackupValidationError(code, detail);
+const invalidBackup = (code: BackupValidationCode): BackupValidationError => new BackupValidationError(code);
 
 export const createBackup = (settings: Settings, history: HistoryEntry[]): string => {
   const backup: ThermoShiftBackup = {
@@ -50,7 +48,7 @@ export const createBackup = (settings: Settings, history: HistoryEntry[]): strin
 
 export const parseBackup = (text: string): ThermoShiftBackup => {
   if (new TextEncoder().encode(text).byteLength > BACKUP_MAX_BYTES) {
-    throw invalidBackup('too-large', BACKUP_MAX_BYTES);
+    throw invalidBackup('too-large');
   }
 
   let parsed: unknown;
@@ -61,15 +59,13 @@ export const parseBackup = (text: string): ThermoShiftBackup => {
   }
 
   if (!isRecord(parsed)) throw invalidBackup('not-backup');
-  if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) {
-    throw invalidBackup('unsupported-schema', String(parsed.schemaVersion));
-  }
+  if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) throw invalidBackup('unsupported-schema');
   if (typeof parsed.exportedAt !== 'string' || !Number.isFinite(Date.parse(parsed.exportedAt))) {
     throw invalidBackup('invalid-exported-at');
   }
   if (!isSettings(parsed.settings)) throw invalidBackup('invalid-settings');
   if (!Array.isArray(parsed.history)) throw invalidBackup('invalid-history');
-  if (parsed.history.length > HISTORY_LIMIT) throw invalidBackup('history-limit', HISTORY_LIMIT);
+  if (parsed.history.length > HISTORY_LIMIT) throw invalidBackup('history-limit');
   if (!parsed.history.every(isHistoryEntry)) throw invalidBackup('invalid-history-entry');
 
   const historyIds = parsed.history.map((entry) => entry.id);
