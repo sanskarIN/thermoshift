@@ -121,4 +121,19 @@ describe('quick action dialog keyboard behavior', () => {
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(first).toHaveFocus();
   });
+
+  it('recaptures Tab focus if it is moved outside an active dialog', async () => {
+    const external = document.createElement('button');
+    external.textContent = 'Outside';
+    document.body.append(external);
+
+    render(<QuickActions open onClose={vi.fn()} onNavigate={vi.fn()} />);
+    await waitFor(() => expect(screen.getByLabelText('Search actions')).toHaveFocus());
+
+    external.focus();
+    expect(external).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(screen.getByRole('button', { name: 'Close quick actions' })).toHaveFocus();
+    external.remove();
+  });
 });
