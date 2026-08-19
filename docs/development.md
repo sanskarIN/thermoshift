@@ -103,13 +103,14 @@ Rust:
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p thermoshift-core
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 ```
 
 Web:
 
 ```bash
+npm ci --ignore-scripts
 npm --workspace @thermoshift/web run typecheck
 npm --workspace @thermoshift/web run lint
 npm --workspace @thermoshift/web run test
@@ -146,7 +147,7 @@ Before native work:
 
 ```bash
 npm run check:desktop-config
-cargo check -p thermoshift-desktop
+cargo check --locked -p thermoshift-desktop
 ```
 
 On a machine with the current Tauri prerequisites:
@@ -158,7 +159,7 @@ npm run desktop:build
 
 The repository also defines a manual unsigned Windows/macOS/Linux packaging matrix. A successful build on one platform does not prove another platform works.
 
-Generate platform icon assets from the editable SVG with:
+Generated platform icon assets are committed from the editable SVG source. `npm run check:desktop-config` checks the required primary generated files. Regenerate them intentionally with:
 
 ```bash
 npm --workspace @thermoshift/desktop run icons
@@ -170,7 +171,7 @@ Do not commit signing or notarization credentials.
 
 Do not hand-edit npm/Cargo lockfiles. See `docs/dependency-lockfiles.md`.
 
-Until the current candidate actually contains generated `package-lock.json` and `Cargo.lock`, ordinary PR/local verification may use the documented temporary floating-resolution path. CI, security automation, and Makefile targets are already transition-safe: they automatically use `npm ci` and Cargo `--locked` when the committed lockfiles are present. Stable release/native/screenshot evidence remains fail-closed and requires the committed locks rather than silently falling back.
+The candidate commits `package-lock.json` and `Cargo.lock`. CI, security automation, Makefile/release-sensitive commands, desktop verification, screenshot capture, and release publication consume those committed graphs with `npm ci` and Cargo `--locked`. If an intentional dependency refresh changes either graph, regenerate it using package-manager tooling, review the diff, and re-run the relevant locked verification before merging.
 
 ## Security changes
 
