@@ -48,7 +48,7 @@ Testing Library exercises:
 - unexpected backup file-read failure handling that keeps raw operational error details out of the UI;
 - first-run onboarding choices;
 - Quick Actions filtering/navigation;
-- dialog initial focus, Escape behavior, Tab/Shift+Tab wrapping, and focus restoration;
+- dialog initial focus, Escape behavior, forward/backward Tab wrapping, escaped-focus recapture, and focus restoration;
 - formula derivation and About/support identity surfaces;
 - application update controls;
 - top-level keyboard navigation (`Alt+1` through `Alt+6`, `Ctrl/⌘+K`);
@@ -177,7 +177,7 @@ Before a stable release, manually or platform-specifically verify what automatio
 
 1. clean installation from an exact candidate checkout;
 2. keyboard-only navigation and visible focus;
-3. screen-reader labels/dialog behavior;
+3. screen-reader labels/dialog behavior, including focus recapture if focus is moved outside an active modal;
 4. 200% zoom, high contrast, and reduced motion;
 5. real browser/device PWA installation and offline/update behavior as required by the release plan;
 6. copy/share success, cancellation, unavailable-capability, and fallback behavior without raw operational errors surfacing to users;
