@@ -1,5 +1,5 @@
 import type { HistoryEntry, Settings } from '../types';
-import { HISTORY_LIMIT, isHistoryEntry, sanitizeHistory, sanitizeSettings } from './storage';
+import { HISTORY_LIMIT, isHistoryEntry, isSettings, sanitizeHistory, sanitizeSettings } from './storage';
 
 export const BACKUP_SCHEMA_VERSION = 1 as const;
 export const BACKUP_MAX_BYTES = 256 * 1024;
@@ -39,18 +39,22 @@ export const parseBackup = (text: string): ThermoShiftBackup => {
   if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) {
     throw new Error(`Unsupported backup schema version: ${String(parsed.schemaVersion)}.`);
   }
-  if (!isRecord(parsed.settings)) throw new Error('Backup settings are missing or invalid.');
+  if (typeof parsed.exportedAt !== 'string' || !Number.isFinite(Date.parse(parsed.exportedAt))) {
+    throw new Error('Backup export timestamp is missing or invalid.');
+  }
+  if (!isSettings(parsed.settings)) throw new Error('Backup settings are missing or invalid.');
   if (!Array.isArray(parsed.history)) throw new Error('Backup history is missing or invalid.');
   if (parsed.history.length > HISTORY_LIMIT) throw new Error(`Backup contains more than ${HISTORY_LIMIT} history entries.`);
   if (!parsed.history.every(isHistoryEntry)) throw new Error('Backup history contains an invalid conversion entry.');
 
-  const exportedAt = typeof parsed.exportedAt === 'string' && Number.isFinite(Date.parse(parsed.exportedAt))
-    ? parsed.exportedAt
-    : new Date(0).toISOString();
+  const historyIds = parsed.history.map((entry) => entry.id);
+  if (new Set(historyIds).size !== historyIds.length) {
+    throw new Error('Backup history contains duplicate conversion identifiers.');
+  }
 
   return {
     schemaVersion: BACKUP_SCHEMA_VERSION,
-    exportedAt,
+    exportedAt: parsed.exportedAt,
     settings: sanitizeSettings(parsed.settings),
     history: sanitizeHistory(parsed.history),
   };
