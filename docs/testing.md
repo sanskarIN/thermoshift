@@ -26,6 +26,7 @@ Vitest covers behavior including:
 - onboarding persistence;
 - versioned backup round trips;
 - malformed, unsupported, and oversized backup rejection;
+- typed `BackupValidationError` failures for trusted user-facing validation cases;
 - CSV/history JSON serialization and browser download lifecycle;
 - PWA update-service states;
 - structured diagnostic redaction and bounded metadata.
@@ -41,6 +42,7 @@ Testing Library exercises:
 - history search/filter/delete/clear/undo;
 - Settings precision bounds and destructive reset confirmation;
 - validated backup restore and invalid/oversized restore errors;
+- unexpected backup file-read failure handling that keeps raw operational error details out of the UI;
 - first-run onboarding choices;
 - Quick Actions filtering/navigation;
 - dialog initial focus, Escape behavior, Tab/Shift+Tab wrapping, and focus restoration;
@@ -175,7 +177,7 @@ Before a stable release, manually or platform-specifically verify what automatio
 5. real browser/device PWA installation and offline/update behavior as required by the release plan;
 6. copy/share fallbacks;
 7. history management and local persistence;
-8. full backup export/restore including invalid/oversized rejection;
+8. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
 9. native Windows/macOS/Linux package outputs;
 10. platform branding/icons;
 11. real screenshots captured from verified builds;
