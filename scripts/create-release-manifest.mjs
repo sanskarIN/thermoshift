@@ -48,6 +48,16 @@ if (!gitSha || !gitRef) {
   process.exit(1);
 }
 
+if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(gitSha)) {
+  console.error('Release provenance candidate SHA must be a full 40- or 64-character hexadecimal Git object ID.');
+  process.exit(1);
+}
+
+if (gitRef.trim() !== gitRef || gitRef.length === 0 || /[\r\n\0]/.test(gitRef)) {
+  console.error('Release provenance candidate ref must be a non-empty single-line Git ref name.');
+  process.exit(1);
+}
+
 const evidenceFiles = [
   'package-lock.json',
   'Cargo.lock',
@@ -101,7 +111,7 @@ const manifest = {
   schemaVersion: 1,
   product: 'ThermoShift',
   version: packageJson.version,
-  git: { sha: gitSha, ref: gitRef },
+  git: { sha: gitSha.toLowerCase(), ref: gitRef },
   generatedAt: new Date().toISOString(),
   files
 };
