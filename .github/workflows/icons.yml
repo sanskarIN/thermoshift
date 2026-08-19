@@ -59,5 +59,15 @@ jobs:
           git config user.email "sanskarin@outlook.in"
           git add apps/desktop/src-tauri/icons
           git commit -m "build(desktop): refresh generated app icons"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+          # Generated branding must match the exact source revision (including
+          # logo.svg) that produced it. Never rebase old icons onto newer source.
+          git fetch origin "${GITHUB_REF_NAME}"
+          EXPECTED_PARENT="$(git rev-parse HEAD^)"
+          REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
+          if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
+            echo "Branch advanced from $EXPECTED_PARENT to $REMOTE_HEAD; rerun icon generation on the new head."
+            exit 1
+          fi
+
           git push origin "HEAD:${GITHUB_REF_NAME}"
