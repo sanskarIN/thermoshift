@@ -72,12 +72,14 @@ describe('ConverterPanel clipboard and share behavior', () => {
 
   it('treats native share cancellation as a user cancellation rather than a failure', async () => {
     const share = vi.fn().mockRejectedValue({ name: 'AbortError' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     setNavigatorProperty('share', share);
     renderConverter();
 
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     await waitFor(() => expect(share).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('keeps rejected native-share details out of the UI', async () => {
