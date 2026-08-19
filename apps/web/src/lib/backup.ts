@@ -2,6 +2,7 @@ import type { HistoryEntry, Settings } from '../types';
 import { HISTORY_LIMIT, isHistoryEntry, sanitizeHistory, sanitizeSettings } from './storage';
 
 export const BACKUP_SCHEMA_VERSION = 1 as const;
+export const BACKUP_MAX_BYTES = 256 * 1024;
 
 export interface ThermoShiftBackup {
   schemaVersion: typeof BACKUP_SCHEMA_VERSION;
@@ -23,6 +24,10 @@ export const createBackup = (settings: Settings, history: HistoryEntry[]): strin
 };
 
 export const parseBackup = (text: string): ThermoShiftBackup => {
+  if (new TextEncoder().encode(text).byteLength > BACKUP_MAX_BYTES) {
+    throw new Error('The selected backup is larger than 256 KiB.');
+  }
+
   let parsed: unknown;
   try {
     parsed = JSON.parse(text) as unknown;
