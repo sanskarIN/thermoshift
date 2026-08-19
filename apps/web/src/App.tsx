@@ -152,9 +152,9 @@ function App() {
       <header className="topbar">
         <div className="brand"><img src="/logo.svg" width="40" height="40" alt="" /><div><strong>{en.appName}</strong><span>{en.tagline}</span></div></div>
         <div className="topbar-actions">
-          <button className="quick-actions-button" type="button" onClick={openQuickActions} aria-keyshortcuts="Control+K Meta+K">{en.shell.quickActions} <kbd>Ctrl K</kbd></button>
+          <button className="quick-actions-button" type="button" onClick={openQuickActions} aria-keyshortcuts="Control+K Meta+K">{en.shell.quickActions} <kbd aria-hidden="true">Ctrl K</kbd></button>
           <nav aria-label={en.shell.primaryNavigation}>
-            {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => navigate(item)} aria-current={page === item ? 'page' : undefined} aria-keyshortcuts={`Alt+${index + 1}`}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
+            {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => navigate(item)} aria-current={page === item ? 'page' : undefined} aria-keyshortcuts={`Alt+${index + 1}`}>{en.nav[item]} <kbd aria-hidden="true">Alt+{index + 1}</kbd></button>)}
           </nav>
         </div>
       </header>
