@@ -24,20 +24,20 @@ ThermoShift is a production-oriented temperature converter for Web/PWA with a Ta
 - Instant bidirectional conversion with configurable precision and rounding.
 - First-run onboarding explaining local-first privacy and offline use without an account.
 - Reference cards switchable across all supported scales.
-- Batch conversion with CSV export and per-line validation.
+- Batch conversion with CSV export, per-line validation, and an interactive safety ceiling of 32,768 characters / 1,000 lines before conversion work.
 - Local conversion history with search, from/to filters, individual deletion, clear, and undo.
 - Versioned full-data JSON backup with strict all-or-nothing restore validation and a 256 KiB import limit.
 - Formula guide with educational derivation notes while executable formulas remain in Rust.
 - Offline-capable installable PWA with explicit update checks in Settings.
-- Light, dark, system, high-contrast, reduced-motion, keyboard navigation, responsive layouts, and modal focus containment.
-- Quick Actions command palette with `Ctrl/⌘+K` plus `Alt+1` through `Alt+6` page shortcuts outside editable/modal interactions.
+- Light, dark, system, high-contrast, reduced-motion, keyboard navigation, responsive layouts, modal focus containment, page-change announcements, and synchronized document titles.
+- Quick Actions command palette with `Ctrl/⌘+K` plus `Alt+1` through `Alt+6` page shortcuts outside editable/modal interactions; shortcuts are also exposed through `aria-keyshortcuts`.
 - Copy/share support without a server.
 - English UI copy externalized into a locale module for future language expansion.
 - Local-only structured diagnostics with secret/PII-shaped metadata redaction and generic user-facing operational errors.
-- Static version/Tauri configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, and production asset budgets.
+- Static version/Tauri configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, three-engine Chromium/Firefox/WebKit compatibility automation, and production asset budgets.
 - CodeQL, Gitleaks, RustSec/npm dependency auditing, Dependabot, and fail-closed release automation.
 - Exact release-input preflight plus cryptographic release provenance manifest/checksum generation.
-- Dedicated workflows for real product screenshots, generated desktop icons, dependency lockfiles, and unsigned Windows/macOS/Linux native build evidence.
+- Dedicated workflows for real product screenshots, generated desktop icons, dependency lockfiles, unsigned Windows/macOS/Linux native build evidence, and browser-engine compatibility.
 - Open-source MIT license and no required account.
 
 ## Screenshots
@@ -56,13 +56,13 @@ npm run check:release-inputs:screenshots
 
 | Platform | Delivery | Current repository status |
 |---|---|---|
-| Modern Chromium-class browsers | React + WebAssembly | Primary development/E2E target |
+| Chromium, Firefox, WebKit | React + WebAssembly | Three-engine compatibility automation implemented; exact-candidate hosted results remain release evidence |
 | Installable PWA | Vite PWA / service worker | Implemented; release evidence still reviewed per candidate |
 | Windows | Tauri 2 | Configured target; exact native package evidence pending |
 | macOS | Tauri 2 | Configured target; exact native package evidence pending |
 | Linux | Tauri 2 | Configured target; exact native package evidence pending |
 
-A workflow definition is not a claim that every platform build passed. See the release-evidence record for the exact candidate.
+A workflow definition is not a claim that every platform build or browser engine passed. See the release-evidence record for the exact candidate.
 
 ## Tech stack
 
@@ -94,6 +94,8 @@ Open the Vite URL (normally `http://localhost:5173`). On first run, choose **Sta
 
 - `Ctrl+K` on Windows/Linux or `⌘+K` on macOS opens Quick Actions after onboarding.
 - `Alt+1` through `Alt+6` opens Converter, Batch, History, Formulas, Settings, and About when focus is not in an editable control and no modal owns interaction.
+- Shortcut metadata is exposed to assistive technology without duplicating the visible `<kbd>` text in accessible button names.
+- Client-side page changes update the document title and a polite screen-reader live region.
 - `Tab`/`Shift+Tab` navigation works throughout the app; modal dialogs contain focus until they close.
 - A skip link is available for keyboard navigation to main content.
 
@@ -129,9 +131,10 @@ npm --workspace @thermoshift/web run test
 npm --workspace @thermoshift/web run build
 npm run check:web-budget
 npm --workspace @thermoshift/web run e2e
+npm --workspace @thermoshift/web run e2e:cross-browser
 ```
 
-The browser suite covers real WASM conversion, first-run behavior, keyboard navigation, local-history persistence, service-worker-controlled offline reload/conversion, Settings/update UI, and axe scans at configured desktop/mobile form factors.
+The primary browser suite covers real WASM conversion, first-run behavior, keyboard navigation, local-history persistence, service-worker-controlled offline reload/conversion, Settings/update UI, and axe scans at configured desktop/mobile form factors. The compatibility suite independently exercises Chromium, Firefox, and WebKit with real conversion, persistence, and accessibility smoke checks.
 
 ## Performance budget
 
@@ -191,7 +194,7 @@ npm run check:docs
 npm run test:release-tools
 ```
 
-A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfiles, complete PNG/ICO/ICNS desktop icon set, and verified eight-screenshot set exist. The workflow validates version/tag consistency, repository config/docs, Rust quality using the locked graph, web type/lint/coverage, production PWA build/budget, committed screenshots, Playwright E2E/axe, and then produces:
+A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfiles, complete PNG/ICO/ICNS desktop icon set, and verified eight-screenshot set exist. The workflow validates version/tag consistency, repository config/docs, Rust quality using the locked graph, web type/lint/coverage, production PWA build/budget, committed screenshots, primary Playwright E2E/axe, Chromium/Firefox/WebKit compatibility, and then produces:
 
 - the compressed web archive;
 - its SHA-256 checksum;
