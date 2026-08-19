@@ -29,6 +29,7 @@ describe('backup restoration', () => {
       <SettingsPanel
         settings={DEFAULT_SETTINGS}
         history={[]}
+        appVersion="0.2.0"
         onChange={vi.fn()}
         onRestoreData={onRestoreData}
         onResetData={vi.fn()}
@@ -49,6 +50,7 @@ describe('backup restoration', () => {
       <SettingsPanel
         settings={DEFAULT_SETTINGS}
         history={history}
+        appVersion="0.2.0"
         onChange={vi.fn()}
         onRestoreData={onRestoreData}
         onResetData={vi.fn()}
@@ -70,6 +72,7 @@ describe('backup restoration', () => {
       <SettingsPanel
         settings={DEFAULT_SETTINGS}
         history={history}
+        appVersion="0.2.0"
         onChange={vi.fn()}
         onRestoreData={onRestoreData}
         onResetData={vi.fn()}
