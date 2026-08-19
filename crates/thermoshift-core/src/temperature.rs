@@ -143,7 +143,7 @@ mod tests {
             if unit == Unit::Delisle {
                 assert!(warmer_value < colder_value, "Delisle must decrease as temperature rises");
             } else {
-                assert!(warmer_value > colder_value, "{unit} must increase as temperature rises");
+                assert!(warmer_value > colder_value, "{unit:?} must increase as temperature rises");
             }
         }
     }
