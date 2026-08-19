@@ -46,6 +46,13 @@ npx playwright install chromium
 npm --workspace @thermoshift/web run e2e
 ```
 
+For browser-compatibility-sensitive web changes, install all supported Playwright engines and run the focused compatibility suite too:
+
+```bash
+npx playwright install chromium firefox webkit
+npm --workspace @thermoshift/web run e2e:cross-browser
+```
+
 For UI changes that need release/review captures:
 
 ```bash
@@ -60,7 +67,7 @@ Do not weaken coverage, performance, accessibility, documentation, or security g
 - Keep executable temperature formulas in `thermoshift-core`; do not reimplement them in React.
 - Treat imported backup files as untrusted input.
 - Keep local-storage and backup schemas versioned and document compatibility changes.
-- Preserve bounded history/backup behavior.
+- Preserve bounded history/backup behavior and the documented batch-input resource ceilings unless a measured change justifies revising them.
 - Add regression tests for fixed defects.
 - Keep user-visible static product copy in the locale module where appropriate.
 
@@ -78,6 +85,6 @@ git config user.email sanskarin@outlook.in
 
 Use the pull request template. Explain the problem and solution, list verification actually performed, add real screenshots when UI evidence materially helps, and update documentation when behavior/setup/release requirements change.
 
-Do not claim a generated lockfile, platform package, screenshot, signing result, security result, or release gate exists merely because automation for it has been added. Evidence must correspond to the exact candidate commit.
+Do not claim a generated lockfile, platform package, screenshot, signing result, browser/security result, or release gate exists merely because automation for it has been added. Evidence must correspond to the exact candidate commit.
 
 For release-candidate work, follow `docs/release.md` and `docs/release-evidence.md`.
