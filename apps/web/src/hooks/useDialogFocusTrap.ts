@@ -36,7 +36,8 @@ export function useDialogFocusTrap(
       }
 
       if (event.key !== 'Tab') return;
-      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((element) => !element.hidden && element.getAttribute('aria-hidden') !== 'true');
+      const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE)]
+        .filter((element) => element.closest('[hidden], [aria-hidden="true"]') === null);
       if (focusable.length === 0) {
         event.preventDefault();
         container.focus();
@@ -46,6 +47,12 @@ export function useDialogFocusTrap(
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
       if (!first || !last) return;
+
+      if (!(document.activeElement instanceof Node) || !container.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
