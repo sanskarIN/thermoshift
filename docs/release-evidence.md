@@ -14,10 +14,29 @@ Record:
 
 Do not reuse evidence from an older commit after the candidate changes.
 
+## Exact release-input preflight
+
+Before spending runner time on dependency installation/builds, run:
+
+```bash
+npm run check:release-inputs
+```
+
+For a stable tag candidate, require the complete verified screenshot set too:
+
+```bash
+npm run check:release-inputs:screenshots
+```
+
+The preflight requires non-empty committed release inputs, including npm/Cargo lockfiles, core npm/Rust/Tauri manifests, the primary generated desktop PNG/ICO/ICNS icon set, security/privacy/release documentation, and—when `--screenshots` is used—the exact eight verified screenshot files.
+
+The preflight is deliberately fail-closed. Do not add empty files, copied placeholders, hand-authored lock integrity metadata, mock screenshots, or fake platform icons merely to make it pass.
+
 ## Source and repository integrity
 
 Required evidence:
 
+- `npm run check:release-inputs` passes;
 - `npm run check:versions` passes;
 - `npm run check:desktop-config` passes;
 - `npm run check:docs` passes;
@@ -31,15 +50,21 @@ Record successful results for:
 
 ```bash
 cargo fmt --all -- --check
-cargo test -p thermoshift-core
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 ```
 
-When committed `Cargo.lock` exists, release-sensitive commands should use `--locked`.
+Release-sensitive Rust verification consumes the committed `Cargo.lock`; a missing or stale lockfile is a release blocker rather than a reason to remove `--locked`.
 
 ## Web/PWA evidence
 
-Record successful results for:
+Install the committed dependency graph with:
+
+```bash
+npm ci --ignore-scripts
+```
+
+Then record successful results for:
 
 ```bash
 npm --workspace @thermoshift/web run typecheck
@@ -61,6 +86,7 @@ The repository provides:
 ```bash
 npm --workspace @thermoshift/web run screenshots
 npm run check:screenshots
+npm run check:release-inputs:screenshots
 ```
 
 The expected committed set is:
@@ -71,6 +97,8 @@ The expected committed set is:
 - About desktop/mobile.
 
 The screenshot verifier checks the exact set, PNG signatures, minimum file sizes, and sane desktop/mobile dimensions. Mockups, manually relabeled images, or empty placeholders must not be called product screenshots.
+
+A stable `vX.Y.Z` release workflow runs the screenshot-complete release-input preflight and therefore cannot publish while this committed set is missing.
 
 ## Security evidence
 
@@ -92,13 +120,23 @@ For each supported native target, record an unsigned package build on the native
 - macOS;
 - Linux.
 
-The `Desktop Platform Verification` workflow provides an unsigned CI matrix and uploads native bundle evidence. A successful build on one operating system is not evidence for the other two.
+The `Desktop Platform Verification` workflow provides an unsigned CI matrix and uploads candidate-SHA-qualified native bundle evidence. Each artifact also contains `THERMOSHIFT_BUILD.txt` with the candidate SHA/ref/platform label. A successful build on one operating system is not evidence for the other two.
 
 Signing and notarization are separate publication gates. Their credentials remain owner-controlled and outside Git.
 
 ## Branding evidence
 
-Verify the desktop bundle has generated platform icon assets derived from the repository's editable ThermoShift logo source. The `Refresh Desktop Icons` workflow is the reproducible generator path. Do not claim platform icon completion until the generated files actually exist in the candidate commit.
+Verify the desktop bundle has generated platform icon assets derived from the repository's editable ThermoShift logo source. The `Refresh Desktop Icons` workflow is the reproducible generator path.
+
+The stable release-input preflight requires, at minimum:
+
+- `apps/desktop/src-tauri/icons/32x32.png`;
+- `apps/desktop/src-tauri/icons/128x128.png`;
+- `apps/desktop/src-tauri/icons/128x128@2x.png`;
+- `apps/desktop/src-tauri/icons/icon.ico`;
+- `apps/desktop/src-tauri/icons/icon.icns`.
+
+Do not claim platform icon completion until those generated files actually exist and are non-empty in the candidate commit.
 
 ## Offline and update evidence
 
@@ -115,6 +153,7 @@ Record the browser/device used for manual offline-install evidence when this is 
 
 For a `vX.Y.Z` candidate, verify:
 
+- `npm run check:release-inputs:screenshots` passes;
 - source/package version matches the exact tag;
 - the release workflow completes its full quality gate;
 - the produced web archive is non-empty;
@@ -126,6 +165,7 @@ For a `vX.Y.Z` candidate, verify:
 
 | Gate | Candidate SHA | Environment/workflow | Result | Evidence/reference |
 |---|---|---|---|---|
+| Release-input preflight | | | Pending | |
 | Versions/config/docs | | | Pending | |
 | Rust fmt/test/Clippy | | | Pending | |
 | Web type/lint/coverage/build | | | Pending | |
@@ -134,6 +174,7 @@ For a `vX.Y.Z` candidate, verify:
 | CodeQL | | | Pending | |
 | Secret scan | | | Pending | |
 | Rust/npm audit | | | Pending | |
+| Desktop icon set | | | Pending | |
 | Screenshots | | | Pending | |
 | Linux native bundle | | | Pending | |
 | Windows native bundle | | | Pending | |
