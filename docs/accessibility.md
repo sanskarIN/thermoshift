@@ -12,7 +12,8 @@ ThermoShift targets WCAG-oriented accessibility practices rather than treating a
 - Shortcut-capable controls expose `aria-keyshortcuts`; visible `<kbd>` hints are hidden from the accessibility tree so shortcut text is not spoken twice as part of the control name.
 - Client-side page changes update the document title and a persistent polite live region so navigation is announced without requiring focus to be moved unexpectedly.
 - Quick Actions search lets keyboard users jump directly to Converter, Batch, History, Formulas, Settings, or About.
-- Modal dialogs move focus inside when opened, contain `Tab`/`Shift+Tab` navigation, support Escape where dismissal is appropriate, and return focus to the previously focused control when unmounted.
+- Modal dialogs move focus inside when opened, contain `Tab`/`Shift+Tab` navigation, recapture focus if it is moved outside an active dialog and the user continues tabbing, support Escape where dismissal is appropriate, and return focus to the previously focused control when unmounted.
+- Hidden/`aria-hidden` descendants are excluded from the modal focus cycle.
 - First-run onboarding begins with its primary action focused and does not require pointer input.
 - Converter validation uses `aria-invalid`, an alert message, and descriptive helper text rather than color alone.
 - Batch input exposes its processing limits through `aria-describedby` and marks an over-limit field invalid before conversion work begins.
@@ -42,7 +43,7 @@ Shortcuts supplement normal navigation and are never the only way to reach a fea
 
 ## Automated coverage
 
-- Component/application tests exercise focus placement, Escape handling, Tab wrapping, invalid-field semantics, keyboard page navigation, live-region page announcements, title synchronization, shortcut metadata, and bounded batch-input semantics.
+- Component/application tests exercise focus placement, Escape handling, forward/backward Tab wrapping, escaped-focus recapture, invalid-field semantics, keyboard page navigation, live-region page announcements, title synchronization, shortcut metadata, and bounded batch-input semantics.
 - The primary Playwright suite runs axe against converter, onboarding, and Settings states.
 - The primary Playwright configuration includes desktop Chromium and a Pixel 7 mobile emulation project.
 - The cross-browser Playwright configuration independently runs a primary-screen axe scan in Chromium, Firefox, and WebKit.
@@ -54,12 +55,13 @@ Automated tooling cannot prove accessibility by itself.
 Before stable releases, verify:
 
 1. Keyboard-only operation through all pages, dialogs, backup/restore, and destructive actions.
-2. Page-change announcements and title changes with a mainstream screen reader.
-3. Zoom to 200% without loss of required content or functionality.
-4. System high contrast where available.
-5. Reduced-motion behavior.
-6. At least one mainstream screen reader on each primary desktop family.
-7. Touch target usability on a real small-screen device.
-8. Error announcements and focus recovery after dialogs close.
+2. Modal focus stays contained even after programmatic/assistive-technology focus movement, and returns to the trigger when the dialog closes.
+3. Page-change announcements and title changes with a mainstream screen reader.
+4. Zoom to 200% without loss of required content or functionality.
+5. System high contrast where available.
+6. Reduced-motion behavior.
+7. At least one mainstream screen reader on each primary desktop family.
+8. Touch target usability on a real small-screen device.
+9. Error announcements and focus recovery after dialogs close.
 
 Accessibility defects should be treated as functional defects and receive regression coverage where practical.
