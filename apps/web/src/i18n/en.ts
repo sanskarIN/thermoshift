@@ -2,6 +2,14 @@ export const en = {
   appName: 'ThermoShift',
   tagline: 'Precise temperature conversion, privately on your device.',
   madeBy: 'Made by the Sanskar',
+  shell: {
+    skipToContent: 'Skip to content',
+    primaryNavigation: 'Primary',
+    quickActions: 'Quick actions',
+    support: 'Support ThermoShift ☕',
+    historyFilters: 'History filters',
+    logoAlt: 'ThermoShift logo',
+  },
   common: {
     undo: 'Undo',
     delete: 'Delete',
