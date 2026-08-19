@@ -93,6 +93,17 @@ describe('ConverterPanel clipboard and share behavior', () => {
     expect(String(warn.mock.calls[0]?.[0])).not.toContain('sensitive native share detail');
   });
 
+  it('falls back to clipboard sharing when native sharing is unavailable', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    setNavigatorProperty('share', undefined);
+    setNavigatorProperty('clipboard', { writeText });
+    renderConverter();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('0 °C = 32.00 °F'));
+    expect(screen.getByRole('status')).toHaveTextContent('Share text copied.');
+  });
+
   it('falls back to clipboard sharing and keeps fallback failures generic', async () => {
     const writeText = vi.fn().mockRejectedValue(new Error('sensitive fallback detail'));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
