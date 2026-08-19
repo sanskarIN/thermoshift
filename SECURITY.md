@@ -20,6 +20,8 @@ Interactive batch conversion is also bounded before conversion work. Input above
 
 Clipboard and Web Share integrations are treated as operational browser boundaries rather than trusted sources of user-facing text. Rejected browser promises do not have their raw `Error.message` echoed into the UI. The app emits only localized generic outcomes and passes failure objects through the redacted local logger. A native Web Share `AbortError` is treated as user cancellation and is neither displayed as a failure nor logged as a warning.
 
+User-triggered text downloads are also an operational browser boundary. Batch CSV, history JSON, and full-backup exports catch download-dispatch exceptions, expose only localized generic failure text, and route the error object through the redacted local logger. The shared download helper removes its temporary anchor in a `finally` path and still schedules object-URL revocation if anchor dispatch throws, avoiding avoidable DOM/object-URL leakage on the failure path.
+
 The desktop application uses a minimal Tauri capability set. Desktop web content is constrained by the Content Security Policy in `apps/desktop/src-tauri/tauri.conf.json`. Tauri frontend paths are checked by `npm run check:desktop-config` so packaging cannot silently point at the wrong workspace.
 
 Operational diagnostics are local-only structured console records. Metadata passes through a redaction layer before serialization; credential/session, contact/identity, content, input/output, and value-shaped fields are redacted, Error objects are reduced to their type for logged metadata, and collection/depth/string sizes are bounded. ThermoShift does not intentionally send those diagnostic records to a remote service.
@@ -37,10 +39,11 @@ Repository automation includes:
 - TypeScript checking, ESLint, Vitest coverage, PWA production build, Playwright/axe checks, Chromium/Firefox/WebKit compatibility smoke tests, and production-asset budgets;
 - regression tests for trusted backup-validation failures and generic handling of unexpected backup file-read errors;
 - regression tests for clipboard/share success, fallback, cancellation, redacted logging, and generic rejected-promise UI outcomes;
+- regression tests for failed download cleanup plus localized/redacted batch/history/backup export failures;
 - manifest-version and desktop-path consistency checks;
 - tagged-release version/tag consistency checks, three-engine browser compatibility, and SHA-256 web artifact/provenance checksum generation.
 
-Passing automation reduces risk but does not replace review of new permissions, CSP changes, file-import paths, external network behavior, logging fields, dependencies, resource-boundary changes, or release credentials.
+Passing automation reduces risk but does not replace review of new permissions, CSP changes, file-import paths, export/download paths, external network behavior, logging fields, dependencies, resource-boundary changes, or release credentials.
 
 ## Secrets and release credentials
 
