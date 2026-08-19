@@ -1,4 +1,4 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,8 +6,10 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const tauriDir = resolve(root, 'apps/desktop/src-tauri');
 const configPath = resolve(tauriDir, 'tauri.conf.json');
 const capabilityPath = resolve(tauriDir, 'capabilities/default.json');
+const desktopPackagePath = resolve(root, 'apps/desktop/package.json');
 const config = JSON.parse(await readFile(configPath, 'utf8'));
 const capability = JSON.parse(await readFile(capabilityPath, 'utf8'));
+const desktopPackage = JSON.parse(await readFile(desktopPackagePath, 'utf8'));
 
 const expectedWebDir = resolve(root, 'apps/web');
 const expectedDist = resolve(expectedWebDir, 'dist');
@@ -99,4 +101,28 @@ for (const [directive, sources] of directives) {
   }
 }
 
-console.log('Tauri frontend paths, minimal capability, and CSP bounds are consistent.');
+const iconCommand = desktopPackage.scripts?.icons;
+if (iconCommand !== 'tauri icon ../web/public/logo.svg') {
+  throw new Error(`Unexpected desktop icon generator command: ${String(iconCommand)}`);
+}
+
+const requiredIcons = [
+  '32x32.png',
+  '128x128.png',
+  '128x128@2x.png',
+  'icon.png',
+  'icon.ico',
+  'icon.icns',
+];
+
+for (const icon of requiredIcons) {
+  const iconPath = resolve(tauriDir, 'icons', icon);
+  const metadata = await stat(iconPath).catch(() => undefined);
+  if (!metadata?.isFile() || metadata.size === 0) {
+    throw new Error(`Required generated desktop icon is missing or empty: ${icon}`);
+  }
+}
+
+await access(resolve(root, 'apps/web/public/logo.svg'));
+
+console.log('Tauri frontend paths, minimal capability, CSP bounds, and desktop icon artifacts are consistent.');
