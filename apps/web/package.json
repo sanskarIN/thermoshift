@@ -16,7 +16,8 @@
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "screenshots": "playwright test --config=screenshot.config.ts"
   },
   "dependencies": {
     "@vite-pwa/assets-generator": "^1.0.0",
