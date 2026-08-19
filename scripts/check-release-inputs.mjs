@@ -16,6 +16,8 @@ const requiredFiles = [
   'apps/desktop/src-tauri/icons/32x32.png',
   'apps/desktop/src-tauri/icons/128x128.png',
   'apps/desktop/src-tauri/icons/128x128@2x.png',
+  'apps/desktop/src-tauri/icons/icon.ico',
+  'apps/desktop/src-tauri/icons/icon.icns',
   'README.md',
   'CHANGELOG.md',
   'SECURITY.md',
