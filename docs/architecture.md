@@ -25,7 +25,7 @@ Important presentation/infrastructure modules include:
 - `src/hooks/useDialogFocusTrap.ts`: reusable modal keyboard-focus behavior.
 - `src/components/*`: feature surfaces that receive domain/persistence dependencies through explicit props where useful.
 
-This keeps domain rules, persistence recovery, strict file validation, update state, diagnostic sanitation, file serialization, accessibility mechanics, and copy independently testable.
+This keeps domain rules, persistence recovery, strict file validation, update state, diagnostic sanitation, file serialization, browser interaction handling, accessibility mechanics, and copy independently testable.
 
 ## State
 
@@ -92,17 +92,20 @@ Global shortcut ownership follows these rules:
 
 Client-side page navigation updates the document title and a polite live region. Shortcut-capable navigation controls expose `aria-keyshortcuts`, while decorative visible `<kbd>` hints are hidden from the accessibility tree to avoid duplicate spoken shortcut text.
 
-This keeps modal/focus ownership deterministic and prevents background UI changes during an active dialog.
+Clipboard and native sharing are user-triggered capability boundaries. Copy writes only the formatted result requested by the user. Native sharing receives the requested conversion text; when unavailable, the UI may fall back to copying that share text. A native `AbortError` means the user cancelled the share and therefore produces no failure status or warning log.
+
+This keeps modal/focus ownership deterministic and prevents background UI changes during an active dialog while keeping browser-capability failures separate from domain validation.
 
 ## Failure and diagnostic boundaries
 
 Invalid temperatures fail in the Rust domain before a result is emitted. Rust/WASM conversion errors may be shown when they directly describe user input validation.
 
-Operational failures such as engine initialization, storage access, service-worker updates, or unexpected backup file reads follow a different path:
+Operational failures such as engine initialization, storage access, service-worker updates, unexpected backup file reads, or rejected clipboard/share promises follow a different path:
 
 - detailed failure objects go only to the local structured logger;
 - the logger redacts sensitive/identity/content/value-shaped metadata and reduces Error objects to safe type information;
-- startup/update/backup operational UI uses localized generic recovery/status text rather than echoing raw operational error messages.
+- startup/update/backup/clipboard/share operational UI uses localized generic recovery/status text rather than echoing raw operational error messages;
+- user-cancelled native sharing is not classified as an operational failure and is not logged as a warning.
 
 Known backup content validation is separate from operational failure handling: stable parser codes map to safe locale-owned guidance, while arbitrary imported values are not reflected into that guidance.
 
@@ -114,7 +117,7 @@ Core conversion never waits for an update/network request. `pwaUpdate.ts` tracks
 
 ## Security boundary
 
-The conversion engine is pure computation. The web app does not request network data for core conversion. Tauri uses a minimal capability set and restrictive CSP. File import is limited to user-selected JSON handled as bounded text and schema-validated before use. Interactive batch work is also bounded before per-line conversion. External support/funding links are explicit user actions.
+The conversion engine is pure computation. The web app does not request network data for core conversion. Tauri uses a minimal capability set and restrictive CSP. File import is limited to user-selected JSON handled as bounded text and schema-validated before use. Interactive batch work is also bounded before per-line conversion. Clipboard/share integration occurs only after explicit user action, and operational browser failures pass through redacted diagnostics. External support/funding links are explicit user actions.
 
 Source-controlled repository checks cover manifest/Tauri configuration, internal documentation links, production bundle budgets, CodeQL, Gitleaks, dependency audits, browser-engine compatibility, and release gates. Native signing/notarization credentials remain outside source control.
 
