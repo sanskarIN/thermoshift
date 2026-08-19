@@ -10,6 +10,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Quick Actions command palette with `Ctrl/⌘+K` plus searchable page actions.
 - Versioned full-data JSON backup and strict validated restore for settings and saved history.
 - A 256 KiB backup input ceiling enforced before file reading and again at the parser boundary.
+- A dedicated backup-validation error type separating safe user-facing validation guidance from unexpected operational failures.
 - History search, source/destination filters, individual delete, clear, undo, and duplicate-ID sanitization.
 - User-selectable scale for temperature reference cards.
 - Formula derivation notes for all educational scale relationships shown in the UI.
@@ -42,6 +43,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 
 - Local persistence sanitization validates timestamps, enforces retention limits, deduplicates history identifiers, handles browser-storage write failures gracefully, and stores onboarding state separately.
 - Backup restore now rejects malformed settings, invalid/missing export timestamps, duplicate conversion identifiers, oversized payloads, invalid records, unsupported schemas, and over-limit histories rather than silently normalizing imported corruption.
+- Unexpected backup file-read/runtime failures no longer expose raw browser error messages in Settings; they are recorded only through the redacted local diagnostic boundary while the UI shows a generic restore failure.
 - Converter validation exposes `aria-invalid`, resets stale action notices after input changes, and reports clearer share/copy outcomes.
 - Rust unit parsing now uses Unicode-aware lowercase normalization so uppercase accented `RÉAUMUR`/`RØMER` input is accepted consistently.
 - Settings contains conversion, appearance/accessibility, application-update, privacy/data, and About/support sections.
@@ -63,10 +65,11 @@ All notable changes to ThermoShift are documented here. The project follows sema
 ### Security and privacy
 
 - Backup restore is treated as an untrusted-input boundary and fails closed for malformed candidate data before application state changes.
+- Known backup-validation failures are explicitly distinguished from unexpected operational failures so only trusted validation guidance reaches the user.
 - Full backup/export files remain local and user-controlled; ThermoShift does not upload them.
 - Operational diagnostics stay local to the browser console and redact credential/session, identity/contact, content, input/output, and value-shaped metadata before serialization.
 - Error objects are reduced to their type for structured logged metadata rather than logging raw error messages.
-- User-facing startup/update error surfaces no longer echo raw operational error messages.
+- User-facing startup/update/backup operational error surfaces no longer echo raw operational error messages.
 - Batch paste floods are bounded before conversion work to reduce accidental client-side resource exhaustion.
 - Security automation includes CodeQL, Gitleaks repository secret scanning, RustSec audit, and npm audit.
 - Desktop signing/notarization remains explicitly outside source control and requires owner-controlled credentials.
