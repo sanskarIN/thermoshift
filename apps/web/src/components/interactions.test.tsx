@@ -16,6 +16,20 @@ const history: HistoryEntry[] = [{
   to: 'celsius',
 }];
 
+const renderSettings = (onRestoreData = vi.fn()) => {
+  render(
+    <SettingsPanel
+      settings={DEFAULT_SETTINGS}
+      history={history}
+      appVersion="0.2.0"
+      onChange={vi.fn()}
+      onRestoreData={onRestoreData}
+      onResetData={vi.fn()}
+    />,
+  );
+  return onRestoreData;
+};
+
 afterEach(() => vi.restoreAllMocks());
 
 describe('backup restoration', () => {
@@ -42,42 +56,36 @@ describe('backup restoration', () => {
   });
 
   it('reports an invalid backup without replacing local data', async () => {
-    const onRestoreData = vi.fn();
+    const onRestoreData = renderSettings();
     const file = new File(['bad'], 'broken.json', { type: 'application/json' });
     Object.defineProperty(file, 'text', { value: async () => 'bad' });
-
-    render(
-      <SettingsPanel
-        settings={DEFAULT_SETTINGS}
-        history={history}
-        appVersion="0.2.0"
-        onChange={vi.fn()}
-        onRestoreData={onRestoreData}
-        onResetData={vi.fn()}
-      />,
-    );
 
     fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
     expect(await screen.findByRole('alert')).toHaveTextContent('not valid JSON');
     expect(onRestoreData).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed backup settings without replacing local data', async () => {
+    const onRestoreData = renderSettings();
+    const backup = JSON.stringify({
+      schemaVersion: 1,
+      exportedAt: '2026-08-19T00:00:00.000Z',
+      settings: { ...DEFAULT_SETTINGS, precision: 999 },
+      history,
+    });
+    const file = new File([backup], 'malformed-settings.json', { type: 'application/json' });
+    Object.defineProperty(file, 'text', { value: async () => backup });
+
+    fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Backup settings are missing or invalid.');
+    expect(onRestoreData).not.toHaveBeenCalled();
+  });
+
   it('rejects oversized files before reading their contents', async () => {
-    const onRestoreData = vi.fn();
+    const onRestoreData = renderSettings();
     const file = new File(['x'.repeat(BACKUP_MAX_BYTES + 1)], 'too-large.json', { type: 'application/json' });
     const read = vi.fn(async () => '{}');
     Object.defineProperty(file, 'text', { value: read });
-
-    render(
-      <SettingsPanel
-        settings={DEFAULT_SETTINGS}
-        history={history}
-        appVersion="0.2.0"
-        onChange={vi.fn()}
-        onRestoreData={onRestoreData}
-        onResetData={vi.fn()}
-      />,
-    );
 
     fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
     expect(await screen.findByRole('alert')).toHaveTextContent('larger than 256 KiB');
