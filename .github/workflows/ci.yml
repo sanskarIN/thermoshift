@@ -32,6 +32,8 @@ jobs:
         run: npm run check:desktop-config
       - name: Check internal documentation links
         run: npm run check:docs
+      - name: Test release preflight and provenance tooling
+        run: npm run test:release-tools
 
   rust-core:
     runs-on: ubuntu-latest
