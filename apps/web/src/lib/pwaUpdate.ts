@@ -4,7 +4,6 @@ export type UpdateStatus = 'initializing' | 'ready' | 'checking' | 'checked' | '
 
 export interface UpdateState {
   status: UpdateStatus;
-  errorDetail?: string;
 }
 
 type Listener = () => void;
@@ -38,10 +37,7 @@ export const markOfflineReady = (): void => {
 
 export const markUpdateError = (error: unknown): void => {
   logEvent('warn', 'pwa.update_failed', { error });
-  emit({
-    status: 'error',
-    errorDetail: error instanceof Error ? error.message : undefined,
-  });
+  emit({ status: 'error' });
 };
 
 export const checkForUpdates = async (): Promise<void> => {
