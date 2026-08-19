@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap';
+
 export type QuickActionPage = 'converter' | 'batch' | 'history' | 'formulas' | 'settings' | 'about';
 
 interface Props {
@@ -19,24 +21,13 @@ const ACTIONS: ReadonlyArray<{ page: QuickActionPage; label: string; description
 
 export function QuickActions({ open, onClose, onNavigate }: Props) {
   const [query, setQuery] = useState('');
+  const dialogRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  useDialogFocusTrap(dialogRef, open, inputRef, onClose);
 
   useEffect(() => {
-    if (!open) return;
-    setQuery('');
-    const frame = requestAnimationFrame(() => inputRef.current?.focus());
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    addEventListener('keydown', onKeyDown);
-    return () => {
-      cancelAnimationFrame(frame);
-      removeEventListener('keydown', onKeyDown);
-    };
-  }, [onClose, open]);
+    if (open) setQuery('');
+  }, [open]);
 
   const matches = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
@@ -53,7 +44,7 @@ export function QuickActions({ open, onClose, onNavigate }: Props) {
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
-      <section className="modal-card command-card" role="dialog" aria-modal="true" aria-labelledby="quick-actions-title">
+      <section ref={dialogRef} className="modal-card command-card" role="dialog" aria-modal="true" aria-labelledby="quick-actions-title" tabIndex={-1}>
         <div className="panel-heading command-heading">
           <div><p className="eyebrow">Ctrl/⌘ + K</p><h2 id="quick-actions-title">Quick actions</h2></div>
           <button className="ghost-button" type="button" onClick={onClose} aria-label="Close quick actions">Esc</button>
@@ -62,15 +53,20 @@ export function QuickActions({ open, onClose, onNavigate }: Props) {
           <span className="sr-only">Search actions</span>
           <input ref={inputRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search pages and actions…" autoComplete="off" />
         </label>
-        <div className="command-list" role="list">
-          {matches.map((action) => (
-            <button key={action.page} type="button" className="command-item" onClick={() => select(action.page)} role="listitem">
-              <strong>{action.label}</strong>
-              <span>{action.description}</span>
-            </button>
-          ))}
-          {matches.length === 0 && <div className="empty-state compact"><strong>No matching action.</strong><span>Try “history”, “settings”, or “formula”.</span></div>}
-        </div>
+        {matches.length > 0 ? (
+          <ul className="command-list">
+            {matches.map((action) => (
+              <li key={action.page}>
+                <button type="button" className="command-item" onClick={() => select(action.page)}>
+                  <strong>{action.label}</strong>
+                  <span>{action.description}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="empty-state compact"><strong>No matching action.</strong><span>Try “history”, “settings”, or “formula”.</span></div>
+        )}
       </section>
     </div>
   );
