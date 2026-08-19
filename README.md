@@ -14,7 +14,7 @@
 
 ThermoShift is a production-oriented temperature converter for Web/PWA with a Tauri desktop target for Windows, macOS, and Linux. Its conversion rules live in one Rust domain engine exposed to the browser through WebAssembly. Core conversion needs no account, server, analytics service, or network request.
 
-> **Release status:** source metadata is currently `0.2.0`, but the v0.2 release candidate remains untagged while exact-candidate hosted checks and generated cross-platform release evidence are completed. See [`ROADMAP.md`](ROADMAP.md) and [`docs/release-evidence.md`](docs/release-evidence.md).
+> **Release status:** source metadata is currently `0.2.0`, but the v0.2 release candidate remains untagged while exact-candidate hosted checks, verified product screenshots, and cross-platform release evidence are completed. See [`ROADMAP.md`](ROADMAP.md) and [`docs/release-evidence.md`](docs/release-evidence.md).
 
 ## Highlights
 
@@ -36,8 +36,10 @@ ThermoShift is a production-oriented temperature converter for Web/PWA with a Ta
 - Local-only structured diagnostics with secret/PII-shaped metadata redaction and generic user-facing operational errors.
 - Static version/Tauri configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, three-engine Chromium/Firefox/WebKit compatibility automation, and production asset budgets.
 - CodeQL, Gitleaks, RustSec/npm dependency auditing, Dependabot, and fail-closed release automation.
+- Committed npm/Cargo lockfiles used by CI, security, desktop, screenshot, and release verification paths.
+- Committed Tauri platform icon assets generated from the editable SVG logo, including required PNG, ICO, and ICNS outputs.
 - Exact release-input preflight plus cryptographic release provenance manifest/checksum generation.
-- Dedicated workflows for real product screenshots, generated desktop icons, dependency lockfiles, unsigned Windows/macOS/Linux native build evidence, and browser-engine compatibility.
+- Dedicated workflows for real product screenshots, manual dependency/icon refresh, unsigned Windows/macOS/Linux native build evidence, and browser-engine compatibility.
 - Open-source MIT license and no required account.
 
 ## Screenshots
@@ -58,11 +60,11 @@ npm run check:release-inputs:screenshots
 |---|---|---|
 | Chromium, Firefox, WebKit | React + WebAssembly | Three-engine compatibility automation implemented; exact-candidate hosted results remain release evidence |
 | Installable PWA | Vite PWA / service worker | Implemented; release evidence still reviewed per candidate |
-| Windows | Tauri 2 | Configured target; exact native package evidence pending |
-| macOS | Tauri 2 | Configured target; exact native package evidence pending |
-| Linux | Tauri 2 | Configured target; exact native package evidence pending |
+| Windows | Tauri 2 | Configured target with generated Windows icon assets; exact native package evidence pending |
+| macOS | Tauri 2 | Configured target with generated macOS icon assets; exact native package evidence pending |
+| Linux | Tauri 2 | Configured target with generated Linux icon assets; exact native package evidence pending |
 
-A workflow definition is not a claim that every platform build or browser engine passed. See the release-evidence record for the exact candidate.
+A workflow definition or committed generated asset is not a claim that every platform build or browser engine passed. See the release-evidence record for the exact candidate.
 
 ## Tech stack
 
@@ -82,11 +84,11 @@ git clone https://github.com/sanskarIN/thermoshift.git
 cd thermoshift
 rustup target add wasm32-unknown-unknown
 cargo install wasm-pack --locked
-npm install --ignore-scripts
+npm ci --ignore-scripts
 npm run dev
 ```
 
-The current v0.2 branch does **not** yet contain committed npm/Cargo lockfiles, so documentation does not claim a locked install. A native-tool generation workflow exists; when `package-lock.json` and `Cargo.lock` actually land in the candidate, reproducibility-sensitive paths automatically consume them with `npm ci` and Cargo `--locked`.
+The repository commits both `package-lock.json` and `Cargo.lock`. Normal verification consumes those exact dependency graphs with `npm ci` and Cargo `--locked`; use the manual lockfile-refresh workflow only when intentionally updating dependency resolution.
 
 Open the Vite URL (normally `http://localhost:5173`). On first run, choose **Start converting** or **Review settings first**.
 
@@ -123,8 +125,8 @@ npm run check:desktop-config
 npm run check:docs
 npm run test:release-tools
 cargo fmt --all -- --check
-cargo test -p thermoshift-core
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 npm --workspace @thermoshift/web run typecheck
 npm --workspace @thermoshift/web run lint
 npm --workspace @thermoshift/web run test
@@ -153,7 +155,7 @@ On a machine with the current Tauri prerequisites:
 
 ```bash
 npm run check:desktop-config
-cargo check -p thermoshift-desktop
+cargo check --locked -p thermoshift-desktop
 npm run desktop:dev
 npm run desktop:build
 ```
@@ -166,7 +168,7 @@ Generate Tauri platform icons from the editable SVG logo with:
 npm --workspace @thermoshift/desktop run icons
 ```
 
-The current branch contains generated `32x32.png`, `128x128.png`, and `128x128@2x.png` icon assets. Platform branding is **not yet complete** because the required Windows `icon.ico` and macOS `icon.icns` files are still absent at the latest verified checkpoint.
+The current branch contains the generated Tauri icon set, including `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.ico`, and `icon.icns`. `npm run check:desktop-config` fails if the primary generated icon artifacts disappear or become empty. Icon regeneration is intentionally manual so normal pushes do not rewrite generated branding.
 
 ## Architecture
 
