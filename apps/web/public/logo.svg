@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">ThermoShift logo</title>
+  <desc id="desc">A thermometer inside two circular conversion arrows.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#0f172a"/>
+  <path d="M38 38a36 36 0 0 1 53-5l7-7v23H75l8-8a25 25 0 0 0-36 5z" fill="#60a5fa"/>
+  <path d="M90 90a36 36 0 0 1-53 5l-7 7V79h23l-8 8a25 25 0 0 0 36-5z" fill="#fb923c"/>
+  <path d="M64 32a11 11 0 0 0-11 11v34a19 19 0 1 0 22 0V43a11 11 0 0 0-11-11z" fill="#f8fafc"/>
+  <rect x="60" y="43" width="8" height="43" rx="4" fill="url(#g)"/>
+  <circle cx="64" cy="94" r="10" fill="#ea580c"/>
+</svg>
