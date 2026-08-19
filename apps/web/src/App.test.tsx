@@ -36,7 +36,7 @@ describe('App', () => {
     await screen.findByRole('heading', { name: 'Convert temperature' });
     fireEvent.keyDown(window, { ctrlKey: true, key: 'k' });
     expect(screen.getByRole('dialog', { name: 'Quick actions' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('listitem', { name: /Open formula guide/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Open formula guide/i }));
     expect(screen.getByRole('heading', { name: 'Formula guide' })).toBeInTheDocument();
   });
 
