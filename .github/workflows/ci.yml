@@ -57,6 +57,8 @@ jobs:
       - run: npm --workspace @thermoshift/web run lint
       - run: npm --workspace @thermoshift/web run test
       - run: npm --workspace @thermoshift/web run build:web
+      - name: Enforce production asset budget
+        run: npm run check:web-budget
 
   e2e:
     runs-on: ubuntu-latest
