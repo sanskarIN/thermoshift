@@ -13,6 +13,14 @@ const history: HistoryEntry[] = [{
   to: 'fahrenheit',
 }];
 
+const validBackup = (overrides: Record<string, unknown> = {}) => ({
+  schemaVersion: 1,
+  exportedAt: '2026-08-19T00:00:00.000Z',
+  settings: DEFAULT_SETTINGS,
+  history,
+  ...overrides,
+});
+
 describe('ThermoShift backups', () => {
   it('round-trips settings and history', () => {
     const settings = { ...DEFAULT_SETTINGS, precision: 5, theme: 'dark' as const };
@@ -31,28 +39,31 @@ describe('ThermoShift backups', () => {
   });
 
   it('rejects unsupported schema versions', () => {
-    expect(() => parseBackup(JSON.stringify({ schemaVersion: 99, settings: {}, history: [] }))).toThrow(/unsupported backup schema/i);
+    expect(() => parseBackup(JSON.stringify(validBackup({ schemaVersion: 99 })))).toThrow(/unsupported backup schema/i);
+  });
+
+  it('rejects a missing or invalid export timestamp', () => {
+    expect(() => parseBackup(JSON.stringify(validBackup({ exportedAt: 'invalid-date' })))).toThrow(/timestamp.*invalid/i);
+    expect(() => parseBackup(JSON.stringify(validBackup({ exportedAt: undefined })))).toThrow(/timestamp.*invalid/i);
+  });
+
+  it('rejects malformed settings instead of silently replacing fields with defaults', () => {
+    expect(() => parseBackup(JSON.stringify(validBackup({
+      settings: { ...DEFAULT_SETTINGS, precision: 500 },
+    })))).toThrow(/settings.*invalid/i);
+    expect(() => parseBackup(JSON.stringify(validBackup({
+      settings: { ...DEFAULT_SETTINGS, highContrast: 'yes' },
+    })))).toThrow(/settings.*invalid/i);
   });
 
   it('rejects invalid history rows instead of partially restoring them', () => {
-    const invalid = {
-      schemaVersion: 1,
-      exportedAt: '2026-08-19T00:00:00.000Z',
-      settings: DEFAULT_SETTINGS,
-      history: [{ ...history[0], from: 'bogus' }],
-    };
-    expect(() => parseBackup(JSON.stringify(invalid))).toThrow(/invalid conversion entry/i);
+    const invalidHistory = [{ ...history[0], from: 'bogus' }];
+    expect(() => parseBackup(JSON.stringify(validBackup({ history: invalidHistory })))).toThrow(/invalid conversion entry/i);
   });
 
-  it('normalizes unsafe settings while preserving valid backup data', () => {
-    const backup = {
-      schemaVersion: 1,
-      exportedAt: 'invalid-date',
-      settings: { precision: 500, theme: 'neon', highContrast: 'yes' },
-      history,
-    };
-    const parsed = parseBackup(JSON.stringify(backup));
-    expect(parsed.settings).toEqual(DEFAULT_SETTINGS);
-    expect(parsed.exportedAt).toBe(new Date(0).toISOString());
+  it('rejects duplicate history identifiers instead of silently dropping data', () => {
+    expect(() => parseBackup(JSON.stringify(validBackup({
+      history: [history[0], { ...history[0], input: 100, output: 212 }],
+    })))).toThrow(/duplicate conversion identifiers/i);
   });
 });
