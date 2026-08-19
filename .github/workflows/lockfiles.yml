@@ -28,8 +28,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package.json
       - uses: dtolnay/rust-toolchain@stable
       - name: Generate npm lockfile
         run: npm install --ignore-scripts --package-lock-only --no-audit --no-fund
