@@ -20,6 +20,9 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Dense Rust conversion invariant tests across every supported scale pair.
 - Unit-parser regression coverage for names, symbols, aliases, whitespace, unknown values, and uppercase accented scale names.
 - Expanded component, backup, export, PWA update, logging, accessibility, first-run, keyboard, restore, offline, persistence, and Settings E2E tests.
+- Interactive batch-conversion resource bounds of 32,768 characters and 1,000 lines before per-line conversion work.
+- Chromium/Firefox/WebKit compatibility smoke tests covering real WASM conversion, history persistence, and axe checks.
+- A dedicated cross-browser GitHub Actions matrix with engine-specific failure reports and post-merge `main` verification.
 - Cross-manifest version consistency checker.
 - Static Tauri frontend path/configuration checker.
 - Dependency-free internal Markdown link checker.
@@ -47,11 +50,13 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Raw service-worker update errors no longer appear in user-facing Settings copy; failures remain available only through the redacted operational logging boundary.
 - Raw engine-initialization errors no longer appear on the startup failure screen; the user receives localized recovery guidance while diagnostics remain redacted/local.
 - Global page-navigation shortcuts no longer fire while focus is in an editable control or while onboarding/Quick Actions owns modal interaction.
+- Client-side page navigation now synchronizes the document title, announces the active page through a polite live region, and exposes `aria-keyshortcuts` while keeping visible `<kbd>` hints out of accessible button names.
+- Stable tagged releases now install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
 - All npm, Rust, desktop, and Tauri product version metadata is aligned at `0.2.0`.
 - Fixed Tauri pre-development/pre-build web workspace paths so they resolve to `apps/web` from `src-tauri`.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
 - CI metadata now enforces version consistency, Tauri frontend configuration, and internal documentation-link integrity.
-- Release workflow now runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, or the production asset budget.
+- Release workflow now runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
 - Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance now match the v0.2 quality/evidence model.
 - Removed an unused persistence hook to keep the frontend surface smaller and coverage meaningful.
 
@@ -62,6 +67,7 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Operational diagnostics stay local to the browser console and redact credential/session, identity/contact, content, input/output, and value-shaped metadata before serialization.
 - Error objects are reduced to their type for structured logged metadata rather than logging raw error messages.
 - User-facing startup/update error surfaces no longer echo raw operational error messages.
+- Batch paste floods are bounded before conversion work to reduce accidental client-side resource exhaustion.
 - Security automation includes CodeQL, Gitleaks repository secret scanning, RustSec audit, and npm audit.
 - Desktop signing/notarization remains explicitly outside source control and requires owner-controlled credentials.
 
@@ -72,7 +78,7 @@ The following are not considered complete merely because supporting workflows ex
 - generated and committed `package-lock.json`/`Cargo.lock` for locked dependency builds;
 - generated and committed Tauri platform icon assets;
 - generated and committed verified product screenshots;
-- current-head hosted CI/CodeQL/Gitleaks/dependency-security success;
+- current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
 - successful unsigned native package evidence for every intended desktop platform;
 - owner-controlled signing/notarization and final stable tag/release evidence.
 
