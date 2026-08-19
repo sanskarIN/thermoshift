@@ -1,0 +1,47 @@
+name: Refresh Lockfiles
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lockfiles-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.repository == 'sanskarIN/thermoshift'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Generate npm lockfile
+        run: npm install --ignore-scripts --package-lock-only
+      - name: Generate Cargo lockfile
+        run: cargo generate-lockfile
+      - name: Verify generated lockfiles
+        run: |
+          test -s package-lock.json
+          test -s Cargo.lock
+          npm run check:versions
+          npm run check:desktop-config
+      - name: Commit lockfiles when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json Cargo.lock && git ls-files --error-unmatch package-lock.json Cargo.lock >/dev/null 2>&1; then
+            echo "Lockfiles are already current."
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add package-lock.json Cargo.lock
+          git commit -m "build: refresh dependency lockfiles"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
