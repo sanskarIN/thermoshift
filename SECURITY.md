@@ -18,6 +18,8 @@ The browser/PWA treats imported backup files as untrusted input. Full backups ar
 
 Interactive batch conversion is also bounded before conversion work. Input above 32,768 characters or 1,000 lines is rejected before the per-line conversion loop, limiting avoidable CPU/DOM pressure from accidental paste floods.
 
+Clipboard and Web Share integrations are treated as operational browser boundaries rather than trusted sources of user-facing text. Rejected browser promises do not have their raw `Error.message` echoed into the UI. The app emits only localized generic outcomes and passes failure objects through the redacted local logger. A native Web Share `AbortError` is treated as user cancellation and is neither displayed as a failure nor logged as a warning.
+
 The desktop application uses a minimal Tauri capability set. Desktop web content is constrained by the Content Security Policy in `apps/desktop/src-tauri/tauri.conf.json`. Tauri frontend paths are checked by `npm run check:desktop-config` so packaging cannot silently point at the wrong workspace.
 
 Operational diagnostics are local-only structured console records. Metadata passes through a redaction layer before serialization; credential/session, contact/identity, content, input/output, and value-shaped fields are redacted, Error objects are reduced to their type for logged metadata, and collection/depth/string sizes are bounded. ThermoShift does not intentionally send those diagnostic records to a remote service.
@@ -34,6 +36,7 @@ Repository automation includes:
 - Rust formatting, Clippy, and domain tests in CI;
 - TypeScript checking, ESLint, Vitest coverage, PWA production build, Playwright/axe checks, Chromium/Firefox/WebKit compatibility smoke tests, and production-asset budgets;
 - regression tests for trusted backup-validation failures and generic handling of unexpected backup file-read errors;
+- regression tests for clipboard/share success, fallback, cancellation, redacted logging, and generic rejected-promise UI outcomes;
 - manifest-version and desktop-path consistency checks;
 - tagged-release version/tag consistency checks, three-engine browser compatibility, and SHA-256 web artifact/provenance checksum generation.
 
