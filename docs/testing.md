@@ -28,6 +28,7 @@ Vitest covers behavior including:
 - malformed, unsupported, and oversized backup rejection;
 - typed `BackupValidationError` failures for trusted user-facing validation cases;
 - CSV/history JSON serialization and browser download lifecycle;
+- temporary anchor/object-URL cleanup when browser download dispatch throws;
 - PWA update-service states;
 - structured diagnostic redaction and bounded metadata.
 
@@ -41,6 +42,7 @@ Testing Library exercises:
 - native Web Share success, user cancellation, generic failure handling, and clipboard fallback success/failure;
 - redacted logging for rejected clipboard/share operations without raw browser error text in the UI;
 - batch rows, line-level errors, and bounded batch input safeguards;
+- localized/redacted download-failure handling for batch CSV, history JSON, and full-backup exports;
 - reference-scale switching;
 - history search/filter/delete/clear/undo;
 - Settings precision bounds and destructive reset confirmation;
@@ -56,7 +58,7 @@ Testing Library exercises:
 
 The application engine is mocked only at the presentation boundary in UI tests; formula correctness remains owned by Rust tests.
 
-The dedicated `ConverterPanel.interactions.test.tsx` suite isolates browser capability behavior so clipboard/share promise outcomes can be exercised without turning ordinary converter-domain tests into browser-API fixtures.
+The dedicated `ConverterPanel.interactions.test.tsx` suite isolates browser capability behavior so clipboard/share promise outcomes can be exercised without turning ordinary converter-domain tests into browser-API fixtures. `ExportInteractions.test.tsx` similarly isolates browser download-dispatch failures across the three product export surfaces.
 
 ## End-to-end and accessibility
 
@@ -181,11 +183,12 @@ Before a stable release, manually or platform-specifically verify what automatio
 4. 200% zoom, high contrast, and reduced motion;
 5. real browser/device PWA installation and offline/update behavior as required by the release plan;
 6. copy/share success, cancellation, unavailable-capability, and fallback behavior without raw operational errors surfacing to users;
-7. history management and local persistence;
-8. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
-9. native Windows/macOS/Linux package outputs;
-10. platform branding/icons;
-11. real screenshots captured from verified builds;
-12. release archive checksum validation.
+7. batch/history/backup export success and controlled generic failure behavior when browser download dispatch is unavailable/rejected;
+8. history management and local persistence;
+9. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
+10. native Windows/macOS/Linux package outputs;
+11. platform branding/icons;
+12. real screenshots captured from verified builds;
+13. release archive checksum validation.
 
 Automated green checks are necessary but not sufficient evidence for a stable release. Record exact-candidate results in [`release-evidence.md`](release-evidence.md).
