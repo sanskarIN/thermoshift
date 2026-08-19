@@ -16,6 +16,7 @@ concurrency:
 jobs:
   secret-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,20 +27,38 @@ jobs:
 
   rust-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo generate-lockfile
+      - name: Ensure audit lockfile exists
+        shell: bash
+        run: |
+          if test -s Cargo.lock; then
+            echo 'Auditing committed Cargo.lock.'
+          else
+            echo 'Cargo.lock is not committed yet; generating an ephemeral audit lockfile.'
+            cargo generate-lockfile
+          fi
       - uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   npm-audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --ignore-scripts --package-lock-only
+      - name: Ensure audit lockfile exists
+        shell: bash
+        run: |
+          if test -s package-lock.json; then
+            echo 'Auditing committed package-lock.json.'
+          else
+            echo 'package-lock.json is not committed yet; generating an ephemeral audit lockfile.'
+            npm install --ignore-scripts --package-lock-only --no-audit --no-fund
+          fi
       - run: npm audit --audit-level=high
