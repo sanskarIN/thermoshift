@@ -58,8 +58,15 @@ jobs:
           git add package-lock.json Cargo.lock
           git commit -m "build: refresh dependency lockfiles"
 
-          # Rebase once onto the newest branch head so a concurrent documentation
-          # commit does not turn an otherwise valid generated lockfile into a
-          # non-fast-forward push failure.
-          git pull --rebase origin "${GITHUB_REF_NAME}"
+          # Generated dependency evidence must remain attached to the exact source
+          # revision that produced it. If the branch advanced, fail and rerun on
+          # the new head instead of rebasing stale generated metadata forward.
+          git fetch origin "${GITHUB_REF_NAME}"
+          EXPECTED_PARENT="$(git rev-parse HEAD^)"
+          REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
+          if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
+            echo "Branch advanced from $EXPECTED_PARENT to $REMOTE_HEAD; rerun lockfile generation on the new head."
+            exit 1
+          fi
+
           git push origin "HEAD:${GITHUB_REF_NAME}"
