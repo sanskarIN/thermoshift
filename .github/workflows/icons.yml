@@ -2,10 +2,6 @@ name: Refresh Desktop Icons
 
 on:
   workflow_dispatch:
-  push:
-    branches: [build/thermoshift-v0.2]
-    paths:
-      - '.github/workflows/icons.yml'
 
 permissions:
   contents: write
@@ -28,8 +24,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install workspace dependencies
-        run: npm install --ignore-scripts --no-audit --no-fund
+          cache: npm
+      - name: Install locked workspace dependencies
+        run: npm ci --ignore-scripts
       - name: Generate platform icons from editable SVG
         run: npm --workspace @thermoshift/desktop run icons
       - name: Verify required desktop icon set
