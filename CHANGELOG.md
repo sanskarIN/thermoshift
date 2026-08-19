@@ -25,13 +25,15 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - Chromium/Firefox/WebKit compatibility smoke tests covering real WASM conversion, history persistence, and axe checks.
 - A dedicated cross-browser GitHub Actions matrix with engine-specific failure reports and post-merge `main` verification.
 - Cross-manifest version consistency checker.
-- Static Tauri frontend path/configuration checker.
+- Static Tauri frontend path/configuration checker with primary generated-icon integrity checks.
 - Dependency-free internal Markdown link checker.
 - Production web asset budget checker with raw and gzip limits.
 - Dedicated real-product Playwright screenshot configuration and exact PNG evidence validator.
 - Manual verified-screenshot workflow that can upload and commit successfully validated product captures.
 - Manual unsigned Windows/macOS/Linux Tauri package verification matrix with uploaded native bundle evidence.
 - Reproducible Tauri desktop icon-generation command/workflow using the editable SVG logo source.
+- Generated and committed Tauri platform icon assets, including primary PNG, Windows ICO, and macOS ICNS outputs.
+- Generated and committed npm/Cargo dependency lockfiles for reproducible application verification.
 - Generated-artifact evidence uploads for lockfile, desktop-icon, and screenshot workflows before branch commit attempts.
 - Repository secret scanning alongside CodeQL and dependency vulnerability checks.
 - Tagged-release version/tag consistency checks, documentation/configuration gates, browser E2E/axe verification, asset budgets, and SHA-256 web artifact checksum publication.
@@ -63,7 +65,9 @@ All notable changes to ThermoShift are documented here. The project follows sema
 - All npm, Rust, desktop, and Tauri product version metadata is aligned at `0.2.0`.
 - Fixed Tauri pre-development/pre-build web workspace paths so they resolve to `apps/web` from `src-tauri`.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
-- CI metadata now enforces version consistency, Tauri frontend configuration, and internal documentation-link integrity.
+- CI, cross-browser, and dependency-security workflows now fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
+- Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
+- CI metadata now enforces version consistency, Tauri frontend configuration, generated desktop icon presence, and internal documentation-link integrity.
 - Release workflow now runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
 - Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance now match the v0.2 quality/evidence model.
 - Removed an unused persistence hook to keep the frontend surface smaller and coverage meaningful.
@@ -84,14 +88,15 @@ All notable changes to ThermoShift are documented here. The project follows sema
 
 ### Release evidence still pending
 
-The following are not considered complete merely because supporting workflows exist:
+The following are not considered complete merely because supporting workflows or generated inputs exist:
 
-- generated and committed `package-lock.json`/`Cargo.lock` for locked dependency builds;
-- generated and committed Tauri platform icon assets;
 - generated and committed verified product screenshots;
 - current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
 - successful unsigned native package evidence for every intended desktop platform;
+- representative real-device/browser PWA install/offline/update verification required by the release plan;
 - owner-controlled signing/notarization and final stable tag/release evidence.
+
+Committed `package-lock.json`, `Cargo.lock`, and the required primary PNG/ICO/ICNS desktop icon set are now release inputs, but their presence does not by itself prove the remaining candidate checks passed.
 
 ## 0.1 development baseline
 
