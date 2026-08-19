@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { TemperatureEngine } from '../lib/engine';
@@ -123,6 +123,23 @@ describe('SettingsPanel', () => {
     expect(onResetData).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Reset local data' }));
     expect(onResetData).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps unexpected backup file-read details out of the UI', async () => {
+    const onRestoreData = vi.fn();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const file = {
+      size: 1,
+      text: vi.fn().mockRejectedValue(new Error('sensitive browser file path detail')),
+    } as unknown as File;
+
+    render(<SettingsPanel settings={DEFAULT_SETTINGS} history={history} appVersion="0.2.0" onChange={vi.fn()} onRestoreData={onRestoreData} onResetData={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Restore backup'), { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Backup restore failed.'));
+    expect(screen.getByRole('alert')).not.toHaveTextContent('sensitive browser file path detail');
+    expect(onRestoreData).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });
 
