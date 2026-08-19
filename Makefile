@@ -1,4 +1,4 @@
-.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e screenshots desktop-check check dev
+.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check check dev
 
 setup:
 	@if [ -s package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts --no-audit --no-fund; fi
@@ -36,6 +36,9 @@ lint:
 
 e2e: web
 	npm --workspace @thermoshift/web run e2e
+
+e2e-cross-browser: web
+	npm --workspace @thermoshift/web run e2e:cross-browser
 
 screenshots: web
 	npm --workspace @thermoshift/web run screenshots
