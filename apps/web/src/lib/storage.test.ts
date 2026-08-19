@@ -49,6 +49,19 @@ describe('local persistence', () => {
     expect(loadHistory()).toEqual([]);
   });
 
+  it('keeps only the first valid record for a duplicate history id', () => {
+    const first: HistoryEntry = {
+      id: 'duplicate',
+      createdAt: '2026-08-19T00:00:00.000Z',
+      input: 0,
+      output: 273.15,
+      from: 'celsius',
+      to: 'kelvin',
+    };
+    localStorage.setItem(HISTORY_KEY, JSON.stringify([first, { ...first, input: 100, output: 373.15 }]));
+    expect(loadHistory()).toEqual([first]);
+  });
+
   it('limits history to fifty records', () => {
     const history: HistoryEntry[] = Array.from({ length: 55 }, (_, index) => ({
       id: String(index),
