@@ -39,13 +39,15 @@ describe('UpdatePanel', () => {
     expect(update).toHaveBeenCalledOnce();
   });
 
-  it('announces service-worker update failures as errors', async () => {
+  it('announces service-worker failures without exposing raw error detail', async () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
-    const update = vi.fn(() => Promise.reject(new Error('network failed')));
+    const update = vi.fn(() => Promise.reject(new Error('sensitive network detail')));
     setServiceWorkerRegistration({ update } as unknown as ServiceWorkerRegistration);
     render(<UpdatePanel version="0.2.0" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Check for updates' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Update service error. network failed');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Update service error.');
+    expect(alert).not.toHaveTextContent('sensitive network detail');
   });
 });
