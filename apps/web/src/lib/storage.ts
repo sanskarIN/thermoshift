@@ -15,6 +15,19 @@ export const DEFAULT_SETTINGS: Settings = {
   reducedMotion: false,
 };
 
+export const isSettings = (value: unknown): value is Settings => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const candidate = value as Partial<Settings>;
+  return typeof candidate.precision === 'number'
+    && Number.isInteger(candidate.precision)
+    && candidate.precision >= 0
+    && candidate.precision <= 12
+    && (candidate.roundingMode === 'half-up' || candidate.roundingMode === 'truncate')
+    && (candidate.theme === 'system' || candidate.theme === 'light' || candidate.theme === 'dark')
+    && typeof candidate.highContrast === 'boolean'
+    && typeof candidate.reducedMotion === 'boolean';
+};
+
 export const sanitizeSettings = (value: unknown): Settings => {
   if (!value || typeof value !== 'object') return DEFAULT_SETTINGS;
   const parsed = value as Partial<Settings>;
