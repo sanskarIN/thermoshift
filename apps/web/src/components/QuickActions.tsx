@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDialogFocusTrap } from '../hooks/useDialogFocusTrap';
+import { en } from '../i18n/en';
 
 export type QuickActionPage = 'converter' | 'batch' | 'history' | 'formulas' | 'settings' | 'about';
 
@@ -10,13 +11,14 @@ interface Props {
   onNavigate: (page: QuickActionPage) => void;
 }
 
+const actionCopy = en.quickActions.actions;
 const ACTIONS: ReadonlyArray<{ page: QuickActionPage; label: string; description: string; keywords: string }> = [
-  { page: 'converter', label: 'Open converter', description: 'Convert a single temperature instantly.', keywords: 'convert single temperature home' },
-  { page: 'batch', label: 'Open batch conversion', description: 'Convert many values and export CSV.', keywords: 'batch many csv export' },
-  { page: 'history', label: 'Open history', description: 'Search, export, and manage saved conversions.', keywords: 'history saved search export' },
-  { page: 'formulas', label: 'Open formula guide', description: 'Review equations and educational notes.', keywords: 'formula math learn education' },
-  { page: 'settings', label: 'Open settings', description: 'Change precision, appearance, accessibility, and data options.', keywords: 'settings precision theme accessibility backup' },
-  { page: 'about', label: 'Open About', description: 'View version, support, license, and project links.', keywords: 'about version support license github' },
+  { page: 'converter', label: actionCopy.converter[0], description: actionCopy.converter[1], keywords: actionCopy.converter[2] },
+  { page: 'batch', label: actionCopy.batch[0], description: actionCopy.batch[1], keywords: actionCopy.batch[2] },
+  { page: 'history', label: actionCopy.history[0], description: actionCopy.history[1], keywords: actionCopy.history[2] },
+  { page: 'formulas', label: actionCopy.formulas[0], description: actionCopy.formulas[1], keywords: actionCopy.formulas[2] },
+  { page: 'settings', label: actionCopy.settings[0], description: actionCopy.settings[1], keywords: actionCopy.settings[2] },
+  { page: 'about', label: actionCopy.about[0], description: actionCopy.about[1], keywords: actionCopy.about[2] },
 ];
 
 export function QuickActions({ open, onClose, onNavigate }: Props) {
@@ -46,12 +48,12 @@ export function QuickActions({ open, onClose, onNavigate }: Props) {
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
       <section ref={dialogRef} className="modal-card command-card" role="dialog" aria-modal="true" aria-labelledby="quick-actions-title" tabIndex={-1}>
         <div className="panel-heading command-heading">
-          <div><p className="eyebrow">Ctrl/⌘ + K</p><h2 id="quick-actions-title">Quick actions</h2></div>
-          <button className="ghost-button" type="button" onClick={onClose} aria-label="Close quick actions">Esc</button>
+          <div><p className="eyebrow">{en.quickActions.shortcut}</p><h2 id="quick-actions-title">{en.quickActions.title}</h2></div>
+          <button className="ghost-button" type="button" onClick={onClose} aria-label={en.quickActions.close}>Esc</button>
         </div>
         <label>
-          <span className="sr-only">Search actions</span>
-          <input ref={inputRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search pages and actions…" autoComplete="off" />
+          <span className="sr-only">{en.quickActions.searchLabel}</span>
+          <input ref={inputRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={en.quickActions.searchPlaceholder} autoComplete="off" />
         </label>
         {matches.length > 0 ? (
           <ul className="command-list">
@@ -65,7 +67,7 @@ export function QuickActions({ open, onClose, onNavigate }: Props) {
             ))}
           </ul>
         ) : (
-          <div className="empty-state compact"><strong>No matching action.</strong><span>Try “history”, “settings”, or “formula”.</span></div>
+          <div className="empty-state compact"><strong>{en.quickActions.emptyTitle}</strong><span>{en.quickActions.emptyHelp}</span></div>
         )}
       </section>
     </div>
