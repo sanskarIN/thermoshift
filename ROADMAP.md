@@ -54,19 +54,22 @@
 - [x] Expand tagged web release quality gates before publication.
 - [x] Add a native-tool lockfile generation workflow with artifact evidence and requested Git author identity.
 - [x] Remove npm-cache bootstrapping from the lockfile generator so it can create the first lockfile without depending on one.
-- [x] Make CI/security/Makefile commands automatically consume committed locks when present while preserving current pre-lock verification.
+- [x] Generate and commit `package-lock.json` and `Cargo.lock`.
+- [x] Require committed locks in CI, cross-browser, dependency-security, desktop, screenshot, and release-sensitive verification paths.
+- [x] Return lockfile regeneration to a manual-only maintenance workflow after the generated graphs landed.
 - [x] Add a real-product screenshot capture/validation workflow with SHA-qualified artifact evidence.
 - [x] Add an unsigned Windows/macOS/Linux Tauri package verification matrix with candidate-SHA metadata and bundle artifacts.
 - [x] Add reproducible desktop icon generation from the editable SVG with SHA-qualified artifact evidence.
+- [x] Generate and commit the required primary PNG, Windows ICO, and macOS ICNS desktop icon assets.
+- [x] Verify committed primary desktop icon artifacts through the static desktop configuration gate.
+- [x] Return desktop icon regeneration to a manual-only maintenance workflow after generated assets landed.
 - [x] Add fail-closed release-input preflight requiring lockfiles, complete PNG/ICO/ICNS branding inputs, release documentation, and—at stable-tag time—the verified screenshot set.
 - [x] Add cryptographic release provenance manifest generation plus manifest checksum publication.
 - [x] Add exact-candidate release-evidence and repository-settings guidance.
 
 ### v0.2 release evidence still open
 
-- [ ] Hosted lockfile generator must actually produce and commit `package-lock.json` and `Cargo.lock`; until then the release preflight intentionally fails.
-- [ ] Complete desktop icon evidence: generated PNGs exist, but Windows `icon.ico` and macOS `icon.icns` are still absent at the latest verified checkpoint.
-- [ ] Run the verified screenshot workflow after the npm lockfile exists; review/commit the real desktop/mobile captures and update README screenshot presentation.
+- [ ] Run the verified screenshot workflow; review/commit the real desktop/mobile captures and update README screenshot presentation.
 - [ ] Review current-head CI, Cross-browser E2E, CodeQL, Gitleaks, RustSec, and npm-audit workflow results; fix any actual failure rather than inferring success from workflow definitions.
 - [ ] Run/review unsigned native bundle evidence on Linux, Windows, and macOS for the exact release candidate.
 - [ ] Verify PWA install/offline/update behavior on real target browser/device environments required by the release plan.
