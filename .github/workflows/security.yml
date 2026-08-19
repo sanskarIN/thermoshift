@@ -31,15 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Ensure audit lockfile exists
-        shell: bash
-        run: |
-          if test -s Cargo.lock; then
-            echo 'Auditing committed Cargo.lock.'
-          else
-            echo 'Cargo.lock is not committed yet; generating an ephemeral audit lockfile.'
-            cargo generate-lockfile
-          fi
+      - name: Require committed Cargo lockfile
+        run: test -s Cargo.lock
       - uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -52,13 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Ensure audit lockfile exists
-        shell: bash
-        run: |
-          if test -s package-lock.json; then
-            echo 'Auditing committed package-lock.json.'
-          else
-            echo 'package-lock.json is not committed yet; generating an ephemeral audit lockfile.'
-            npm install --ignore-scripts --package-lock-only --no-audit --no-fund
-          fi
+          cache: npm
+      - name: Require committed npm lockfile
+        run: test -s package-lock.json
       - run: npm audit --audit-level=high
