@@ -11,6 +11,7 @@ import { ReferenceCards } from './components/ReferenceCards';
 import { SettingsPanel } from './components/SettingsPanel';
 import { en } from './i18n/en';
 import { getTemperatureEngine, type TemperatureEngine } from './lib/engine';
+import { logEvent } from './lib/logger';
 import {
   clearStoredData,
   DEFAULT_SETTINGS,
@@ -36,7 +37,10 @@ function App() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
 
   useEffect(() => {
-    void getTemperatureEngine().then(setEngine).catch((error: unknown) => setEngineError(error instanceof Error ? error.message : String(error)));
+    void getTemperatureEngine().then(setEngine).catch((error: unknown) => {
+      logEvent('error', 'engine.init_failed', { error });
+      setEngineError(error instanceof Error ? error.message : String(error));
+    });
   }, []);
 
   useEffect(() => saveSettings(settings), [settings]);
