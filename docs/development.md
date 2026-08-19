@@ -120,11 +120,14 @@ npm run check:web-budget
 Browser E2E/accessibility:
 
 ```bash
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm --workspace @thermoshift/web run e2e
+npm --workspace @thermoshift/web run e2e:cross-browser
 ```
 
-The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `screenshots`, and `desktop-check`.
+The primary E2E suite covers the fuller Chromium desktop/mobile journey. The cross-browser compatibility suite separately exercises real conversion, history persistence, and axe checks in Chromium, Firefox, and WebKit so one browser engine cannot silently stand in for all supported web targets.
+
+The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `e2e-cross-browser`, `screenshots`, and `desktop-check`.
 
 ## Screenshot development
 
