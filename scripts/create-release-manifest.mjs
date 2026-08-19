@@ -8,7 +8,7 @@ function readArg(name) {
   return process.argv[index + 1];
 }
 
-const root = process.cwd();
+const root = path.resolve(process.cwd());
 const archiveArg = readArg('--archive');
 const checksumArg = readArg('--checksum');
 const outputArg = readArg('--output') ?? 'thermoshift-release-manifest.json';
@@ -18,7 +18,35 @@ if (!archiveArg || !checksumArg) {
   process.exit(2);
 }
 
+function resolveInsideRoot(input) {
+  const absolute = path.resolve(root, input);
+  const relative = path.relative(root, absolute);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Path escapes repository root: ${input}`);
+  }
+  return { absolute, relative: relative.split(path.sep).join('/') };
+}
+
+let archive;
+let checksum;
+let output;
+try {
+  archive = resolveInsideRoot(archiveArg);
+  checksum = resolveInsideRoot(checksumArg);
+  output = resolveInsideRoot(outputArg);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
+
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const gitSha = process.env.GITHUB_SHA ?? process.env.THERMOSHIFT_GIT_SHA;
+const gitRef = process.env.GITHUB_REF_NAME ?? process.env.THERMOSHIFT_GIT_REF;
+
+if (!gitSha || !gitRef) {
+  console.error('Release provenance requires a concrete candidate SHA and ref. Set GITHUB_SHA/GITHUB_REF_NAME or THERMOSHIFT_GIT_SHA/THERMOSHIFT_GIT_REF.');
+  process.exit(1);
+}
 
 const evidenceFiles = [
   'package-lock.json',
@@ -38,25 +66,19 @@ const evidenceFiles = [
   'docs/screenshots/about-mobile.png'
 ];
 
-const normalize = (input) => input.split(path.sep).join('/');
-
-function fileDigest(relativeOrAbsolute) {
-  const absolute = path.isAbsolute(relativeOrAbsolute)
-    ? relativeOrAbsolute
-    : path.join(root, relativeOrAbsolute);
+function digestFile(relativePath) {
+  const absolute = path.join(root, relativePath);
   const data = fs.readFileSync(absolute);
   return {
-    path: path.isAbsolute(relativeOrAbsolute)
-      ? normalize(path.relative(root, absolute))
-      : normalize(relativeOrAbsolute),
+    path: relativePath,
     bytes: data.length,
     sha256: crypto.createHash('sha256').update(data).digest('hex')
   };
 }
 
-const required = [...evidenceFiles, archiveArg, checksumArg];
-const missing = required.filter((file) => {
-  const absolute = path.isAbsolute(file) ? file : path.join(root, file);
+const requiredPaths = [...evidenceFiles, archive.relative, checksum.relative];
+const missing = requiredPaths.filter((relativePath) => {
+  const absolute = path.join(root, relativePath);
   return !fs.existsSync(absolute) || !fs.statSync(absolute).isFile() || fs.statSync(absolute).size === 0;
 });
 
@@ -66,18 +88,24 @@ if (missing.length) {
   process.exit(1);
 }
 
+const archiveDigest = digestFile(archive.relative);
+const checksumText = fs.readFileSync(checksum.absolute, 'utf8').trim();
+const declaredDigest = checksumText.split(/\s+/)[0]?.toLowerCase();
+if (!/^[a-f0-9]{64}$/.test(declaredDigest ?? '') || declaredDigest !== archiveDigest.sha256) {
+  console.error(`Archive checksum does not match ${archive.relative}.`);
+  process.exit(1);
+}
+
+const files = requiredPaths.map(digestFile).sort((a, b) => a.path.localeCompare(b.path));
 const manifest = {
   schemaVersion: 1,
   product: 'ThermoShift',
   version: packageJson.version,
-  git: {
-    sha: process.env.GITHUB_SHA ?? process.env.THERMOSHIFT_GIT_SHA ?? 'unknown',
-    ref: process.env.GITHUB_REF_NAME ?? process.env.THERMOSHIFT_GIT_REF ?? 'unknown'
-  },
+  git: { sha: gitSha, ref: gitRef },
   generatedAt: new Date().toISOString(),
-  files: required.map(fileDigest).sort((a, b) => a.path.localeCompare(b.path))
+  files
 };
 
-const outputPath = path.isAbsolute(outputArg) ? outputArg : path.join(root, outputArg);
-fs.writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
-console.log(`Wrote release provenance manifest: ${normalize(path.relative(root, outputPath))}`);
+fs.mkdirSync(path.dirname(output.absolute), { recursive: true });
+fs.writeFileSync(output.absolute, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+console.log(`Wrote release provenance manifest: ${output.relative}`);
