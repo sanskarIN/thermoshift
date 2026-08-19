@@ -18,17 +18,21 @@ jobs:
   refresh:
     if: github.repository == 'sanskarIN/thermoshift'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
       - uses: dtolnay/rust-toolchain@stable
       - name: Generate npm lockfile
-        run: npm install --ignore-scripts --package-lock-only
+        run: npm install --ignore-scripts --package-lock-only --no-audit --no-fund
       - name: Generate Cargo lockfile
         run: cargo generate-lockfile
       - name: Verify generated lockfiles
@@ -37,10 +41,11 @@ jobs:
           test -s Cargo.lock
           npm run check:versions
           npm run check:desktop-config
+          npm run check:docs
       - name: Upload generated lockfile evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-generated-lockfiles
+          name: thermoshift-generated-lockfiles-${{ github.sha }}
           path: |
             package-lock.json
             Cargo.lock
@@ -53,8 +58,14 @@ jobs:
             echo "Lockfiles are already current."
             exit 0
           fi
+
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
           git add package-lock.json Cargo.lock
           git commit -m "build: refresh dependency lockfiles"
+
+          # Rebase once onto the newest branch head so a concurrent documentation
+          # commit does not turn an otherwise valid generated lockfile into a
+          # non-fast-forward push failure.
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
