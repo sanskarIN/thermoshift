@@ -36,13 +36,21 @@ The selected file is processed locally and is not sent to a ThermoShift server.
 
 The History page also offers a history-only JSON export. Batch conversion offers CSV export. Those files are likewise controlled by the user after download.
 
+## Clipboard and sharing
+
+Copy and share actions occur only after an explicit user action. When clipboard support is available, ThermoShift writes only the formatted conversion/share text requested by the user. When the native Web Share API is available, the browser/operating-system share sheet receives the conversion text; the chosen destination is controlled by the user and platform.
+
+If native sharing is unavailable, ThermoShift may fall back to copying the share text to the clipboard. A user-cancelled native share is treated as cancellation rather than a failure event.
+
+Rejected clipboard/share operations do not have raw browser error messages copied into the product UI or diagnostic metadata. User-facing feedback is generic/localized, while operational failures pass through the same local redaction boundary described below.
+
 ## Local diagnostics
 
-ThermoShift may write structured operational diagnostic records to the browser console for events such as engine initialization, browser-storage failure, service-worker update failure, or unexpected backup restore failure.
+ThermoShift may write structured operational diagnostic records to the browser console for events such as engine initialization, browser-storage failure, service-worker update failure, unexpected backup restore failure, or rejected clipboard/share operations.
 
 These diagnostics are local-only; ThermoShift does not intentionally transmit them to a telemetry/analytics server. Metadata passes through a redaction/bounding layer before console serialization. Credential/session-shaped fields, contact/identity fields, user-content/input/output/value-shaped fields, and raw Error messages are not intentionally serialized as diagnostic payloads. Error objects are reduced to their error type rather than their raw message.
 
-User-facing startup/update/backup operational failure messages are generic rather than echoing raw operational error text.
+User-facing startup/update/backup/clipboard/share operational failure messages are generic rather than echoing raw operational error text. Native-share cancellation is not recorded as an operational warning.
 
 ## Data not required by ThermoShift
 
