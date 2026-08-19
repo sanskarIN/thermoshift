@@ -37,6 +37,9 @@ Testing Library exercises:
 
 - instant conversion and invalid-input semantics;
 - copy/share/save outcomes;
+- clipboard success/unavailable/failure behavior;
+- native Web Share success, user cancellation, generic failure handling, and clipboard fallback success/failure;
+- redacted logging for rejected clipboard/share operations without raw browser error text in the UI;
 - batch rows, line-level errors, and bounded batch input safeguards;
 - reference-scale switching;
 - history search/filter/delete/clear/undo;
@@ -52,6 +55,8 @@ Testing Library exercises:
 - page-change live-region announcements, document titles, and `aria-keyshortcuts` metadata.
 
 The application engine is mocked only at the presentation boundary in UI tests; formula correctness remains owned by Rust tests.
+
+The dedicated `ConverterPanel.interactions.test.tsx` suite isolates browser capability behavior so clipboard/share promise outcomes can be exercised without turning ordinary converter-domain tests into browser-API fixtures.
 
 ## End-to-end and accessibility
 
@@ -158,7 +163,7 @@ A security workflow definition is not evidence that the current candidate passed
 
 Repository-side checks include `npm run check:desktop-config` and `cargo check -p thermoshift-desktop` when the platform toolchain is installed.
 
-The manual `Desktop Platform Verification` workflow defines unsigned native package jobs on Linux, Windows, and macOS and uploads each native bundle directory as workflow evidence. Each operating-system job must succeed independently; one platform cannot stand in for another.
+The manual `Desktop Platform Verification` workflow defines unsigned native package jobs on Linux, Windows, and macOS and uploads each native bundle directory as workflow evidence. Each operating-system job must succeed independently; one operating system cannot stand in for another.
 
 ## CI expectations
 
@@ -175,7 +180,7 @@ Before a stable release, manually or platform-specifically verify what automatio
 3. screen-reader labels/dialog behavior;
 4. 200% zoom, high contrast, and reduced motion;
 5. real browser/device PWA installation and offline/update behavior as required by the release plan;
-6. copy/share fallbacks;
+6. copy/share success, cancellation, unavailable-capability, and fallback behavior without raw operational errors surfacing to users;
 7. history management and local persistence;
 8. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
 9. native Windows/macOS/Linux package outputs;
