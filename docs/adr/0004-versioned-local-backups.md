@@ -39,6 +39,10 @@ Restore validates the complete envelope before replacing application state. Vers
 
 Restore is all-or-nothing and does not partially import or silently normalize malformed external data.
 
+The parser reports known validation failures as `BackupValidationError` values carrying stable machine-readable codes rather than English UI copy. Validation errors do not preserve reflected untrusted schema-version text. The Settings presentation layer maps those codes to locale-owned guidance and uses application constants for size/history-limit values.
+
+Unexpected browser file-read/runtime failures are not converted into validation failures. They are routed through the redacted local diagnostic boundary, while Settings presents only the generic localized restore failure message. This keeps trusted validation guidance distinct from unpredictable operational error text.
+
 After a file passes the strict validator, the accepted settings/history are returned in the application’s canonical in-memory shape.
 
 Backup files are generated and read locally after explicit user action. No ThermoShift server receives the data.
@@ -52,6 +56,8 @@ Backup files are generated and read locally after explicit user action. No Therm
 - Corrupt external files cannot appear successful after data-changing fallback normalization.
 - Duplicate identifiers cannot cause silent history loss.
 - Resource use from imported files is bounded before expensive parsing/state replacement.
+- Stable validation codes can be tested independently of user language.
+- Raw operational browser error messages do not become trusted validation guidance.
 - Future migrations can be explicit and testable.
 - Local-first privacy is preserved.
 
@@ -61,12 +67,15 @@ Backup files are generated and read locally after explicit user action. No Therm
 - A backup from a future incompatible schema is rejected until a migration is implemented.
 - The backup is plain JSON, so users must protect exported files themselves if saved history is sensitive to them.
 - The parser intentionally behaves more strictly than browser local-storage recovery; maintainers must preserve that distinction.
+- Presentation code must maintain an exhaustive mapping from validation codes to locale-owned text.
 
 ## Follow-up rules
 
 - Never silently reinterpret a different `schemaVersion` as the current format.
 - Never silently default malformed imported settings or drop malformed/duplicate imported history records.
+- Do not reflect arbitrary untrusted backup values into validation errors or user-visible guidance.
 - Add migration/compatibility tests before accepting another schema version.
-- Keep the backup parser independent from UI components.
+- Keep the backup parser independent from UI components and localized product copy.
 - Keep size limits enforced at both UI file-selection and parser boundaries.
+- Keep unexpected file-read/runtime errors behind the redacted operational diagnostic boundary.
 - Update `PRIVACY.md`, architecture/testing documentation, release notes, and `what_changed.md` when the backup contract changes.
