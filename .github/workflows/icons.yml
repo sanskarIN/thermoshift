@@ -18,16 +18,18 @@ jobs:
   generate:
     if: github.repository == 'sanskarIN/thermoshift'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - name: Install workspace dependencies
-        run: npm install --ignore-scripts
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Generate platform icons from editable SVG
         run: npm --workspace @thermoshift/desktop run icons
       - name: Verify required desktop icon set
@@ -44,19 +46,21 @@ jobs:
       - name: Upload generated icon evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-desktop-icons
+          name: thermoshift-desktop-icons-${{ github.sha }}
           path: apps/desktop/src-tauri/icons/**
           if-no-files-found: error
           retention-days: 14
       - name: Commit generated icons when changed
         shell: bash
         run: |
-          if git diff --quiet -- apps/desktop/src-tauri/icons && git ls-files --error-unmatch apps/desktop/src-tauri/icons/icon.ico >/dev/null 2>&1; then
+          if git diff --quiet -- apps/desktop/src-tauri/icons && git ls-files --error-unmatch apps/desktop/src-tauri/icons/icon.ico apps/desktop/src-tauri/icons/icon.icns >/dev/null 2>&1; then
             echo "Desktop icons are already current."
             exit 0
           fi
+
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
           git add apps/desktop/src-tauri/icons
           git commit -m "build(desktop): refresh generated app icons"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
