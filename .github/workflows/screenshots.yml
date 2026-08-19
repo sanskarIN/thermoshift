@@ -60,5 +60,16 @@ jobs:
           git config user.email "sanskarin@outlook.in"
           git add docs/screenshots/*.png
           git commit -m "docs: refresh verified product screenshots"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
+
+          # Product captures are evidence for the exact UI revision that rendered
+          # them. If source advanced, fail and rerun instead of rebasing stale
+          # screenshots onto a newer candidate.
+          git fetch origin "${GITHUB_REF_NAME}"
+          EXPECTED_PARENT="$(git rev-parse HEAD^)"
+          REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
+          if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
+            echo "Branch advanced from $EXPECTED_PARENT to $REMOTE_HEAD; rerun screenshot capture on the new head."
+            exit 1
+          fi
+
           git push origin "HEAD:${GITHUB_REF_NAME}"
