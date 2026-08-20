@@ -15,14 +15,18 @@ const iosConfig = await readJson(resolve(tauriDir, 'tauri.ios.conf.json'));
 const cargoManifest = await readFile(resolve(tauriDir, 'Cargo.toml'), 'utf8');
 const librarySource = await readFile(resolve(tauriDir, 'src/lib.rs'), 'utf8');
 const binarySource = await readFile(resolve(tauriDir, 'src/main.rs'), 'utf8');
+const viteConfig = await readFile(resolve(root, 'apps/web/vite.config.ts'), 'utf8');
 
 const requiredDesktopScripts = new Map([
   ['android:init', 'tauri android init --ci'],
   ['android:dev', 'tauri android dev'],
+  ['android:dev:host', 'tauri android dev --host'],
   ['android:build', 'tauri android build --ci --apk --aab'],
   ['android:run', 'tauri android run'],
   ['ios:init', 'tauri ios init --ci'],
   ['ios:dev', 'tauri ios dev'],
+  ['ios:dev:host', 'tauri ios dev --host'],
+  ['ios:dev:tunnel', 'tauri ios dev --force-ip-prompt'],
   ['ios:build', 'tauri ios build --ci'],
   ['ios:build:simulator', 'tauri ios build --ci --target aarch64-sim'],
   ['ios:run', 'tauri ios run'],
@@ -84,4 +88,19 @@ if (!binarySource.includes('thermoshift_lib::run();')) {
   throw new Error('Desktop binary must delegate to the shared Tauri runtime.');
 }
 
-console.log('Android/iOS commands, platform configs, and shared Tauri mobile runtime are consistent.');
+const requiredViteFragments = [
+  'process.env.TAURI_DEV_HOST',
+  'host: tauriDevHost || false',
+  'port: 5173',
+  'strictPort: true',
+  "protocol: 'ws'",
+  'host: tauriDevHost',
+];
+
+for (const fragment of requiredViteFragments) {
+  if (!viteConfig.includes(fragment)) {
+    throw new Error(`Vite mobile development-server configuration is missing: ${fragment}`);
+  }
+}
+
+console.log('Android/iOS commands, device-host development, platform configs, and shared Tauri mobile runtime are consistent.');
