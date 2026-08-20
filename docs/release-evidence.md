@@ -28,9 +28,9 @@ For a stable tag candidate, require the complete verified screenshot set too:
 npm run check:release-inputs:screenshots
 ```
 
-The preflight requires non-empty committed release inputs, including npm/Cargo lockfiles, core npm/Rust/Tauri manifests, the primary generated desktop PNG/ICO/ICNS icon set, security/privacy/release documentation, and—when `--screenshots` is used—the exact eight verified screenshot files.
+The preflight requires non-empty committed release inputs, including npm/Cargo lockfiles, core npm/Rust/Tauri manifests, Android/iOS platform configs, the shared mobile-compatible Tauri runtime, the mobile verification workflow/config guard, the primary generated desktop PNG/ICO/ICNS icon set, security/privacy/release documentation, and—when `--screenshots` is used—the exact eight verified screenshot files.
 
-The preflight is deliberately fail-closed. Do not add empty files, copied placeholders, hand-authored lock integrity metadata, mock screenshots, or fake platform icons merely to make it pass.
+The preflight is deliberately fail-closed. Do not add empty files, copied placeholders, hand-authored lock integrity metadata, mock screenshots, fake platform icons, or fake mobile evidence merely to make it pass.
 
 ## Source and repository integrity
 
@@ -39,6 +39,7 @@ Required evidence:
 - `npm run check:release-inputs` passes;
 - `npm run check:versions` passes;
 - `npm run check:desktop-config` passes;
+- `npm run check:mobile-config` passes;
 - `npm run check:docs` passes;
 - `npm run test:release-tools` passes;
 - no unfinished blocker/critical defect is knowingly left open;
@@ -116,9 +117,9 @@ Review the current candidate's:
 
 A local audit is useful additional evidence but does not silently substitute for a failing required hosted check.
 
-## Desktop/platform evidence
+## Desktop native evidence
 
-For each supported native target, record an unsigned package build on the native platform:
+For each supported desktop target, record an unsigned package build on the native platform:
 
 - Windows;
 - macOS;
@@ -128,9 +129,30 @@ The `Desktop Platform Verification` workflow provides an unsigned CI matrix and 
 
 Signing and notarization are separate publication gates. Their credentials remain owner-controlled and outside Git.
 
+## Mobile native evidence
+
+ThermoShift also targets Android and iOS through the same Tauri 2 runtime.
+
+Before release, record:
+
+```bash
+npm run check:mobile-config
+```
+
+and completed exact-candidate results from `Mobile Platform Verification`:
+
+- Android: Tauri target initialization plus ARM64 APK/AAB build on Linux/Android tooling;
+- iOS: Tauri target initialization plus Apple Silicon iOS simulator build on macOS/Xcode tooling.
+
+Android package evidence is uploaded by the workflow under a candidate-SHA-qualified artifact name. For iOS, the simulator build is compilation evidence, not App Store signing evidence.
+
+Also record at least one representative launch/conversion smoke test on Android and one on an iOS simulator/device before describing the mobile targets as release-verified. Include candidate SHA, OS/device/simulator versions, local persistence behavior, and offline conversion behavior.
+
+Apple development-team IDs, signing certificates, provisioning profiles, Android signing keys, and store credentials are owner-controlled release inputs and must stay outside Git. Signed store publication is a separate gate from source supportability.
+
 ## Branding evidence
 
-Verify the desktop bundle has generated platform icon assets derived from the repository's editable ThermoShift logo source. The `Refresh Desktop Icons` workflow is the reproducible generator path.
+Verify the native bundle has generated platform icon assets derived from the repository's editable ThermoShift logo source. The `Refresh Desktop Icons` workflow is the reproducible generator path.
 
 The stable release-input preflight requires, at minimum:
 
@@ -152,6 +174,8 @@ Verify a production PWA can:
 - perform/update-check behavior consistently with Settings documentation when connectivity is available.
 
 Record the browser/device used for manual offline-install evidence when this is part of the release gate.
+
+For native mobile targets, additionally verify conversion remains functional without a network connection after installation and that local settings/history behavior remains consistent with the product documentation.
 
 ## Release provenance manifest
 
@@ -177,8 +201,11 @@ The release workflow also publishes a SHA-256 checksum of the manifest itself.
 For a `vX.Y.Z` candidate, verify:
 
 - `npm run check:release-inputs:screenshots` passes;
+- `npm run check:mobile-config` passes;
 - source/package version matches the exact tag;
 - the release workflow completes its full quality gate, including Chromium/Firefox/WebKit compatibility;
+- exact-candidate Windows/macOS/Linux desktop verification is recorded;
+- exact-candidate Android/iOS verification is recorded;
 - the produced web archive is non-empty;
 - the web archive SHA-256 checksum is published and validates;
 - the provenance manifest is published and references the exact candidate SHA/tag;
@@ -191,7 +218,7 @@ For a `vX.Y.Z` candidate, verify:
 |---|---|---|---|---|
 | Release-input preflight | | | Pending | |
 | Release-tool regression tests | | | Pending | |
-| Versions/config/docs | | | Pending | |
+| Versions/desktop/mobile config/docs | | | Pending | |
 | Rust fmt/test/Clippy | | | Pending | |
 | Web type/lint/coverage/build | | | Pending | |
 | PWA asset budget | | | Pending | |
@@ -205,6 +232,10 @@ For a `vX.Y.Z` candidate, verify:
 | Linux native bundle | | | Pending | |
 | Windows native bundle | | | Pending | |
 | macOS native bundle | | | Pending | |
+| Android native APK/AAB | | | Pending | |
+| iOS simulator native build | | | Pending | |
+| Android real-device/emulator smoke | | | Pending | |
+| iOS simulator/device smoke | | | Pending | |
 | Offline/install/update manual evidence | | | Pending | |
 | Tagged web archive/checksum | | | Pending | |
 | Provenance manifest/checksum | | | Pending | |
