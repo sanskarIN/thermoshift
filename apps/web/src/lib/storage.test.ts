@@ -22,6 +22,14 @@ describe('local persistence', () => {
     expect(loadHistory()).toEqual([]);
   });
 
+  it('rejects otherwise valid history with bad identity metadata', () => {
+    localStorage.setItem('thermoshift.history.v1', JSON.stringify([
+      { id: '', createdAt: new Date(0).toISOString(), input: 1, output: 274.15, from: 'celsius', to: 'kelvin' },
+      { id: 'bad-date', createdAt: 'not-a-date', input: 1, output: 274.15, from: 'celsius', to: 'kelvin' },
+    ]));
+    expect(loadHistory()).toEqual([]);
+  });
+
   it('limits history to fifty records', () => {
     const history: HistoryEntry[] = Array.from({ length: 55 }, (_, index) => ({
       id: String(index),
