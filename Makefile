@@ -1,4 +1,4 @@
-.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check check dev
+.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check mobile-check android-init android-dev android-build ios-init ios-dev ios-build-simulator check dev
 
 setup:
 	npm ci --ignore-scripts
@@ -10,6 +10,7 @@ wasm:
 metadata:
 	npm run check:versions
 	npm run check:desktop-config
+	npm run check:mobile-config
 	npm run check:docs
 
 release-preflight:
@@ -45,7 +46,29 @@ screenshots: web
 	npm run check:screenshots
 
 desktop-check:
+	npm run check:desktop-config
 	cargo check --locked -p thermoshift-desktop
+
+mobile-check:
+	npm run check:mobile-config
+
+android-init: mobile-check
+	npm run android:init
+
+android-dev: mobile-check
+	npm run android:dev
+
+android-build: mobile-check
+	npm run android:build
+
+ios-init: mobile-check
+	npm run ios:init
+
+ios-dev: mobile-check
+	npm run ios:dev
+
+ios-build-simulator: mobile-check
+	npm run ios:build:simulator
 
 check: metadata lint test budget
 
