@@ -3,8 +3,23 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "tauri": "tauri",
+    "info": "tauri info",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev",
+    "android:dev:host": "tauri android dev --host",
+    "android:run": "tauri android run",
+    "android:build": "tauri android build",
+    "android:apk": "tauri android build --apk --split-per-abi",
+    "android:aab": "tauri android build --aab",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "ios:dev:host": "tauri ios dev --host",
+    "ios:run": "tauri ios run",
+    "ios:build": "tauri ios build",
+    "ios:build:unsigned": "tauri ios build --no-sign"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.8.0"
