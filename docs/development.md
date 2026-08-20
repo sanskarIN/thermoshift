@@ -1,6 +1,6 @@
 # Development
 
-ThermoShift is organized around one canonical Rust temperature engine, a thin WebAssembly adapter, a React/TypeScript PWA, and a Tauri 2 desktop shell. Keep behavior changes small, explicit, testable, and separated by responsibility.
+ThermoShift is organized around one canonical Rust temperature engine, a thin WebAssembly adapter, a React/TypeScript PWA, and a shared Tauri 2 native runtime for Windows, macOS, Linux, Android, and iOS. Keep behavior changes small, explicit, testable, and separated by responsibility.
 
 ## Domain-first changes
 
@@ -15,7 +15,7 @@ When changing conversion behavior:
 5. add user-facing regression coverage;
 6. update documentation when behavior or contracts change.
 
-Do not duplicate executable formulas in React merely to make the UI convenient. Educational equations may be displayed in UI copy, but the Rust engine remains the executable source of truth.
+Do not duplicate executable formulas in React or platform-native glue merely to make a target convenient. Educational equations may be displayed in UI copy, but the Rust engine remains the executable source of truth.
 
 ## Web architecture
 
@@ -41,6 +41,20 @@ npm --workspace @thermoshift/web run wasm:build
 
 Generated WASM/JavaScript adapter files must not be hand-edited.
 
+## Native runtime architecture
+
+`apps/desktop/src-tauri/src/lib.rs` is the shared Tauri application runtime. It owns the native command registration and carries `#[cfg_attr(mobile, tauri::mobile_entry_point)]` so Tauri can use the same runtime from desktop and mobile shells.
+
+`apps/desktop/src-tauri/src/main.rs` is intentionally tiny and delegates to `thermoshift_lib::run()` for desktop execution. Keep platform-specific shell concerns out of the conversion domain.
+
+Platform config is layered automatically by Tauri:
+
+- base: `tauri.conf.json`;
+- Android: `tauri.android.conf.json`;
+- iOS: `tauri.ios.conf.json`.
+
+Run `npm run check:mobile-config` after changing the native crate shape, Android/iOS scripts, identifier, or platform configuration.
+
 ## Local persistence and backup contracts
 
 Current browser-managed keys are versioned independently:
@@ -64,7 +78,7 @@ Never silently reinterpret incompatible persisted data.
 
 ## Accessibility requirements for changes
 
-Every new interaction must remain usable without a pointer. Preserve:
+Every new interaction must remain usable without a pointer where the platform provides keyboard/focus navigation. Preserve:
 
 - semantic controls/landmarks;
 - visible focus;
@@ -75,7 +89,7 @@ Every new interaction must remain usable without a pointer. Preserve:
 - dialog focus containment;
 - scalable/responsive layouts and touch-friendly targets.
 
-Add a regression test for an accessibility defect when practical. Use Playwright/axe for primary screen-level coverage and Testing Library for component behavior.
+Add a regression test for an accessibility defect when practical. Use Playwright/axe for primary screen-level coverage and Testing Library for component behavior. Native mobile smoke verification must also check touch sizing, rotation/responsive layout, and platform accessibility behavior appropriate to the tested device/simulator.
 
 ## Structured diagnostics
 
@@ -96,6 +110,7 @@ Repository metadata/documentation:
 ```bash
 npm run check:versions
 npm run check:desktop-config
+npm run check:mobile-config
 npm run check:docs
 ```
 
@@ -105,6 +120,7 @@ Rust:
 cargo fmt --all -- --check
 cargo test --locked -p thermoshift-core
 cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo check --locked -p thermoshift-desktop
 ```
 
 Web:
@@ -128,7 +144,7 @@ npm --workspace @thermoshift/web run e2e:cross-browser
 
 The primary E2E suite covers the fuller Chromium desktop/mobile journey. The cross-browser compatibility suite separately exercises real conversion, history persistence, and axe checks in Chromium, Firefox, and WebKit so one browser engine cannot silently stand in for all supported web targets.
 
-The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `e2e-cross-browser`, `screenshots`, and `desktop-check`.
+The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `e2e-cross-browser`, `screenshots`, `desktop-check`, `mobile-check`, `android-init`, `android-build`, `ios-init`, and `ios-build-simulator`.
 
 ## Screenshot development
 
@@ -143,10 +159,11 @@ Do not hand-create placeholder images and present them as product captures. See 
 
 ## Desktop development
 
-Before native work:
+Before desktop-native work:
 
 ```bash
 npm run check:desktop-config
+npm run check:mobile-config
 cargo check --locked -p thermoshift-desktop
 ```
 
@@ -167,11 +184,51 @@ npm --workspace @thermoshift/desktop run icons
 
 Do not commit signing or notarization credentials.
 
+## Android development
+
+Follow [`mobile.md`](mobile.md) for Android Studio, SDK/NDK, Java, environment-variable, and Rust-target prerequisites.
+
+Initialize and run the Tauri Android target with:
+
+```bash
+npm run check:mobile-config
+npm run android:init
+npm run android:dev
+```
+
+Build APK/AAB outputs with:
+
+```bash
+npm run android:build
+```
+
+The generated Android project belongs under `apps/desktop/src-tauri/gen/android`. Avoid manually duplicating conversion logic in generated Kotlin/Java shell code.
+
+## iOS development
+
+iOS target development is macOS-only and requires full Xcode plus CocoaPods. Follow [`mobile.md`](mobile.md) for the required Rust targets and signing boundary.
+
+Initialize and run with:
+
+```bash
+npm run check:mobile-config
+npm run ios:init
+npm run ios:dev
+```
+
+For CI-friendly native compilation use the Apple Silicon simulator target:
+
+```bash
+npm run ios:build:simulator
+```
+
+Use `npm run ios:build` only when the host environment is prepared for the intended device/archive build. Do not commit Apple development-team identifiers, signing certificates, provisioning profiles, or store credentials.
+
 ## Dependencies and lockfiles
 
 Do not hand-edit npm/Cargo lockfiles. See `docs/dependency-lockfiles.md`.
 
-The candidate commits `package-lock.json` and `Cargo.lock`. CI, security automation, Makefile/release-sensitive commands, desktop verification, screenshot capture, and release publication consume those committed graphs with `npm ci` and Cargo `--locked`. If an intentional dependency refresh changes either graph, regenerate it using package-manager tooling, review the diff, and re-run the relevant locked verification before merging.
+The candidate commits `package-lock.json` and `Cargo.lock`. CI, security automation, Makefile/release-sensitive commands, desktop/mobile verification, screenshot capture, and release publication consume those committed graphs with `npm ci` and Cargo `--locked`. If an intentional dependency refresh changes either graph, regenerate it using package-manager tooling, review the diff, and re-run the relevant locked verification before merging.
 
 ## Security changes
 
