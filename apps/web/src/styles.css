@@ -118,3 +118,38 @@ th,td { text-align:left; padding:10px; border-bottom:1px solid var(--border); }
 footer { display:flex; justify-content:space-between; gap:12px; color:var(--muted); padding:24px 4px 0; font-size:.86rem; }
 @media (max-width:860px) { .topbar{align-items:flex-start;flex-direction:column}.topbar-actions,.topbar nav{justify-content:flex-start}.converter-grid,.settings-grid,.history-tools{grid-template-columns:1fr 1fr}.converter-grid label:first-child{grid-column:1/-1}.history-tools label:first-child{grid-column:1/-1}.onboarding-grid{grid-template-columns:1fr}kbd{display:none} }
 @media (max-width:560px) { .app-shell{width:min(100% - 18px,1180px)}.converter-grid,.batch-controls,.settings-grid,.history-tools{grid-template-columns:1fr}.converter-grid label:first-child,.history-tools label:first-child{grid-column:auto}.history-list li{grid-template-columns:1fr auto}.history-list time{grid-column:1/-1;grid-row:2}.history-delete{grid-column:2;grid-row:1}.about-panel{grid-template-columns:1fr}.panel-heading{flex-direction:column}.action-row.compact{justify-content:flex-start}.inline-control{grid-template-columns:1fr;width:100%}footer{flex-direction:column}.modal-backdrop{padding:10px}.modal-card{max-height:calc(100vh - 20px);border-radius:16px} }
+
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    min-height:100dvh;
+    padding-left:env(safe-area-inset-left, 0px);
+    padding-right:env(safe-area-inset-right, 0px);
+  }
+  .app-shell {
+    padding-top:max(18px, env(safe-area-inset-top, 0px));
+    padding-bottom:max(34px, env(safe-area-inset-bottom, 0px));
+  }
+  .skip-link { left:max(16px, env(safe-area-inset-left, 0px)); }
+  .skip-link:focus { top:max(16px, env(safe-area-inset-top, 0px)); }
+  .loading-screen {
+    min-height:100dvh;
+    padding-top:env(safe-area-inset-top, 0px);
+    padding-right:env(safe-area-inset-right, 0px);
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+    padding-left:env(safe-area-inset-left, 0px);
+  }
+  .modal-backdrop {
+    padding-top:max(20px, env(safe-area-inset-top, 0px));
+    padding-right:max(20px, env(safe-area-inset-right, 0px));
+    padding-bottom:max(20px, env(safe-area-inset-bottom, 0px));
+    padding-left:max(20px, env(safe-area-inset-left, 0px));
+  }
+  @media (max-width:560px) {
+    .modal-backdrop {
+      padding-top:max(10px, env(safe-area-inset-top, 0px));
+      padding-right:max(10px, env(safe-area-inset-right, 0px));
+      padding-bottom:max(10px, env(safe-area-inset-bottom, 0px));
+      padding-left:max(10px, env(safe-area-inset-left, 0px));
+    }
+  }
+}
