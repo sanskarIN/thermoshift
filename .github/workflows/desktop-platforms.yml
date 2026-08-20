@@ -2,12 +2,13 @@ name: Desktop Platform Verification
 
 on:
   workflow_dispatch:
+  pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: desktop-platforms-${{ github.ref }}
+  group: desktop-platforms-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -20,13 +21,16 @@ jobs:
             artifact: linux
           - os: windows-latest
             artifact: windows
-          - os: macos-14
+          - os: macos-15
             artifact: macos
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 60
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
       - name: Install Linux native prerequisites
         if: runner.os == 'Linux'
@@ -48,11 +52,11 @@ jobs:
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts
       - name: Verify repository metadata
-        run: npm run check:versions
-      - name: Verify desktop frontend configuration
-        run: npm run check:desktop-config
-      - name: Verify internal documentation links
-        run: npm run check:docs
+        run: |
+          npm run check:versions
+          npm run check:desktop-config
+          npm run check:mobile-config
+          npm run check:docs
       - name: Check desktop Rust crate
         run: cargo check --locked -p thermoshift-desktop
       - name: Build unsigned native package
@@ -61,11 +65,11 @@ jobs:
         shell: bash
         run: |
           mkdir -p apps/desktop/src-tauri/target/release/bundle
-          printf 'sha=%s\nref=%s\nos=%s\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" "${{ matrix.artifact }}" > apps/desktop/src-tauri/target/release/bundle/THERMOSHIFT_BUILD.txt
+          printf 'candidate_sha=%s\nref=%s\nos=%s\n' "$CANDIDATE_SHA" "$GITHUB_REF" "${{ matrix.artifact }}" > apps/desktop/src-tauri/target/release/bundle/THERMOSHIFT_BUILD.txt
       - name: Upload native bundle evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-${{ matrix.artifact }}-bundle-${{ github.sha }}
+          name: thermoshift-${{ matrix.artifact }}-bundle-${{ env.CANDIDATE_SHA }}
           path: apps/desktop/src-tauri/target/release/bundle/**
           if-no-files-found: error
           retention-days: 14
