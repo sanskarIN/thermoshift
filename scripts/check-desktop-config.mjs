@@ -3,10 +3,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const tauriDir = resolve(root, 'apps/desktop/src-tauri');
+const desktopDir = resolve(root, 'apps/desktop');
+const tauriDir = resolve(desktopDir, 'src-tauri');
 const configPath = resolve(tauriDir, 'tauri.conf.json');
 const capabilityPath = resolve(tauriDir, 'capabilities/default.json');
-const desktopPackagePath = resolve(root, 'apps/desktop/package.json');
+const desktopPackagePath = resolve(desktopDir, 'package.json');
 const config = JSON.parse(await readFile(configPath, 'utf8'));
 const capability = JSON.parse(await readFile(capabilityPath, 'utf8'));
 const desktopPackage = JSON.parse(await readFile(desktopPackagePath, 'utf8'));
@@ -28,7 +29,10 @@ const verifyPrefixCommand = async (name, command) => {
   const prefix = match?.[1] ?? match?.[2] ?? match?.[3];
   if (!prefix) throw new Error(`Tauri ${name} must use npm --prefix for the web workspace.`);
 
-  const resolvedPrefix = resolve(tauriDir, prefix);
+  // Tauri runs beforeDevCommand/beforeBuildCommand from the directory where the
+  // CLI is invoked. Our npm workspace invokes the CLI from apps/desktop, while
+  // frontendDist is resolved relative to src-tauri/tauri.conf.json.
+  const resolvedPrefix = resolve(desktopDir, prefix);
   if (resolvedPrefix !== expectedWebDir) {
     throw new Error(`Tauri ${name} prefix resolves to ${resolvedPrefix}; expected ${expectedWebDir}`);
   }
