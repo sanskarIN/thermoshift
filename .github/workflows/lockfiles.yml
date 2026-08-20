@@ -2,15 +2,12 @@ name: Refresh Lockfiles
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '.github/workflows/lockfiles.yml'
 
 permissions:
   contents: write
 
 concurrency:
-  group: lockfiles-${{ github.event.pull_request.number || github.ref }}
+  group: lockfiles-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -18,12 +15,10 @@ jobs:
     if: github.repository == 'sanskarIN/thermoshift'
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
           persist-credentials: true
       - uses: actions/setup-node@v4
@@ -40,27 +35,31 @@ jobs:
           test -s Cargo.lock
           npm run check:versions
           npm run check:desktop-config
+          npm run check:mobile-config
           npm run check:docs
       - name: Upload generated lockfile evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-generated-lockfiles-${{ github.event.pull_request.head.sha || github.sha }}
+          name: thermoshift-generated-lockfiles-${{ github.sha }}
           path: |
             package-lock.json
             Cargo.lock
           if-no-files-found: error
           retention-days: 14
-      - name: Commit refreshed lockfiles and restore manual workflow
+      - name: Commit lockfiles when changed
         shell: bash
         run: |
-          printf '%s' 'bmFtZTogUmVmcmVzaCBMb2NrZmlsZXMKCm9uOgogIHdvcmtmbG93X2Rpc3BhdGNoOgoKcGVybWlzc2lvbnM6CiAgY29udGVudHM6IHdyaXRlCgpjb25jdXJyZW5jeToKICBncm91cDogbG9ja2ZpbGVzLSR7eyBnaXRodWIucmVmIH19CiAgY2FuY2VsLWluLXByb2dyZXNzOiBmYWxzZQoKam9iczoKICByZWZyZXNoOgogICAgaWY6IGdpdGh1Yi5yZXBvc2l0b3J5ID09ICdzYW5za2FySU4vdGhlcm1vc2hpZnQnCiAgICBydW5zLW9uOiB1YnVudHUtbGF0ZXN0CiAgICB0aW1lb3V0LW1pbnV0ZXM6IDIwCiAgICBzdGVwczoKICAgICAgLSB1c2VzOiBhY3Rpb25zL2NoZWNrb3V0QHY0CiAgICAgICAgd2l0aDoKICAgICAgICAgIHJlZjogJHt7IGdpdGh1Yi5yZWZfbmFtZSB9fQogICAgICAgICAgZmV0Y2gtZGVwdGg6IDAKICAgICAgICAgIHBlcnNpc3QtY3JlZGVudGlhbHM6IHRydWUKICAgICAgLSB1c2VzOiBhY3Rpb25zL3NldHVwLW5vZGVAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgbm9kZS12ZXJzaW9uOiAyMgogICAgICAtIHVzZXM6IGR0b2xuYXkvcnVzdC10b29sY2hhaW5Ac3RhYmxlCiAgICAgIC0gbmFtZTogR2VuZXJhdGUgbnBtIGxvY2tmaWxlCiAgICAgICAgcnVuOiBucG0gaW5zdGFsbCAtLWlnbm9yZS1zY3JpcHRzIC0tcGFja2FnZS1sb2NrLW9ubHkgLS1uby1hdWRpdCAtLW5vLWZ1bmQKICAgICAgLSBuYW1lOiBHZW5lcmF0ZSBDYXJnbyBsb2NrZmlsZQogICAgICAgIHJ1bjogY2FyZ28gZ2VuZXJhdGUtbG9ja2ZpbGUKICAgICAgLSBuYW1lOiBWZXJpZnkgZ2VuZXJhdGVkIGxvY2tmaWxlcwogICAgICAgIHJ1bjogfAogICAgICAgICAgdGVzdCAtcyBwYWNrYWdlLWxvY2suanNvbgogICAgICAgICAgdGVzdCAtcyBDYXJnby5sb2NrCiAgICAgICAgICBucG0gcnVuIGNoZWNrOnZlcnNpb25zCiAgICAgICAgICBucG0gcnVuIGNoZWNrOmRlc2t0b3AtY29uZmlnCiAgICAgICAgICBucG0gcnVuIGNoZWNrOmRvY3MKICAgICAgLSBuYW1lOiBVcGxvYWQgZ2VuZXJhdGVkIGxvY2tmaWxlIGV2aWRlbmNlCiAgICAgICAgdXNlczogYWN0aW9ucy91cGxvYWQtYXJ0aWZhY3RAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgbmFtZTogdGhlcm1vc2hpZnQtZ2VuZXJhdGVkLWxvY2tmaWxlcy0ke3sgZ2l0aHViLnNoYSB9fQogICAgICAgICAgcGF0aDogfAogICAgICAgICAgICBwYWNrYWdlLWxvY2suanNvbgogICAgICAgICAgICBDYXJnby5sb2NrCiAgICAgICAgICBpZi1uby1maWxlcy1mb3VuZDogZXJyb3IKICAgICAgICAgIHJldGVudGlvbi1kYXlzOiAxNAogICAgICAtIG5hbWU6IENvbW1pdCBsb2NrZmlsZXMgd2hlbiBjaGFuZ2VkCiAgICAgICAgc2hlbGw6IGJhc2gKICAgICAgICBydW46IHwKICAgICAgICAgIGlmIGdpdCBkaWZmIC0tcXVpZXQgLS0gcGFja2FnZS1sb2NrLmpzb24gQ2FyZ28ubG9jayAmJiBnaXQgbHMtZmlsZXMgLS1lcnJvci11bm1hdGNoIHBhY2thZ2UtbG9jay5qc29uIENhcmdvLmxvY2sgPi9kZXYvbnVsbCAyPiYxOyB0aGVuCiAgICAgICAgICAgIGVjaG8gIkxvY2tmaWxlcyBhcmUgYWxyZWFkeSBjdXJyZW50LiIKICAgICAgICAgICAgZXhpdCAwCiAgICAgICAgICBmaQoKICAgICAgICAgIGdpdCBjb25maWcgdXNlci5uYW1lICJTYW5za2FyIgogICAgICAgICAgZ2l0IGNvbmZpZyB1c2VyLmVtYWlsICJzYW5za2FyaW5Ab3V0bG9vay5pbiIKICAgICAgICAgIGdpdCBhZGQgcGFja2FnZS1sb2NrLmpzb24gQ2FyZ28ubG9jawogICAgICAgICAgZ2l0IGNvbW1pdCAtbSAiYnVpbGQ6IHJlZnJlc2ggZGVwZW5kZW5jeSBsb2NrZmlsZXMiCgogICAgICAgICAgIyBHZW5lcmF0ZWQgZGVwZW5kZW5jeSBldmlkZW5jZSBtdXN0IHJlbWFpbiBhdHRhY2hlZCB0byB0aGUgZXhhY3Qgc291cmNlCiAgICAgICAgICAjIHJldmlzaW9uIHRoYXQgcHJvZHVjZWQgaXQuIElmIHRoZSBicmFuY2ggYWR2YW5jZWQsIGZhaWwgYW5kIHJlcnVuIG9uCiAgICAgICAgICAjIHRoZSBuZXcgaGVhZCBpbnN0ZWFkIG9mIHJlYmFzaW5nIHN0YWxlIGdlbmVyYXRlZCBtZXRhZGF0YSBmb3J3YXJkLgogICAgICAgICAgZ2l0IGZldGNoIG9yaWdpbiAiJHtHSVRIVUJfUkVGX05BTUV9IgogICAgICAgICAgRVhQRUNURURfUEFSRU5UPSIkKGdpdCByZXYtcGFyc2UgSEVBRF4pIgogICAgICAgICAgUkVNT1RFX0hFQUQ9IiQoZ2l0IHJldi1wYXJzZSBGRVRDSF9IRUFEKSIKICAgICAgICAgIGlmIFsgIiRSRU1PVEVfSEVBRCIgIT0gIiRFWFBFQ1RFRF9QQVJFTlQiIF07IHRoZW4KICAgICAgICAgICAgZWNobyAiQnJhbmNoIGFkdmFuY2VkIGZyb20gJEVYUEVDVEVEX1BBUkVOVCB0byAkUkVNT1RFX0hFQUQ7IHJlcnVuIGxvY2tmaWxlIGdlbmVyYXRpb24gb24gdGhlIG5ldyBoZWFkLiIKICAgICAgICAgICAgZXhpdCAxCiAgICAgICAgICBmaQoKICAgICAgICAgIGdpdCBwdXNoIG9yaWdpbiAiSEVBRDoke0dJVEhVQl9SRUZfTkFNRX0iCg==' | base64 -d > .github/workflows/lockfiles.yml
+          if git diff --quiet -- package-lock.json Cargo.lock && git ls-files --error-unmatch package-lock.json Cargo.lock >/dev/null 2>&1; then
+            echo "Lockfiles are already current."
+            exit 0
+          fi
 
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
-          git add package-lock.json Cargo.lock .github/workflows/lockfiles.yml
-          git commit -m "build: refresh 2.8.2 dependency lockfiles"
+          git add package-lock.json Cargo.lock
+          git commit -m "build: refresh dependency lockfiles"
 
-          git fetch origin "$TARGET_BRANCH"
+          git fetch origin "${GITHUB_REF_NAME}"
           EXPECTED_PARENT="$(git rev-parse HEAD^)"
           REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
           if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
@@ -68,4 +67,4 @@ jobs:
             exit 1
           fi
 
-          git push origin "HEAD:${TARGET_BRANCH}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
