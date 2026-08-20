@@ -1,6 +1,6 @@
 # Testing Strategy
 
-ThermoShift uses layered verification so formula correctness, state safety, UI behavior, accessibility, documentation integrity, production size, reproducibility, and platform packaging fail independently and produce useful diagnostics.
+ThermoShift uses layered verification so formula correctness, state safety, UI behavior, accessibility, documentation integrity, production size, reproducibility, and web/desktop/mobile platform packaging fail independently and produce useful diagnostics.
 
 ## Rust unit/domain tests
 
@@ -13,7 +13,7 @@ ThermoShift uses layered verification so formula correctness, state safety, UI b
 - a dense 0–5000 K grid across every source/destination scale pair;
 - expected scale direction, including the intentionally reversed Delisle scale.
 
-Domain regressions belong here first. TypeScript UI tests must not become a second executable source of truth for conversion formulas.
+Domain regressions belong here first. TypeScript UI tests and platform-native shells must not become a second executable source of truth for conversion formulas.
 
 ## Web utility/infrastructure tests
 
@@ -123,10 +123,11 @@ The dependency-free repository checks are part of the quality gate:
 ```bash
 npm run check:versions
 npm run check:desktop-config
+npm run check:mobile-config
 npm run check:docs
 ```
 
-They verify version alignment, Tauri frontend/security paths, required generated primary desktop icon artifacts, and relative Markdown link targets.
+They verify version alignment, Tauri frontend/security paths, required generated primary desktop icon artifacts, shared mobile-compatible crate/runtime shape, Android/iOS commands and platform configuration, and relative Markdown link targets.
 
 ## Production asset budget
 
@@ -161,15 +162,28 @@ Source-controlled security automation includes:
 
 Security verification fails closed if the committed lockfile required for an audit disappears. A security workflow definition is not evidence that the current candidate passed; review the current workflow result before marking the release-evidence row successful.
 
-## Desktop/platform verification
+## Desktop platform verification
 
-Repository-side checks include `npm run check:desktop-config` and `cargo check --locked -p thermoshift-desktop` when the platform toolchain is installed. The desktop-config check also fails when required primary generated icon artifacts are missing or empty.
+Repository-side checks include `npm run check:desktop-config`, `npm run check:mobile-config`, and `cargo check --locked -p thermoshift-desktop` when the platform toolchain is installed. The desktop-config check also fails when required primary generated icon artifacts are missing or empty.
 
 The manual `Desktop Platform Verification` workflow defines unsigned native package jobs on Linux, Windows, and macOS and uploads each native bundle directory as workflow evidence. Each operating-system job must succeed independently; one operating system cannot stand in for another.
 
+## Mobile platform verification
+
+`npm run check:mobile-config` is the dependency-free structural guard for Android/iOS support. It verifies lifecycle commands, the application identifier, Android SDK baseline, iOS system baseline, shared native library crate types, the Tauri mobile entry point, desktop delegation to the shared runtime, and the rule against committing an Apple development-team identifier.
+
+The `Mobile Platform Verification` workflow provides platform-native compilation/package evidence:
+
+- Android runs on Ubuntu with Java/Android NDK tooling, initializes the Tauri target, builds ARM64 APK/AAB outputs, and uploads the generated package directory using the candidate SHA in the artifact name;
+- iOS runs on macOS, verifies Xcode and CocoaPods, initializes the Tauri target, and builds the Apple Silicon iOS simulator target.
+
+Each job must complete for the exact candidate SHA. Workflow source alone is not passing evidence, and iOS simulator compilation is not App Store signing evidence.
+
+Before a release is described as mobile-verified, also record a representative Android emulator/device launch and an iOS simulator/device launch. Smoke evidence must include a real conversion, local persistence, offline conversion, responsive/touch behavior, and the exact candidate/device environment.
+
 ## CI expectations
 
-Pull requests should fail when applicable lockfile, formatting, configuration, generated-icon, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, or accessibility checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
+Pull requests should fail when applicable lockfile, formatting, desktop/mobile configuration, generated-icon, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, accessibility, or native mobile verification checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
 
 When fixing a surfaced defect, add or retain a regression test when the failure represents real application behavior rather than only a transient infrastructure problem.
 
@@ -187,8 +201,10 @@ Before a stable release, manually or platform-specifically verify what automatio
 8. history management and local persistence;
 9. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
 10. native Windows/macOS/Linux package outputs;
-11. platform branding/icons;
-12. real screenshots captured from verified builds;
-13. release archive checksum validation.
+11. Android APK/AAB native build plus emulator/device launch/conversion/persistence/offline smoke evidence;
+12. iOS simulator native build plus simulator/device launch/conversion/persistence/offline smoke evidence;
+13. platform branding/icons;
+14. real screenshots captured from verified builds;
+15. release archive checksum validation.
 
 Automated green checks are necessary but not sufficient evidence for a stable release. Record exact-candidate results in [`release-evidence.md`](release-evidence.md).
