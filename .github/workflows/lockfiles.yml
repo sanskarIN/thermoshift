@@ -1,0 +1,43 @@
+name: Lockfile Verification
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'crates/**/Cargo.toml'
+      - 'apps/desktop/src-tauri/Cargo.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - '.github/workflows/lockfiles.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Regenerate npm lockfile
+        run: npm install --ignore-scripts --package-lock-only
+      - name: Regenerate Cargo lockfile
+        run: cargo generate-lockfile
+      - name: Upload generated lockfiles
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-lockfiles
+          path: |
+            package-lock.json
+            Cargo.lock
+          if-no-files-found: error
+          retention-days: 1
+      - name: Verify committed lockfiles are current
+        run: git diff --exit-code -- package-lock.json Cargo.lock
