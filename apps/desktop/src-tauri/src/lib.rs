@@ -25,7 +25,10 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![convert_temperature, absolute_zero_for])
+        .invoke_handler(tauri::generate_handler![
+            convert_temperature,
+            absolute_zero_for
+        ])
         .run(tauri::generate_context!())
         .expect("ThermoShift native runtime failed");
 }
