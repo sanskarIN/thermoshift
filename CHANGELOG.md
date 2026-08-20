@@ -32,10 +32,12 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Static Tauri frontend path/configuration checker with primary generated-icon integrity checks.
 - Cross-platform Tauri configuration guard covering the shared native runtime plus Android/iOS commands and platform-specific configuration.
 - A shared Tauri library entry point compiled as `staticlib`, `cdylib`, and `rlib`, with the Tauri mobile entry-point attribute required by Android/iOS shells.
-- Android Tauri configuration with explicit minimum SDK 24 plus workspace commands for target initialization, development, run, APK/AAB builds, and device workflows.
-- iOS Tauri configuration with explicit minimum system version 14.0 plus workspace commands for target initialization, development, simulator/device builds, and run workflows.
+- Android Tauri configuration with explicit minimum SDK 24 plus workspace commands for target initialization, development, host/device development, run, and APK/AAB builds.
+- iOS Tauri configuration with explicit minimum system version 14.0 plus workspace commands for target initialization, development, host/IP-prompt device development, simulator/device builds, and run workflows.
+- Mobile-aware Vite development-server configuration using `TAURI_DEV_HOST`, fixed port `5173`, strict port selection, and mobile HMR routing on port `5174`.
 - Dedicated Android/iOS native verification workflow: Android ARM64 APK/AAB build evidence on Ubuntu and an iOS Apple Silicon simulator build on macOS.
-- A complete mobile development guide documenting Android SDK/NDK, Xcode/CocoaPods, Rust targets, local commands, CI behavior, real-device evidence, and signing boundaries.
+- Exact-candidate mobile workflow checkout plus candidate-identity records and SHA-qualified Android/iOS build-evidence artifacts.
+- A complete mobile development guide documenting Android SDK/NDK, Xcode/CocoaPods, Rust targets, local/device-host commands, CI behavior, real-device evidence, and signing boundaries.
 - Dependency-free internal Markdown link checker.
 - Production web asset budget checker with raw and gzip limits.
 - Dedicated real-product Playwright screenshot configuration and exact PNG evidence validator.
@@ -76,8 +78,10 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Global page-navigation shortcuts no longer fire while focus is in an editable control or while onboarding/Quick Actions owns modal interaction.
 - Client-side page navigation synchronizes the document title, announces the active page through a polite live region, and exposes `aria-keyshortcuts` while keeping visible `<kbd>` hints out of accessible button names.
 - Stable tagged releases install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
-- Tauri pre-development/pre-build web workspace paths resolve to `apps/web` from `src-tauri` and are statically verified.
+- Tauri `beforeDevCommand`/`beforeBuildCommand` web-workspace prefixes now resolve from the actual native npm/Tauri CLI working directory (`apps/desktop`), while `frontendDist` remains resolved relative to `src-tauri/tauri.conf.json`; the static native config checker verifies both coordinate systems.
+- The first hosted Android native build successfully initialized the Tauri Android project and exposed the previous frontend-hook working-directory bug before package compilation; the path and regression checker were corrected rather than weakening the native build gate.
 - Normal CI and tagged web-release preflight now validate Android/iOS target configuration and the shared mobile-capable runtime in addition to desktop configuration.
+- Mobile pull-request verification explicitly checks out the PR head SHA instead of GitHub's synthetic merge commit and names native evidence artifacts with that candidate SHA.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
 - CI, cross-browser, and dependency-security workflows fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
 - Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
@@ -113,8 +117,8 @@ The following are not considered complete merely because supporting workflows or
 - generated and committed verified product screenshots;
 - current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
 - successful unsigned native package evidence for Windows, macOS, and Linux;
-- successful Android APK/AAB and iOS simulator native-build evidence for the exact candidate;
-- representative Android and iOS simulator/device launch, conversion, persistence, and offline smoke evidence;
+- successful Android APK/AAB and iOS simulator native-build evidence for the exact final candidate after the frontend-path correction;
+- representative Android and iOS simulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence;
 - representative real-device/browser PWA install/offline/update verification required by the release plan;
 - owner-controlled desktop/mobile signing/notarization/store publication evidence and final stable tag/release evidence.
 
