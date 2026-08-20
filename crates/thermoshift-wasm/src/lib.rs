@@ -20,6 +20,6 @@ pub fn absolute_zero_for(unit: &str) -> Result<f64, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn engine_version() -> &'static str {
-    env!("CARGO_PKG_VERSION")
+pub fn engine_version() -> String {
+    env!("CARGO_PKG_VERSION").to_owned()
 }
