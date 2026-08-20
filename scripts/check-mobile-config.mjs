@@ -16,6 +16,8 @@ const cargoManifest = await readFile(resolve(tauriDir, 'Cargo.toml'), 'utf8');
 const librarySource = await readFile(resolve(tauriDir, 'src/lib.rs'), 'utf8');
 const binarySource = await readFile(resolve(tauriDir, 'src/main.rs'), 'utf8');
 const viteConfig = await readFile(resolve(root, 'apps/web/vite.config.ts'), 'utf8');
+const webIndex = await readFile(resolve(root, 'apps/web/index.html'), 'utf8');
+const webStyles = await readFile(resolve(root, 'apps/web/src/styles.css'), 'utf8');
 
 if (desktopPackage.scripts?.tauri !== 'tauri') {
   throw new Error(`Native package must expose the plain Tauri CLI script required by generated mobile projects; received ${String(desktopPackage.scripts?.tauri)}.`);
@@ -107,4 +109,14 @@ for (const fragment of requiredViteFragments) {
   }
 }
 
-console.log('Android/iOS commands, generated-project Tauri CLI bridge, device-host development, platform configs, and shared Tauri mobile runtime are consistent.');
+if (!webIndex.includes('viewport-fit=cover')) {
+  throw new Error('Mobile viewport must retain viewport-fit=cover for notch/home-indicator safe-area handling.');
+}
+
+for (const inset of ['safe-area-inset-top', 'safe-area-inset-right', 'safe-area-inset-bottom', 'safe-area-inset-left']) {
+  if (!webStyles.includes(`env(${inset}`)) {
+    throw new Error(`Mobile styles must retain ${inset} handling.`);
+  }
+}
+
+console.log('Android/iOS commands, generated-project Tauri CLI bridge, device-host development, safe-area handling, platform configs, and shared Tauri mobile runtime are consistent.');
