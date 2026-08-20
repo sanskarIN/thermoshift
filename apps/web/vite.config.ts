@@ -2,7 +2,10 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const tauriDevHost = process.env.TAURI_DEV_HOST;
+
 export default defineConfig({
+  clearScreen: false,
   plugins: [
     react(),
     VitePWA({
@@ -27,6 +30,18 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    host: tauriDevHost || false,
+    port: 5173,
+    strictPort: true,
+    hmr: tauriDevHost
+      ? {
+          protocol: 'ws',
+          host: tauriDevHost,
+          port: 5174,
+        }
+      : undefined,
+  },
   build: {
     target: 'es2022',
     sourcemap: true,
