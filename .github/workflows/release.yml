@@ -32,6 +32,8 @@ jobs:
         run: npm run check:versions
       - name: Check desktop frontend configuration
         run: npm run check:desktop-config
+      - name: Check mobile platform configuration
+        run: npm run check:mobile-config
       - name: Check internal documentation links
         run: npm run check:docs
       - name: Check tag matches package version
