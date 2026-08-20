@@ -8,10 +8,13 @@
     "icons": "tauri icon ../web/public/logo.svg",
     "android:init": "tauri android init --ci",
     "android:dev": "tauri android dev",
+    "android:dev:host": "tauri android dev --host",
     "android:build": "tauri android build --ci --apk --aab",
     "android:run": "tauri android run",
     "ios:init": "tauri ios init --ci",
     "ios:dev": "tauri ios dev",
+    "ios:dev:host": "tauri ios dev --host",
+    "ios:dev:tunnel": "tauri ios dev --force-ip-prompt",
     "ios:build": "tauri ios build --ci",
     "ios:build:simulator": "tauri ios build --ci --target aarch64-sim",
     "ios:run": "tauri ios run"
