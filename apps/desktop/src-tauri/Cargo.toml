@@ -7,6 +7,10 @@ repository.workspace = true
 rust-version.workspace = true
 publish = false
 
+[lib]
+name = "thermoshift_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

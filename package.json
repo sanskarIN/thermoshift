@@ -10,7 +10,22 @@
     "lint": "npm --workspace @thermoshift/web run lint",
     "typecheck": "npm --workspace @thermoshift/web run typecheck",
     "e2e": "npm --workspace @thermoshift/web run e2e",
+    "verify:native-config": "node scripts/verify-native-config.mjs",
+    "native:info": "npm --workspace @thermoshift/desktop run info",
     "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
-    "desktop:build": "npm --workspace @thermoshift/desktop run build"
+    "desktop:build": "npm --workspace @thermoshift/desktop run build",
+    "android:init": "npm --workspace @thermoshift/desktop run android:init",
+    "android:dev": "npm --workspace @thermoshift/desktop run android:dev",
+    "android:dev:host": "npm --workspace @thermoshift/desktop run android:dev:host",
+    "android:run": "npm --workspace @thermoshift/desktop run android:run",
+    "android:build": "npm --workspace @thermoshift/desktop run android:build",
+    "android:apk": "npm --workspace @thermoshift/desktop run android:apk",
+    "android:aab": "npm --workspace @thermoshift/desktop run android:aab",
+    "ios:init": "npm --workspace @thermoshift/desktop run ios:init",
+    "ios:dev": "npm --workspace @thermoshift/desktop run ios:dev",
+    "ios:dev:host": "npm --workspace @thermoshift/desktop run ios:dev:host",
+    "ios:run": "npm --workspace @thermoshift/desktop run ios:run",
+    "ios:build": "npm --workspace @thermoshift/desktop run ios:build",
+    "ios:build:unsigned": "npm --workspace @thermoshift/desktop run ios:build:unsigned"
   }
 }

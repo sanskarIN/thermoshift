@@ -3,122 +3,141 @@
 ## Current milestone
 
 **Version:** 0.1.0 development baseline  
-**Phase:** Phases 0–4 implementation baseline complete and merged to `main`; Phases 5–6 are at clean-build/release-verification stage.
+**Phase:** Core/web/native implementation is cross-platform at source/configuration level for browsers/PWA, Windows, macOS, Linux, Android, and iOS/iPadOS. Clean-build, real-device, signing, and release verification remain before the first public native release.
 
-## Completed work
+## Completed foundation
 
-- Preserved the repository's existing MIT license and initial history.
-- Added a Rust workspace and canonical dependency-free temperature conversion engine.
-- Implemented Celsius, Fahrenheit, Kelvin, Rankine, Réaumur, Delisle, Newton, and Rømer conversions.
-- Added absolute-zero and non-finite input validation.
-- Added reference-point, all-scale round-trip, boundary, and invalid-input Rust tests.
-- Added a `wasm-bindgen` bridge so the browser uses the Rust engine instead of duplicating executable conversion formulas.
-- Added a React/TypeScript/Vite PWA with instant conversion, swap, validation feedback, precision/rounding controls, copy/share, local history, batch conversion, CSV/JSON export, educational formulas, comparison/reference cards, offline status, themes, high contrast, reduced motion, keyboard shortcuts, privacy/data reset, About, contacts, BMC, and the `Made by the Sanskar` credit.
-- Added an editable SVG application logo and responsive design system.
-- Added a Tauri 2 desktop target for Windows, macOS, and Linux with a minimal capability set and CSP.
-- Added Vitest, Testing Library, Playwright, and axe test coverage foundations.
-- Added GitHub Actions CI, CodeQL, Rust/npm dependency audits, Dependabot, release automation, issue templates, PR template, CODEOWNERS, release-note categories, and funding configuration.
-- Added the complete documentation baseline requested by the master prompt: README, contributing, code of conduct, security, support, privacy, changelog, roadmap, architecture, setup, development, testing, release, troubleshooting, accessibility, performance, and ADRs.
-- Merged implementation pull request #1 to `main` using a merge commit so the 24 meaningful feature-branch commits remain visible in history.
+- Preserved the repository's MIT license and initial history.
+- Added the canonical dependency-free Rust temperature engine for Celsius, Fahrenheit, Kelvin, Rankine, Réaumur, Delisle, Newton, and Rømer.
+- Added absolute-zero/non-finite validation plus Rust reference, round-trip, boundary, and invalid-input tests.
+- Added the `wasm-bindgen` bridge so browser conversion behavior comes from the Rust engine rather than duplicated TypeScript formulas.
+- Added the React/TypeScript/Vite PWA with instant conversion, swap, precision/rounding, copy/share, batch conversion, CSV export, local history, JSON export, formula/reference education, offline state, themes, high contrast, reduced motion, keyboard shortcuts, local data reset, About/support surfaces, and the `Made by the Sanskar` credit.
+- Added Vitest, Testing Library, Playwright, axe, GitHub Actions, CodeQL, dependency auditing, Dependabot, release automation, community templates, and repository documentation.
+- Added the original Tauri 2 native target for Windows, macOS, and Linux.
+- Merged the original implementation as pull request #1 while preserving its granular feature history.
 
-## Files/modules added or changed
+## Cross-platform continuation completed on 2026-08-20
 
-Major areas:
+### Shared native runtime
 
-- `/crates/thermoshift-core`
-- `/crates/thermoshift-wasm`
-- `/apps/web`
-- `/apps/desktop/src-tauri`
-- `/.github`
-- `/docs`
-- root build/configuration/community files
+- Converted the Tauri crate into a shared native library with `staticlib`, `cdylib`, and `rlib` crate types.
+- Moved Tauri command registration/setup into `apps/desktop/src-tauri/src/lib.rs`.
+- Added `#[cfg_attr(mobile, tauri::mobile_entry_point)]` to the shared `run()` function so the same native runtime supports Android and iOS.
+- Reduced desktop `main.rs` to a thin delegate to `thermoshift_lib::run()` so desktop and mobile cannot silently diverge.
+- Preserved the canonical `thermoshift-core` engine as the only executable source of temperature conversion formulas.
 
-The pre-existing `LICENSE` was retained. Pull request #1 contained **87 changed files** and **2,633 additions**.
+### Android and iOS delivery
 
-## Tests added
+- Added root/workspace commands for Android initialization, emulator/device development, host-network development, execution, APK generation, AAB generation, and normal builds.
+- Added root/workspace commands for iOS initialization, simulator/device development, host-network development, execution, signed builds, and unsigned CI-oriented builds.
+- Configured Android API 24 as the native minimum and added a debug application ID suffix.
+- Configured iOS/iPadOS 14.0 as the native minimum system version.
+- Added mobile-aware `TAURI_DEV_HOST` handling to Vite so physical devices can reach the development server and HMR over the local network.
+- Kept generated `src-tauri/gen/android` and `src-tauri/gen/apple` projects out of this source-only change; they must be generated by the installed Tauri CLI on a real Android/Xcode toolchain rather than fabricated.
+
+### PWA/mobile experience
+
+- Expanded PWA manifest metadata for standalone installation and device-class compatibility.
+- Added browser install-prompt lifecycle handling and a visible **Install app** action when `beforeinstallprompt` is available.
+- Added standalone-mode detection, accepted/dismissed install outcomes, and `appinstalled` handling.
+- Added `viewport-fit=cover`, Apple/mobile standalone metadata, mobile color-scheme metadata, safe-area insets, dynamic viewport sizing, 44px minimum interactive targets, touch manipulation behavior, momentum table scrolling, and coarse-pointer hover protection.
+
+### Quality and CI
+
+- Added `scripts/verify-native-config.mjs`, a dependency-free structural verifier for the native application identifier, Android/iOS minimum versions, Android/iOS lifecycle scripts, Rust library crate types, Tauri mobile entry point, shared `run()`, and desktop delegation.
+- Added `npm run verify:native-config` at the workspace root.
+- Added a CI `repository-config` job and made E2E depend on that invariant check in addition to the Rust/web jobs.
+- Added install-prompt unit tests for acceptance, dismissal, and completion.
+
+### Documentation
+
+- Added `docs/mobile.md` with Android Studio/SDK/NDK setup, Rust targets, Android init/dev/APK/AAB commands, iOS/Xcode/Rust target setup, iOS init/dev/build commands, signing boundaries, PWA installation, troubleshooting, and mobile release checklist.
+- Expanded `README.md`, `docs/setup.md`, `docs/release.md`, and `docs/architecture.md` for Android/iOS and the shared native runtime.
+- Added ADR 0004 documenting the decision to share one Tauri runtime across desktop and mobile.
+- Updated `CHANGELOG.md` and `ROADMAP.md` so configured platform support is clearly distinguished from release-verified packages.
+
+## Current supported target matrix
+
+| Platform | Delivery | Repository state |
+|---|---|---|
+| Modern browsers | React + Rust/WASM | Implemented |
+| Installable PWA | Vite PWA | Implemented |
+| Windows | Tauri 2 | Configured native target |
+| macOS | Tauri 2 | Configured native target |
+| Linux | Tauri 2 | Configured native target |
+| Android 7.0+ / API 24+ | Tauri 2 mobile | Configured native target |
+| iOS/iPadOS 14+ | Tauri 2 mobile | Configured native target; build host must be macOS/Xcode |
+
+A configured native target is not called release-verified until its real package has been built and smoke-tested on the appropriate toolchain.
+
+## Tests and verification present
 
 - Rust canonical reference-point tests.
 - Cross-scale round-trip tests across all eight units.
 - Absolute-zero boundary tests for all units.
 - Non-finite input rejection tests.
-- TypeScript rounding/formatting tests, including negative half-away-from-zero behavior.
-- Local-storage resilience, malformed-unit, reset, and history-limit tests.
-- React startup component test with the engine mocked only at the UI boundary.
+- TypeScript rounding/formatting tests.
+- Local-storage resilience/reset/history-limit tests.
+- React startup component test.
+- PWA install-prompt lifecycle tests.
 - Playwright real conversion smoke test.
 - Playwright + axe primary-screen accessibility test.
+- Dependency-free native configuration invariant check.
 
-## Commands and checks run in this chat
+## Verification boundary in this continuation
 
-Local execution sandbox:
+- GitHub repository writes and branch comparisons are being performed through the connected GitHub repository integration.
+- The connected commit-status API did not expose completed checks for the starting `main` commit, so no historical green-CI claim is made.
+- A real Android SDK/NDK, Xcode/iOS SDK, desktop platform toolchains, Rust dependency resolution, and npm dependency installation are not available inside this repository-editing environment; native package builds and clean dependency-based test runs are therefore not fabricated.
+- The new structural native verifier is wired into CI and can also run locally with Node.js because it has no third-party dependencies.
 
-- `rustc --version` / `cargo --version`: unavailable in the sandbox, so Rust compilation, rustfmt, and Clippy could not be executed locally.
-- `node --version`: Node.js 22 is installed.
-- JSON files were parsed successfully after generation.
-- TypeScript/TSX files were passed through the globally installed TypeScript transpiler for syntax diagnostics: no syntax errors were reported.
-- A full `tsc -b` was attempted and stopped only because project dependencies/type packages are not installed in the sandbox (`vite/client`, `vitest/globals`, and `node` type definitions unavailable locally).
-- An npm registry lookup timed out, so dependency installation/lockfile generation was not fabricated.
+## Known release blockers / remaining verification
 
-Repository verification:
-
-- Connector-created Git commits were inspected through GitHub's Git commit API. Commit `e35dbd7a6b23673d622557734a69e038475cd0aa` reports both author and committer email as `sanskarin@outlook.in`, confirming the requested commit email is used by the connected GitHub identity.
-- Before merge, `build/thermoshift-v0.1` was verified as 24 commits ahead of `main`, 0 behind, with no merge conflict.
-- Pull request #1 was merged successfully. Merge commit: `21638734e7d326b605975eef27c24b74e409f4a8`.
-- GitHub workflow runs had not yet surfaced through the connector immediately after the merge checks in this session; no passing status is claimed without evidence.
-
-## Known limitations / release blockers
-
-1. Dependency lockfiles are not yet committed because the sandbox could not complete networked dependency resolution. CI deliberately uses `npm install` rather than `npm ci` until a reviewed `package-lock.json` exists. A clean developer checkout should generate and commit `package-lock.json` and `Cargo.lock` after successful verification.
-2. Real screenshots, native installers, signing/notarization, and native smoke tests require real Windows/macOS/Linux toolchains and must not be fabricated.
-3. Desktop release automation currently publishes the web artifact only. Signed native installers require repository-owner signing secrets and platform runners.
-4. Branch protection and GitHub Discussions are repository settings; this connector session does not expose those mutations. Recommended settings are documented below under next tasks.
-
-## Next exact tasks
-
-1. Check the newest `main` GitHub Actions runs and fix any dependency/API drift revealed by the live toolchains.
-2. On a full toolchain machine, run `npm install`; review and commit the generated `package-lock.json`.
-3. Run Cargo dependency resolution; review and commit `Cargo.lock` for this application workspace.
-4. Run `cargo test -p thermoshift-core`, `cargo fmt --all -- --check`, Clippy, web typecheck/lint/test/build, and Playwright from a clean checkout.
-5. Build Tauri packages on Windows, macOS, and Linux, then capture actual screenshots for README/release assets.
-6. Configure `main` branch protection to require CI/security checks and pull-request review as appropriate.
-7. Enable GitHub Discussions if community Q&A is desired.
-8. Prepare `v0.1.0` only after all Phase 6 checks pass.
+1. Generate, review, and commit `package-lock.json` and `Cargo.lock` after a successful clean dependency resolution.
+2. Run the complete Rust/web/PWA quality gates from a clean checkout and fix any live toolchain/API drift.
+3. Run `tauri android init` on a configured Android development machine, then build/test APK and AAB outputs on emulator and real hardware.
+4. Run `tauri ios init` on macOS with Xcode, then build/test simulator/device outputs and verify signing/provisioning separately.
+5. Build and smoke-test Tauri packages on Windows, macOS, and Linux.
+6. Capture real screenshots and package evidence from verified builds; do not use fabricated screenshots as release proof.
+7. Configure owner-controlled signing/notarization/store credentials before publishing signed native packages.
+8. Verify GitHub Actions/CodeQL/dependency checks for the final release commit.
+9. Configure branch protection/required checks if repository settings allow it.
+10. Prepare `v0.1.0` only after the platform verification matrix is complete enough for the claims in its release notes.
 
 ## Migration notes
 
-There is no database or remote migration. Local storage keys are versioned as `thermoshift.settings.v1` and `thermoshift.history.v1`. Future storage-schema changes must migrate or version old data explicitly rather than silently assuming a new shape.
+There is no database or remote migration. Local storage keys remain `thermoshift.settings.v1` and `thermoshift.history.v1`. Future schema changes must migrate/version existing local data explicitly.
 
 ## Release notes draft
 
-ThermoShift 0.1 introduces a local-first multi-scale temperature converter with a canonical Rust engine, WebAssembly-powered React PWA, Tauri desktop target, batch/history/export tools, formula/reference education, offline support, accessibility preferences, and professional CI/security/documentation foundations.
+ThermoShift 0.1 is a local-first, multi-scale temperature converter with a canonical Rust engine, WebAssembly-powered React PWA, shared Tauri 2 native runtime for Windows/macOS/Linux/Android/iOS, offline installation, local history and batch/export tools, formula/reference education, accessibility preferences, mobile-safe layouts, and professional CI/security/documentation foundations.
 
-## Meaningful commit checkpoint
+## Cross-platform continuation commit checkpoint
 
-Implementation history created in this work session:
+- `83185fe` — `build(native): enable shared library targets for mobile`
+- `a50c29a` — `refactor(native): share Tauri runtime across desktop and mobile`
+- `702f5b9` — `refactor(native): keep desktop entrypoint thin`
+- `f27e0bb` — `build(native): add Android and iOS lifecycle commands`
+- `2c78d32` — `build: expose cross-platform native commands at workspace root`
+- `2cdeba9` — `build(web): support Tauri mobile dev hosts and richer PWA metadata`
+- `fe4d7f6` — `feat(native): configure Android and iOS bundle targets`
+- `f3f41f8` — `feat(web): add mobile viewport and standalone app metadata`
+- `5e06b7e` — `feat(web): harden touch targets and mobile safe-area layouts`
+- `4349f1d` — `feat(web): add install-prompt lifecycle hook`
+- `5625d0c` — `i18n: add install action copy`
+- `6aacfc2` — `feat(web): surface install action when PWA installation is available`
+- `11b2acb` — `style(web): integrate install control into responsive navigation`
+- `c807f55` — `test(web): cover install prompt acceptance dismissal and completion`
+- `4c74bd8` — `test(native): add cross-platform configuration invariant check`
+- `debe65e` — `build: expose native configuration verification command`
+- `e0cc208` — `ci: verify cross-platform native configuration invariants`
+- `4ecde44` — `docs: add complete Android iOS and mobile PWA guide`
+- `3c38742` — `docs: document complete cross-platform support and commands`
+- `896f60a` — `docs: expand setup for Android iOS and native verification`
+- `95acbb6` — `docs: define cross-platform release verification and signing gates`
+- `b6b36a3` — `docs: align architecture with shared desktop and mobile runtime`
+- `5043275` — `docs(adr): record shared Tauri desktop and mobile runtime decision`
+- `6f8202c` — `docs: advance roadmap for cross-platform native delivery`
+- `f23da6c` — `docs: record cross-platform native and mobile PWA improvements`
 
-- `9c76bc2` — `build: bootstrap Rust workspace`
-- `96fb4c8` — `build: add workspace developer commands`
-- `055a5cf` — `chore: add repository hygiene configuration`
-- `807928e` — `feat(core): add validated multi-scale conversion engine`
-- `90663b2` — `feat(wasm): expose Rust engine to the PWA`
-- `5d3ea8d` — `build(web): configure React TypeScript PWA toolchain`
-- `f9a769f` — `feat(web): add typed engine and local data foundations`
-- `937d971` — `feat(web): add accessible instant converter and reference cards`
-- `d387afc` — `feat(web): add batch conversion and local history`
-- `11616b5` — `feat(web): add formulas settings and project about`
-- `d8eda33` — `feat(web): compose responsive accessible application shell`
-- `df1450b` — `test(web): cover formatting persistence UI and accessibility`
-- `aabcc5a` — `feat(desktop): add Tauri 2 application target`
-- `e50c215` — `chore(github): add contribution and dependency templates`
-- `cec26c1` — `ci: verify Rust web and end-to-end quality gates`
-- `c6713e7` — `ci: add CodeQL and dependency security audits`
-- `e10cc27` — `ci: add tagged web release workflow`
-- `a51fda1` — `docs: add project overview and contribution guidance`
-- `d9fd621` — `docs: define security privacy and support policies`
-- `4760df6` — `docs: document architecture setup development and testing`
-- `2535d5d` — `docs: add release accessibility troubleshooting and performance guides`
-- `620416f` — `docs(adr): record core delivery and persistence decisions`
-- `e35dbd7` — `docs: add changelog roadmap and release metadata`
-- `ea8fbbc` — `docs: add implementation handoff checkpoint`
-- `2163873` — merge commit for pull request #1
-
-This file is the authoritative continuation checkpoint; GitHub history remains the source of truth for exact final hashes/messages.
+This file is the authoritative continuation checkpoint. GitHub history remains the source of truth for exact final hashes, pull-request state, and the eventual merge commit.

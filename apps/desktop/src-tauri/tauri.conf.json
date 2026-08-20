@@ -29,8 +29,18 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "Utility",
+    "homepage": "https://github.com/sanskarIN/thermoshift",
+    "license": "MIT",
     "shortDescription": "Precise offline temperature conversion",
-    "longDescription": "ThermoShift is a private, offline-first temperature converter for modern desktop and web platforms.",
-    "copyright": "Copyright © 2026 Sanskar"
+    "longDescription": "ThermoShift is a private, offline-first temperature converter for web, desktop, Android, and iOS devices.",
+    "copyright": "Copyright © 2026 Sanskar",
+    "android": {
+      "minSdkVersion": 24,
+      "debugApplicationIdSuffix": ".debug"
+    },
+    "iOS": {
+      "minimumSystemVersion": "14.0"
+    }
   }
 }
