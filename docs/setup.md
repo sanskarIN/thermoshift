@@ -1,6 +1,6 @@
 # Setup
 
-ThermoShift combines a Rust domain engine, a WebAssembly bridge, a React/TypeScript PWA, and a Tauri 2 desktop shell.
+ThermoShift combines a Rust domain engine, a WebAssembly bridge, a React/TypeScript PWA, and a shared Tauri 2 native runtime for Windows, macOS, Linux, Android, and iOS.
 
 ## Common prerequisites
 
@@ -40,7 +40,7 @@ cd thermoshift
 npm ci --ignore-scripts
 ```
 
-The `2.8.2` candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
+The `2.8.2` candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop/mobile, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
 
 ## Repository metadata checks
 
@@ -49,10 +49,11 @@ These checks do not require the web application to be running:
 ```bash
 npm run check:versions
 npm run check:desktop-config
+npm run check:mobile-config
 npm run check:docs
 ```
 
-They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, and internal Markdown file links.
+They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, the shared mobile-capable Tauri runtime, Android/iOS platform configuration and scripts, and internal Markdown file links.
 
 ## Web/PWA development
 
@@ -106,10 +107,11 @@ The capture command writes product screenshots under `docs/screenshots/`; the ve
 
 Install the current Tauri 2 native prerequisites for your operating system. These include platform toolchains such as Microsoft C++/WebView components on Windows, Xcode command-line tooling on macOS, and WebKitGTK/build dependencies on Linux. Use current Tauri platform prerequisite documentation because package names vary by OS/distribution version.
 
-Verify the repository-side desktop configuration first:
+Verify the repository-side native configuration first:
 
 ```bash
 npm run check:desktop-config
+npm run check:mobile-config
 cargo check --locked -p thermoshift-desktop
 ```
 
@@ -119,13 +121,73 @@ Then run:
 npm run desktop:dev
 ```
 
-Build the current platform package with:
+Build the current desktop platform package with:
 
 ```bash
 npm run desktop:build
 ```
 
 The manual `Desktop Platform Verification` workflow provides unsigned Windows/macOS/Linux CI build evidence. Signing/notarization is intentionally separate and requires owner-controlled credentials outside source control.
+
+## Android development
+
+Android development can be performed from Windows, macOS, or Linux when the Tauri/Android prerequisites are installed. In addition to the common tools, configure Android Studio, the Android SDK/Platform-Tools/Build-Tools/Command-line Tools, Android NDK, a supported Java runtime, `ANDROID_HOME`, and `NDK_HOME`.
+
+Install the Rust Android targets:
+
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+Then initialize and run:
+
+```bash
+npm run check:mobile-config
+npm run android:init
+npm run android:dev
+```
+
+Build APK/AAB outputs with:
+
+```bash
+npm run android:build
+```
+
+The repository configures Android minimum SDK 24. The dedicated `Mobile Platform Verification` workflow performs an exact-candidate Android ARM64 build and uploads native package evidence when the hosted job succeeds.
+
+## iOS development
+
+iOS development is macOS-only. Install the full Xcode application and CocoaPods in addition to the common prerequisites.
+
+Install the Rust iOS targets:
+
+```bash
+rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+```
+
+Initialize and run:
+
+```bash
+npm run check:mobile-config
+npm run ios:init
+npm run ios:dev
+```
+
+Build the Apple Silicon simulator target with:
+
+```bash
+npm run ios:build:simulator
+```
+
+A device/archive build uses:
+
+```bash
+npm run ios:build
+```
+
+The repository configures iOS minimum system version 14.0. Apple development-team selection, signing certificates, provisioning profiles, and store credentials are intentionally not committed; supply them only through the owner-controlled build environment when a signed build is required.
+
+See [`mobile.md`](mobile.md) for the complete mobile workflow and evidence requirements.
 
 ## Desktop branding
 
@@ -141,11 +203,12 @@ The hosted `Refresh Desktop Icons` workflow is manual-only and provides the repr
 
 ## Environment and secrets
 
-Core ThermoShift conversion requires no production secret. `.env.example` contains placeholders only. Never put credentials, signing keys, tokens, private endpoints, or real user data in tracked files.
+Core ThermoShift conversion requires no production secret. `.env.example` contains placeholders only. Never put credentials, signing keys, tokens, private endpoints, real user data, Android keystores, Apple certificates, provisioning profiles, or store credentials in tracked files.
 
 ## Additional references
 
 - [`development.md`](development.md) — code-change workflow and architecture boundaries.
+- [`mobile.md`](mobile.md) — Android/iOS prerequisites, commands, CI verification, and evidence model.
 - [`testing.md`](testing.md) — test strategy.
 - [`release.md`](release.md) — release process.
 - [`release-evidence.md`](release-evidence.md) — exact-candidate evidence template.
