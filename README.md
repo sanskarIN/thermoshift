@@ -12,7 +12,7 @@
   <a href="https://buymeacoffee.com/sanskarIN"><img alt="Buy Me a Coffee" src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000" /></a>
 </p>
 
-ThermoShift is a production-oriented temperature converter for Web/PWA with a Tauri desktop target for Windows, macOS, and Linux. Its conversion rules live in one Rust domain engine exposed to the browser through WebAssembly. Core conversion needs no account, server, analytics service, or network request.
+ThermoShift is a production-oriented temperature converter for Web/PWA plus Tauri 2 native targets for Windows, macOS, Linux, Android, and iOS. Its conversion rules live in one Rust domain engine exposed to the browser through WebAssembly and reused by every native target. Core conversion needs no account, server, analytics service, or network request.
 
 > **Release status:** source metadata is currently `2.8.2`, but the `v2.8.2` release candidate remains untagged while exact-candidate hosted checks, verified product screenshots, and cross-platform release evidence are completed. See [`ROADMAP.md`](ROADMAP.md) and [`docs/release-evidence.md`](docs/release-evidence.md).
 
@@ -34,12 +34,12 @@ ThermoShift is a production-oriented temperature converter for Web/PWA with a Ta
 - Copy/share support without a server.
 - English UI copy externalized into a locale module for future language expansion.
 - Local-only structured diagnostics with secret/PII-shaped metadata redaction and generic user-facing operational errors.
-- Static version/Tauri configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, three-engine Chromium/Firefox/WebKit compatibility automation, and production asset budgets.
+- Static version/Tauri desktop/mobile configuration/documentation-link checks, Rust/web quality gates, Playwright/axe coverage, three-engine Chromium/Firefox/WebKit compatibility automation, and production asset budgets.
 - CodeQL, Gitleaks, RustSec/npm dependency auditing, Dependabot, and fail-closed release automation.
-- Committed npm/Cargo lockfiles used by CI, security, desktop, screenshot, and release verification paths.
+- Committed npm/Cargo lockfiles used by CI, security, desktop, mobile, screenshot, and release verification paths.
 - Committed Tauri platform icon assets generated from the editable SVG logo, including required PNG, ICO, and ICNS outputs.
 - Exact release-input preflight plus cryptographic release provenance manifest/checksum generation.
-- Dedicated workflows for real product screenshots, manual dependency/icon refresh, unsigned Windows/macOS/Linux native build evidence, and browser-engine compatibility.
+- Dedicated workflows for real product screenshots, manual dependency/icon refresh, unsigned Windows/macOS/Linux native build evidence, Android APK/AAB verification, iOS simulator verification, and browser-engine compatibility.
 - Open-source MIT license and no required account.
 
 ## Screenshots
@@ -63,6 +63,8 @@ npm run check:release-inputs:screenshots
 | Windows | Tauri 2 | Configured target with generated Windows icon assets; exact native package evidence pending |
 | macOS | Tauri 2 | Configured target with generated macOS icon assets; exact native package evidence pending |
 | Linux | Tauri 2 | Configured target with generated Linux icon assets; exact native package evidence pending |
+| Android | Tauri 2 | Shared mobile runtime, SDK 24 config, init/dev/build/run commands, and APK/AAB CI verification defined; exact candidate/device evidence pending |
+| iOS | Tauri 2 | Shared mobile runtime, iOS 14 config, init/dev/build/run commands, and macOS simulator CI verification defined; exact candidate/device/signing evidence pending |
 
 A workflow definition or committed generated asset is not a claim that every platform build or browser engine passed. See the release-evidence record for the exact candidate.
 
@@ -71,7 +73,7 @@ A workflow definition or committed generated asset is not a claim that every pla
 - Rust for canonical temperature domain logic.
 - `wasm-bindgen` / `wasm-pack` for the browser bridge.
 - React + TypeScript + Vite for the PWA.
-- Tauri 2 for native desktop packaging.
+- Tauri 2 for native desktop and mobile packaging.
 - Vitest, Testing Library, Playwright, and axe for automated quality/accessibility checks.
 - GitHub Actions, CodeQL, Gitleaks, dependency audits, Dependabot, and release automation.
 
@@ -117,11 +119,12 @@ Operational update failures are logged only through the redacted local diagnosti
 
 ## Development and quality commands
 
-See [`docs/setup.md`](docs/setup.md) and [`docs/development.md`](docs/development.md) for the full workflow.
+See [`docs/setup.md`](docs/setup.md), [`docs/development.md`](docs/development.md), and [`docs/mobile.md`](docs/mobile.md) for the full workflow.
 
 ```bash
 npm run check:versions
 npm run check:desktop-config
+npm run check:mobile-config
 npm run check:docs
 npm run test:release-tools
 cargo fmt --all -- --check
@@ -170,9 +173,33 @@ npm --workspace @thermoshift/desktop run icons
 
 The current branch contains the generated Tauri icon set, including `32x32.png`, `128x128.png`, `128x128@2x.png`, `icon.ico`, and `icon.icns`. `npm run check:desktop-config` fails if the primary generated icon artifacts disappear or become empty. Icon regeneration is intentionally manual so normal pushes do not rewrite generated branding.
 
+## Mobile development
+
+ThermoShift's Tauri crate is structured as a shared native library with a `mobile_entry_point`, so Android and iOS use the same Rust command/runtime path as desktop.
+
+Android setup/build commands:
+
+```bash
+npm run check:mobile-config
+npm run android:init
+npm run android:dev
+npm run android:build
+```
+
+iOS development requires macOS with full Xcode. The repository exposes:
+
+```bash
+npm run ios:init
+npm run ios:dev
+npm run ios:build:simulator
+npm run ios:build
+```
+
+`Mobile Platform Verification` initializes and builds the Android ARM64 package path and the iOS Apple Silicon simulator path on native hosted environments. Android/iOS device signing and store credentials remain outside Git. See [`docs/mobile.md`](docs/mobile.md) for prerequisites and the exact evidence model.
+
 ## Architecture
 
-`thermoshift-core` is the executable source of truth for conversion and physical validation. The React application calls it through a generated WebAssembly bridge, and Tauri links the same Rust core. This avoids parallel formula implementations drifting apart.
+`thermoshift-core` is the executable source of truth for conversion and physical validation. The React application calls it through a generated WebAssembly bridge, and every Tauri desktop/mobile target links the same Rust core. This avoids parallel formula implementations drifting apart.
 
 Presentation state is local-first. Browser data is versioned; backup parsing is strict; English product copy is externalized under `apps/web/src/i18n/`; reusable accessibility behavior lives outside individual screens; and local diagnostics sanitize metadata before console serialization.
 
@@ -192,18 +219,19 @@ Before a stable tag, run the fail-closed candidate checks:
 npm run check:release-inputs:screenshots
 npm run check:versions
 npm run check:desktop-config
+npm run check:mobile-config
 npm run check:docs
 npm run test:release-tools
 ```
 
-A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfiles, complete PNG/ICO/ICNS desktop icon set, and verified eight-screenshot set exist. The workflow validates version/tag consistency, repository config/docs, Rust quality using the locked graph, web type/lint/coverage, production PWA build/budget, committed screenshots, primary Playwright E2E/axe, Chromium/Firefox/WebKit compatibility, and then produces:
+A `vX.Y.Z` tag triggers the web release workflow only after the committed lockfiles, complete PNG/ICO/ICNS desktop icon set, mobile target configuration/runtime inputs, and verified eight-screenshot set exist. The workflow validates version/tag consistency, desktop/mobile repository config/docs, Rust quality using the locked graph, web type/lint/coverage, production PWA build/budget, committed screenshots, primary Playwright E2E/axe, Chromium/Firefox/WebKit compatibility, and then produces:
 
 - the compressed web archive;
 - its SHA-256 checksum;
 - a candidate-SHA/ref release provenance manifest containing SHA-256 digests for release evidence;
 - the provenance manifest's SHA-256 checksum.
 
-Do not create `v2.8.2` merely because source metadata is `2.8.2`. Follow [`docs/release.md`](docs/release.md) and record exact-candidate evidence in [`docs/release-evidence.md`](docs/release-evidence.md).
+Native Windows/macOS/Linux/Android/iOS build/device evidence is recorded separately for the exact candidate and remains mandatory before cross-platform release claims. Do not create `v2.8.2` merely because source metadata is `2.8.2`. Follow [`docs/release.md`](docs/release.md) and record exact-candidate evidence in [`docs/release-evidence.md`](docs/release-evidence.md).
 
 Recommended GitHub repository settings are documented in [`docs/repository-settings.md`](docs/repository-settings.md).
 
