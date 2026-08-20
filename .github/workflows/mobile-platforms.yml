@@ -7,6 +7,7 @@ on:
       - 'apps/desktop/**'
       - 'apps/web/**'
       - 'crates/thermoshift-core/**'
+      - 'scripts/check-desktop-config.mjs'
       - 'scripts/check-mobile-config.mjs'
       - 'package.json'
       - 'package-lock.json'
@@ -26,8 +27,12 @@ jobs:
     name: Android native build
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -53,17 +58,25 @@ jobs:
           echo "NDK_HOME=$NDK_DIR" >> "$GITHUB_ENV"
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts
-      - name: Verify mobile configuration
-        run: npm run check:mobile-config
+      - name: Verify native configuration
+        run: |
+          npm run check:desktop-config
+          npm run check:mobile-config
       - name: Initialize Android shell
         run: npm run android:init
       - name: Build Android APK and AAB
         run: npm --workspace @thermoshift/desktop run android:build -- --target aarch64
+      - name: Record Android candidate identity
+        shell: bash
+        run: |
+          printf 'candidate_sha=%s\nref=%s\nplatform=android-aarch64\n' "$CANDIDATE_SHA" "$GITHUB_REF" > THERMOSHIFT_ANDROID_BUILD.txt
       - name: Upload Android build evidence
         uses: actions/upload-artifact@v4
         with:
-          name: thermoshift-android-${{ github.sha }}
-          path: apps/desktop/src-tauri/gen/android/app/build/outputs/**
+          name: thermoshift-android-${{ env.CANDIDATE_SHA }}
+          path: |
+            THERMOSHIFT_ANDROID_BUILD.txt
+            apps/desktop/src-tauri/gen/android/app/build/outputs/**
           if-no-files-found: error
           retention-days: 14
 
@@ -71,8 +84,12 @@ jobs:
     name: iOS simulator build
     runs-on: macos-14
     timeout-minutes: 60
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -89,9 +106,24 @@ jobs:
         run: pod --version
       - name: Install locked JavaScript dependencies
         run: npm ci --ignore-scripts
-      - name: Verify mobile configuration
-        run: npm run check:mobile-config
+      - name: Verify native configuration
+        run: |
+          npm run check:desktop-config
+          npm run check:mobile-config
       - name: Initialize iOS shell
         run: npm run ios:init
       - name: Build unsigned iOS simulator target
         run: npm run ios:build:simulator
+      - name: Record iOS candidate identity
+        shell: bash
+        run: |
+          printf 'candidate_sha=%s\nref=%s\nplatform=ios-aarch64-sim\n' "$CANDIDATE_SHA" "$GITHUB_REF" > THERMOSHIFT_IOS_BUILD.txt
+      - name: Upload iOS simulator build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-ios-simulator-${{ env.CANDIDATE_SHA }}
+          path: |
+            THERMOSHIFT_IOS_BUILD.txt
+            apps/desktop/src-tauri/gen/apple/build/**
+          if-no-files-found: error
+          retention-days: 14
