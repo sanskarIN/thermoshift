@@ -62,7 +62,9 @@ const isHistoryEntry = (value: unknown): value is HistoryEntry => {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<HistoryEntry>;
   return typeof candidate.id === 'string'
+    && candidate.id.trim().length > 0
     && typeof candidate.createdAt === 'string'
+    && Number.isFinite(Date.parse(candidate.createdAt))
     && typeof candidate.input === 'number'
     && Number.isFinite(candidate.input)
     && typeof candidate.output === 'number'
