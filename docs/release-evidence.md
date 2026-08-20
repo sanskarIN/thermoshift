@@ -136,6 +136,7 @@ ThermoShift also targets Android and iOS through the same Tauri 2 runtime.
 Before release, record:
 
 ```bash
+npm run check:desktop-config
 npm run check:mobile-config
 ```
 
@@ -144,9 +145,11 @@ and completed exact-candidate results from `Mobile Platform Verification`:
 - Android: Tauri target initialization plus ARM64 APK/AAB build on Linux/Android tooling;
 - iOS: Tauri target initialization plus Apple Silicon iOS simulator build on macOS/Xcode tooling.
 
-Android package evidence is uploaded by the workflow under a candidate-SHA-qualified artifact name. For iOS, the simulator build is compilation evidence, not App Store signing evidence.
+Pull-request mobile jobs explicitly check out the PR head SHA. Both jobs write a candidate-identity record and upload candidate-SHA-qualified artifacts when successful. Android evidence contains the generated package outputs plus `THERMOSHIFT_ANDROID_BUILD.txt`; iOS simulator evidence contains the generated Apple build outputs plus `THERMOSHIFT_IOS_BUILD.txt`.
 
-Also record at least one representative launch/conversion smoke test on Android and one on an iOS simulator/device before describing the mobile targets as release-verified. Include candidate SHA, OS/device/simulator versions, local persistence behavior, and offline conversion behavior.
+A failed run from an older SHA is useful diagnostic history but not evidence against a later fixed candidate. Likewise, a passing run from an older SHA cannot be reused after the source candidate changes.
+
+Also record at least one representative launch/conversion smoke test on Android and one on an iOS simulator/device before describing the mobile targets as release-verified. Include candidate SHA, OS/device/simulator versions, local persistence behavior, responsive/touch/accessibility behavior, and offline conversion behavior.
 
 Apple development-team IDs, signing certificates, provisioning profiles, Android signing keys, and store credentials are owner-controlled release inputs and must stay outside Git. Signed store publication is a separate gate from source supportability.
 
@@ -201,6 +204,7 @@ The release workflow also publishes a SHA-256 checksum of the manifest itself.
 For a `vX.Y.Z` candidate, verify:
 
 - `npm run check:release-inputs:screenshots` passes;
+- `npm run check:desktop-config` passes;
 - `npm run check:mobile-config` passes;
 - source/package version matches the exact tag;
 - the release workflow completes its full quality gate, including Chromium/Firefox/WebKit compatibility;
