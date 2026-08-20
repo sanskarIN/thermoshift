@@ -4,7 +4,7 @@
 
 - Git.
 - Current stable Rust with `rustfmt`, `clippy`, and target `wasm32-unknown-unknown`.
-- Node.js 22 or newer and npm.
+- Node.js 22.x and npm 10.9.x. The root `package.json` enforces the supported range and `.nvmrc` selects Node 22 for compatible version managers.
 - `wasm-pack`.
 
 ```bash
@@ -15,7 +15,7 @@ npm install
 npm run verify:native-config
 ```
 
-`npm run verify:native-config` checks the repository's desktop/Android/iOS Tauri invariants without requiring a platform SDK.
+`npm run verify:native-config` checks the repository's desktop/Android/iOS Tauri invariants without requiring a platform SDK. The repository also has a lockfile verification workflow that regenerates npm and Cargo lockfiles on dependency-manifest changes and rejects drift once the reviewed lockfiles are committed.
 
 ## Web/PWA
 
