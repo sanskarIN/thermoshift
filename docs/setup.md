@@ -53,7 +53,9 @@ npm run check:mobile-config
 npm run check:docs
 ```
 
-They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, the shared mobile-capable Tauri runtime, Android/iOS platform configuration and scripts, and internal Markdown file links.
+They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, the shared mobile-capable Tauri runtime, Android/iOS platform configuration and scripts, mobile-device Vite host wiring, and internal Markdown file links.
+
+The Tauri CLI is launched from `apps/desktop`, so `beforeDevCommand` and `beforeBuildCommand` prefixes are validated relative to that workspace. `frontendDist` remains a Tauri-config-relative path. Do not make those two path types share an incorrect base directory.
 
 ## Web/PWA development
 
@@ -142,10 +144,19 @@ rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-andro
 Then initialize and run:
 
 ```bash
+npm run check:desktop-config
 npm run check:mobile-config
 npm run android:init
 npm run android:dev
 ```
+
+For a physical/LAN device that needs the development server exposed through Tauri's selected host, use:
+
+```bash
+npm run android:dev:host
+```
+
+When `TAURI_DEV_HOST` is supplied, Vite listens on that host at port `5173` with strict port selection and uses port `5174` for HMR.
 
 Build APK/AAB outputs with:
 
@@ -153,7 +164,7 @@ Build APK/AAB outputs with:
 npm run android:build
 ```
 
-The repository configures Android minimum SDK 24. The dedicated `Mobile Platform Verification` workflow performs an exact-candidate Android ARM64 build and uploads native package evidence when the hosted job succeeds.
+The repository configures Android minimum SDK 24. The dedicated `Mobile Platform Verification` workflow checks out the exact candidate head, performs an Android ARM64 build, records candidate identity, and uploads native package evidence when the hosted job succeeds.
 
 ## iOS development
 
@@ -168,9 +179,22 @@ rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
 Initialize and run:
 
 ```bash
+npm run check:desktop-config
 npm run check:mobile-config
 npm run ios:init
 npm run ios:dev
+```
+
+For physical-device development, use the explicit host flow:
+
+```bash
+npm run ios:dev:host
+```
+
+If automatic host selection is unsuitable, force the Tauri IP-selection prompt with:
+
+```bash
+npm run ios:dev:tunnel
 ```
 
 Build the Apple Silicon simulator target with:
@@ -184,6 +208,8 @@ A device/archive build uses:
 ```bash
 npm run ios:build
 ```
+
+The generated Apple project/build area is under `apps/desktop/src-tauri/gen/apple`. The hosted mobile workflow checks out the exact candidate head and uploads candidate-qualified iOS simulator build evidence when successful.
 
 The repository configures iOS minimum system version 14.0. Apple development-team selection, signing certificates, provisioning profiles, and store credentials are intentionally not committed; supply them only through the owner-controlled build environment when a signed build is required.
 
