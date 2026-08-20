@@ -3,17 +3,6 @@ name: Mobile Platform Verification
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - 'apps/desktop/**'
-      - 'apps/web/**'
-      - 'crates/thermoshift-core/**'
-      - 'scripts/check-desktop-config.mjs'
-      - 'scripts/check-mobile-config.mjs'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/mobile-platforms.yml'
 
 permissions:
   contents: read
