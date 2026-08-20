@@ -9,7 +9,7 @@ pub enum TemperatureError {
     BelowAbsoluteZero {
         value: f64,
         unit: Unit,
-        minimum: f64,
+        absolute_zero: f64,
     },
     UnknownUnit(String),
 }
@@ -21,10 +21,10 @@ impl fmt::Display for TemperatureError {
             Self::BelowAbsoluteZero {
                 value,
                 unit,
-                minimum,
+                absolute_zero,
             } => write!(
                 f,
-                "{value} {} is below absolute zero ({minimum} {})",
+                "{value} {} is below absolute zero ({absolute_zero} {})",
                 unit.symbol(),
                 unit.symbol()
             ),
