@@ -3,6 +3,7 @@
   "private": true,
   "version": "2.8.2",
   "scripts": {
+    "tauri": "tauri",
     "dev": "tauri dev",
     "build": "tauri build",
     "icons": "tauri icon ../web/public/logo.svg",
