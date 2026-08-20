@@ -17,6 +17,10 @@ const librarySource = await readFile(resolve(tauriDir, 'src/lib.rs'), 'utf8');
 const binarySource = await readFile(resolve(tauriDir, 'src/main.rs'), 'utf8');
 const viteConfig = await readFile(resolve(root, 'apps/web/vite.config.ts'), 'utf8');
 
+if (desktopPackage.scripts?.tauri !== 'tauri') {
+  throw new Error(`Native package must expose the plain Tauri CLI script required by generated mobile projects; received ${String(desktopPackage.scripts?.tauri)}.`);
+}
+
 const requiredDesktopScripts = new Map([
   ['android:init', 'tauri android init --ci'],
   ['android:dev', 'tauri android dev'],
@@ -103,4 +107,4 @@ for (const fragment of requiredViteFragments) {
   }
 }
 
-console.log('Android/iOS commands, device-host development, platform configs, and shared Tauri mobile runtime are consistent.');
+console.log('Android/iOS commands, generated-project Tauri CLI bridge, device-host development, platform configs, and shared Tauri mobile runtime are consistent.');
