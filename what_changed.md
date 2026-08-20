@@ -74,7 +74,7 @@ Apple development-team IDs, signing certificates, provisioning profiles, private
 
 ## Mobile development-server support
 
-`apps/web/vite.config.ts` now reads `TAURI_DEV_HOST` for mobile development.
+`apps/web/vite.config.ts` reads `TAURI_DEV_HOST` for mobile development.
 
 When a mobile host is supplied:
 
@@ -85,39 +85,62 @@ When a mobile host is supplied:
 
 Ordinary browser/desktop development remains local by default. `scripts/check-mobile-config.mjs` guards these device-host settings so physical-device support cannot silently disappear.
 
-## Native frontend-path failure discovered and fixed
+## Hosted Android failure 1: frontend-hook working directory
 
-The first real hosted Android run was valuable because it reached actual Tauri target initialization instead of failing in setup.
-
-Old exact-head Android job successfully completed:
+The first real hosted Android run reached actual Tauri target initialization and successfully completed:
 
 - checkout;
-- Node setup;
-- Java setup;
-- Rust target setup;
+- Node/Java/Rust setup;
 - Android NDK resolution;
 - locked `npm ci`;
-- `check:mobile-config`;
+- mobile configuration guard;
 - `tauri android init`.
 
-The generated Android Studio project was created successfully. The build then failed before package compilation because Tauri executed:
+The generated Android Studio project was created successfully. The package build then failed because Tauri executed the old frontend hook:
 
 ```text
 npm --prefix ../../web run build
 ```
 
-from the native npm/Tauri CLI working directory `apps/desktop`. That incorrectly resolved to repository-level `/web/package.json`, which does not exist.
-
-The real failure was therefore a frontend-hook working-directory bug, not an Android SDK/NDK or target-initialization failure.
+from the native npm/Tauri CLI working directory `apps/desktop`, incorrectly resolving to repository-level `/web/package.json`.
 
 Fixes:
 
 - `beforeDevCommand` is now `npm --prefix ../web run dev:web`;
 - `beforeBuildCommand` is now `npm --prefix ../web run build`;
-- `frontendDist` remains `../../web/dist` because Tauri resolves that configuration path relative to `src-tauri/tauri.conf.json`;
-- `scripts/check-desktop-config.mjs` now models these two different path bases explicitly and verifies the target `package.json` exists.
+- `frontendDist` remains `../../web/dist` because Tauri resolves that path from `src-tauri/tauri.conf.json`;
+- `scripts/check-desktop-config.mjs` now models both path bases and verifies the target package exists.
 
-Do not revert both path classes to one base directory; they follow different runtime/configuration resolution rules.
+## Hosted Android failure 2: WASM exported borrowed string
+
+After the frontend-path fix, exact-candidate Android verification again passed:
+
+- exact candidate checkout;
+- Node/Java/Rust/NDK setup;
+- locked npm install;
+- `check:desktop-config`;
+- `check:mobile-config`;
+- Android shell initialization;
+- execution of the corrected `beforeBuildCommand`;
+- compilation of the canonical Rust core and most WASM dependencies.
+
+The production WASM build then surfaced this compiler error in `crates/thermoshift-wasm/src/lib.rs`:
+
+```text
+error: cannot return a borrowed ref with #[wasm_bindgen]
+23 | pub fn engine_version() -> &'static str {
+   |                            ^^^^^^^^^^^^
+```
+
+This was a WebAssembly boundary defect exposed by the current hosted wasm-bindgen toolchain, not an Android SDK/NDK failure.
+
+Fixes:
+
+- `engine_version()` now returns an owned `String` using `env!("CARGO_PKG_VERSION").to_owned()`;
+- the JavaScript-facing semantic value remains the same;
+- a Rust regression test verifies the exported engine version equals `CARGO_PKG_VERSION`.
+
+The next exact-candidate native run must prove that compilation progresses beyond this point; do not treat the older failing SHA as current evidence.
 
 ## Cross-platform configuration guards
 
@@ -150,17 +173,9 @@ Both native guards run in the dedicated mobile workflow before platform initiali
 
 ## Exact-candidate mobile verification
 
-`.github/workflows/mobile-platforms.yml` has separate Android and iOS jobs.
+`.github/workflows/mobile-platforms.yml` has separate Android and iOS jobs and now runs for every pull-request candidate change. This is intentional: release evidence is tied to the exact candidate SHA, so documentation-only final commits must not bypass native verification.
 
-The workflow now runs for every pull-request candidate change instead of using path filters. This is intentional: release evidence is tied to the exact candidate SHA, so documentation-only candidate changes must not bypass native verification.
-
-For pull requests each job sets:
-
-```text
-CANDIDATE_SHA = github.event.pull_request.head.sha
-```
-
-and explicitly checks out that SHA instead of GitHub's synthetic merge commit.
+For pull requests each job uses the PR head SHA as `CANDIDATE_SHA` and explicitly checks out that SHA instead of GitHub's synthetic merge commit.
 
 Android job:
 
@@ -205,24 +220,19 @@ Confirmed in the branch:
 - `Cargo.lock` records `thermoshift-desktop` `2.8.2`;
 - `Cargo.lock` records `thermoshift-wasm` `2.8.2`.
 
-The cross-platform continuation changed scripts, Tauri platform configs, source layout, crate output types, Vite/native workflow configuration, and documentation, but did not add/change npm or Rust dependency declarations. Do not hand-edit package-manager integrity metadata merely to make the lockfile commit newer.
+The cross-platform continuation changed scripts, Tauri platform configs, source layout, crate output types, Vite/native workflow configuration, WASM return ownership, tests, and documentation, but did not add/change npm or Rust dependency declarations. Do not hand-edit package-manager integrity metadata merely to make the lockfile commit newer.
 
-`.github/workflows/lockfiles.yml` is restored to manual-only maintenance and runs version, desktop config, mobile config, and documentation checks before committing an intentional dependency refresh. Its configured Git identity remains Sanskar / `sanskarin@outlook.in`.
+The hosted `npm ci` output currently reports three high-severity vulnerabilities in the installed dependency tree. Treat the dedicated Dependency Security workflow and an actual audit report as the source of truth for release remediation; do not run a breaking `npm audit fix --force` blindly.
+
+`.github/workflows/lockfiles.yml` is manual-only maintenance and runs version, desktop config, mobile config, and documentation checks before committing an intentional dependency refresh. Its configured Git identity remains Sanskar / `sanskarin@outlook.in`.
 
 ## Release/preflight hardening
 
-`scripts/check-release-inputs.mjs` requires the committed cross-platform inputs, including:
-
-- Android config;
-- iOS config;
-- shared Tauri native library entry point;
-- mobile config checker;
-- mobile verification workflow;
-- mobile development documentation.
+`scripts/check-release-inputs.mjs` requires the committed cross-platform inputs, including Android/iOS configs, the shared Tauri native library entry point, mobile config checker, mobile verification workflow, and mobile development documentation.
 
 Normal CI and the tagged web-release workflow run `check:mobile-config`; mobile hosted verification additionally runs `check:desktop-config` because Tauri frontend path correctness is required on every native target.
 
-`docs/release-evidence.md` now requires candidate-SHA-qualified Android and iOS evidence and explicitly prevents old failed/passed SHAs from being reused after the candidate changes.
+`docs/release-evidence.md` requires candidate-SHA-qualified Android and iOS evidence and explicitly prevents old failed/passed SHAs from being reused after the candidate changes.
 
 ## Developer/documentation integration
 
@@ -240,30 +250,11 @@ Cross-platform guidance is maintained in:
 - `Makefile`;
 - this handoff.
 
-The Makefile now exposes desktop/mobile checks, Android init/dev/device-host/build, and iOS init/dev/device-host/IP-selection/simulator-build targets.
+The Makefile exposes desktop/mobile checks, Android init/dev/device-host/build, and iOS init/dev/device-host/IP-selection/simulator-build targets.
 
 ## Existing product/reliability work retained
 
-The earlier 2.8.2 candidate work remains intact, including:
-
-- eight temperature scales;
-- canonical Rust conversion and absolute-zero validation;
-- WebAssembly browser bridge;
-- instant and batch conversion;
-- local searchable/filterable history with undo;
-- strict bounded backup/restore;
-- reference and formula education;
-- onboarding;
-- Quick Actions and keyboard navigation;
-- PWA offline/update behavior;
-- local-only persistence and redacted diagnostics;
-- accessibility/focus hardening;
-- decimal rounding regression fixes;
-- web asset budgets;
-- Chromium/Firefox/WebKit automation;
-- CodeQL/Gitleaks/RustSec/npm-audit automation;
-- generated desktop icon assets;
-- release input/provenance/checksum tooling.
+The earlier 2.8.2 candidate work remains intact, including eight temperature scales, canonical Rust conversion and absolute-zero validation, WebAssembly bridge, instant/batch conversion, searchable/filterable local history, strict bounded backup/restore, reference/formula education, onboarding, keyboard/Quick Actions, PWA offline/update behavior, local-only persistence, redacted diagnostics, accessibility/focus hardening, decimal rounding regression fixes, web asset budgets, Chromium/Firefox/WebKit automation, CodeQL/Gitleaks/RustSec/npm-audit automation, generated desktop icon assets, and release provenance/checksum tooling.
 
 ## Cross-platform continuation commits
 
@@ -288,7 +279,7 @@ Initial Android/iOS integration:
 - `5138b60ef73802dbd7d799bcb14e8f0d364b0197` — `docs(release): define full cross-platform verification`
 - `f23c379f5d926ff2b9c87145aa7ad3912f3c7b97` — `docs(changelog): record Android and iOS target work`
 - `722940d108a51ed486e5c54fb18a5ee3ea8eb08b` — `ci(lockfiles): restore manual cross-platform refresh`
-- `879e33084175e17003f6bad7869f0017a8ce4b71` — `docs(development): document shared native mobile workflow`
+- `879e33084175e17003f6bad7869f0017a8ce4b71` — `docs/development): document shared native mobile workflow`
 - `a6f2f294138a0e4497acd2aa9cbc26f13701586b` — `docs(setup): add Android and iOS prerequisites`
 - `bbf1ced7db8b357131279321ef5beeb4d5abd2fa` — `build(make): expose cross-platform native targets`
 - `fb0abe804da7b438a9614baca20afa2082fd41d1` — `docs(roadmap): add Android and iOS release gates`
@@ -311,6 +302,10 @@ Hosted-build-driven hardening and physical-device support:
 - `d9c79258648f1509fd7dd7881d2c28dd5cd25586` — `docs(setup): add physical-device mobile setup`
 - `e53ae0e1d301ff5ee7c6f14e17f0d43c5b78d28a` — `docs(changelog): record native path and device-host fixes`
 - `d01aba5ae51549953f5469ea241024859734a04c` — `ci(mobile): verify every PR candidate head`
+- `52605476d142ef0535e14c31f9acf21178eda09b` — `docs(handoff): record hosted cross-platform hardening`
+- `517ac4fcf141199db298c2624f8596811788f8a1` — `fix(wasm): return owned engine version string`
+- `8982a26121b983ba495e0f6a15d794729c2d95e3` — `test(wasm): cover owned engine version export`
+- `45a789ae6d2759d562b496aeae2d56fce94d4c91` — `docs(changelog): record WASM native-build fix`
 
 ## Exact-candidate evidence still open
 
@@ -323,12 +318,12 @@ The source architecture/configuration is cross-platform, but these release gates
 5. Unsigned Windows native bundle evidence.
 6. Unsigned macOS native bundle evidence.
 7. Unsigned Linux native bundle evidence.
-8. Android native APK/AAB workflow success on the final candidate after the frontend-path fix.
+8. Android native APK/AAB workflow success on the final candidate after the frontend-path and WASM-export fixes.
 9. iOS simulator native-build workflow success on the final candidate.
 10. Representative Android emulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence.
 11. Representative iOS simulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence.
 12. Required PWA real browser/device install/offline/update evidence.
-13. Review/fix any actual current dependency-security findings; do not automatically force-upgrade around audit output without understanding the dependency impact.
+13. Review/fix any actual current dependency-security findings; do not automatically force-upgrade around audit output without understanding dependency impact.
 14. Owner-controlled native signing/notarization/store publication configuration where distribution requires it.
 15. Repository administration/ruleset review where required.
 16. Stable tag/publication only after the exact-candidate evidence table is satisfied.
