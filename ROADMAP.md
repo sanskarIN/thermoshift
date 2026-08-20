@@ -11,7 +11,7 @@
 - [x] Tauri desktop target configuration.
 - [x] CI/security/repository automation baseline.
 
-## 2.8.2 — Reliability, safety, and release-readiness
+## 2.8.2 — Reliability, safety, cross-platform support, and release-readiness
 
 ### Product/UX implementation
 
@@ -35,6 +35,19 @@
 - [x] Clean temporary download resources and show localized/redacted failure feedback when batch/history/backup export dispatch fails.
 - [x] Harden decimal half-up presentation rounding for binary floating-point edge cases such as `±1.005`.
 
+### Cross-platform native implementation
+
+- [x] Refactor the Tauri backend into a shared library runtime used by desktop and mobile targets.
+- [x] Add the Tauri mobile entry point and `staticlib`/`cdylib`/`rlib` crate types required for generated Android/iOS shells.
+- [x] Preserve Windows, macOS, and Linux desktop delivery through the shared native runtime.
+- [x] Add Android target initialization/development/run/build commands and explicit minimum SDK 24 configuration.
+- [x] Add iOS target initialization/development/run/build commands, simulator build support, and explicit minimum system version 14.0 configuration.
+- [x] Add a fail-closed mobile configuration guard that verifies scripts, identifiers, platform settings, crate types, mobile entry point, and absence of a committed Apple development-team identifier.
+- [x] Add hosted Android ARM64 APK/AAB verification and candidate-qualified build evidence.
+- [x] Add hosted iOS Apple Silicon simulator native-build verification on macOS.
+- [x] Add Android/iOS setup, development, CI, signing-boundary, and release-evidence documentation.
+- [x] Add Make/npm entry points for desktop/mobile configuration and native target workflows.
+
 ### Domain/test hardening
 
 - [x] Add dense cross-scale Rust conversion invariants.
@@ -55,15 +68,16 @@
 - [x] Add concurrency cancellation to current PR CI/security workflow definitions.
 - [x] Expand tagged web release quality gates before publication.
 - [x] Add a native-tool lockfile generation workflow with artifact evidence and requested Git author identity.
-- [x] Require committed locks in CI, cross-browser, dependency-security, desktop, screenshot, and release-sensitive verification paths.
-- [x] Keep lockfile regeneration manual-only outside intentional version/dependency refreshes.
+- [x] Require committed locks in CI, cross-browser, dependency-security, desktop, mobile, screenshot, and release-sensitive verification paths.
+- [x] Restore lockfile regeneration to a manual-only maintenance path after the generated `2.8.2` locks landed.
+- [x] Generate and commit npm/Cargo lock metadata aligned with `2.8.2`; current mobile runtime/script changes do not alter dependency declarations.
 - [x] Add a real-product screenshot capture/validation workflow with SHA-qualified artifact evidence.
 - [x] Add an unsigned Windows/macOS/Linux Tauri package verification matrix with candidate-SHA metadata and bundle artifacts.
 - [x] Add reproducible desktop icon generation from the editable SVG with SHA-qualified artifact evidence.
 - [x] Generate and commit the required primary PNG, Windows ICO, and macOS ICNS desktop icon assets.
 - [x] Verify committed primary desktop icon artifacts through the static desktop configuration gate.
 - [x] Keep desktop icon regeneration manual-only after generated assets land.
-- [x] Add fail-closed release-input preflight requiring lockfiles, complete PNG/ICO/ICNS branding inputs, release documentation, and—at stable-tag time—the verified screenshot set.
+- [x] Add fail-closed release-input preflight requiring lockfiles, desktop/mobile platform configuration/runtime inputs, complete PNG/ICO/ICNS branding inputs, release documentation, and—at stable-tag time—the verified screenshot set.
 - [x] Add cryptographic release provenance manifest generation plus manifest checksum publication.
 - [x] Prevent lockfile/icon/screenshot generator workflows from rebasing stale generated evidence onto a newer branch head.
 - [x] Add exact-candidate release-evidence and repository-settings guidance.
@@ -71,24 +85,26 @@
 
 ### 2.8.2 release evidence still open
 
-- [ ] Regenerate and commit npm/Cargo lock metadata for the exact `2.8.2` source manifests.
+- [ ] Review exact-head locked npm/Cargo verification for the final candidate and fix only real surfaced failures.
 - [ ] Run the verified screenshot workflow; review/commit the real desktop/mobile captures and update README screenshot presentation.
 - [ ] Review current-head CI, Cross-browser E2E, CodeQL, Gitleaks, RustSec, and npm-audit workflow results; fix any actual failure rather than inferring success from workflow definitions.
 - [ ] Run/review unsigned native bundle evidence on Linux, Windows, and macOS for the exact release candidate.
+- [ ] Run/review the Android APK/AAB and iOS simulator native verification jobs for the exact release candidate.
+- [ ] Record representative Android emulator/device and iOS simulator/device launch, conversion, persistence, responsive-layout, accessibility, and offline smoke evidence.
 - [ ] Verify PWA install/offline/update behavior on real target browser/device environments required by the release plan.
 - [ ] Configure intended `main` branch protection/rulesets and optional Discussions/labels/milestones in GitHub settings where available.
-- [ ] Configure owner-controlled platform signing/notarization credentials before signed desktop publication.
-- [ ] Tag/publish `v2.8.2` only after `npm run check:release-inputs:screenshots`, exact-candidate hosted checks, native evidence, and `docs/release-evidence.md` are satisfied.
+- [ ] Configure owner-controlled platform signing/notarization/store credentials before signed native publication.
+- [ ] Tag/publish `v2.8.2` only after `npm run check:release-inputs:screenshots`, exact-candidate hosted checks, desktop/mobile native evidence, device evidence, and `docs/release-evidence.md` are satisfied.
 - [ ] Verify the published archive checksum plus the candidate-SHA/ref provenance manifest and its checksum after the tagged release runs.
 
 ## 3.0 — Next major stability milestone
 
-- [ ] Complete clean-checkout verification on Windows, macOS, Linux, Chromium, Firefox, and WebKit.
+- [ ] Complete clean-checkout verification on Windows, macOS, Linux, Android, iOS, Chromium, Firefox, and WebKit.
 - [ ] Close all blocker/high-severity defects carried beyond 2.8.2.
 - [ ] Verify PWA install/offline/update behavior on representative real desktop and mobile devices.
 - [ ] Verify backup compatibility from exported fixtures and document future migration rules.
-- [ ] Complete signed/notarized native publication strategy where distribution requires it.
-- [ ] Publish stable release notes, checksums, provenance manifest, verified screenshots, and reproducible release evidence.
+- [ ] Complete signed/notarized/store native publication strategy where distribution requires it.
+- [ ] Publish stable release notes, checksums, provenance manifest, verified screenshots, and reproducible cross-platform release evidence.
 
 ## Future/optional engineering
 
