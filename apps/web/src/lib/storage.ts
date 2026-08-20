@@ -36,8 +36,24 @@ export const loadSettings = (): Settings => {
   }
 };
 
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Persistence is best-effort. Keep the in-memory app usable when storage is denied or full.
+  }
+};
+
+const safeRemoveItem = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // A failed cleanup must not make the settings screen or app unusable.
+  }
+};
+
 export const saveSettings = (settings: Settings): void => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  safeSetItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 const isUnitId = (value: unknown): value is UnitId => typeof value === 'string' && UNIT_IDS.has(value as UnitId);
@@ -67,10 +83,10 @@ export const loadHistory = (): HistoryEntry[] => {
 };
 
 export const saveHistory = (history: HistoryEntry[]): void => {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
+  safeSetItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
 };
 
 export const clearStoredData = (): void => {
-  localStorage.removeItem(SETTINGS_KEY);
-  localStorage.removeItem(HISTORY_KEY);
+  safeRemoveItem(SETTINGS_KEY);
+  safeRemoveItem(HISTORY_KEY);
 };
