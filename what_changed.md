@@ -3,7 +3,15 @@
 ## Current milestone
 
 **Version:** 0.1.0 development baseline  
-**Phase:** Core/web/native implementation is cross-platform at source/configuration level for browsers/PWA, Windows, macOS, Linux, Android, and iOS/iPadOS. Clean-build, real-device, signing, and release verification remain before the first public native release.
+**Phase:** Core/web/native implementation is cross-platform at source/configuration level for browsers/PWA, Windows, macOS, Linux, Android, and iOS/iPadOS. The cross-platform continuation is merged to `main`; clean-build, real-device, signing, and release verification remain before the first public native release.
+
+## Merge checkpoint
+
+- Cross-platform pull request **#12** was merged to `main` on 2026-08-20.
+- Pull request #12 preserved **26 granular commits** across **24 changed files**.
+- Merge commit: `421c409f81dcff9f86cc9ce90e3830f9d43a4276`.
+- The pull request was mergeable and 0 commits behind `main` when reviewed.
+- CI, CodeQL, and Dependency Security workflow runs were created for the reviewed head but were still queued at merge time; this file does not claim they had passed.
 
 ## Completed foundation
 
@@ -86,10 +94,10 @@ A configured native target is not called release-verified until its real package
 
 ## Verification boundary in this continuation
 
-- GitHub repository writes and branch comparisons are being performed through the connected GitHub repository integration.
-- The connected commit-status API did not expose completed checks for the starting `main` commit, so no historical green-CI claim is made.
+- GitHub repository writes, branch comparison, pull-request creation, and merging were performed through the connected GitHub repository integration.
 - A real Android SDK/NDK, Xcode/iOS SDK, desktop platform toolchains, Rust dependency resolution, and npm dependency installation are not available inside this repository-editing environment; native package builds and clean dependency-based test runs are therefore not fabricated.
 - The new structural native verifier is wired into CI and can also run locally with Node.js because it has no third-party dependencies.
+- CI, CodeQL, and Dependency Security runs for pull request #12 existed but were queued when the merge completed. Their results must be checked separately before a release claim.
 
 ## Known release blockers / remaining verification
 
@@ -139,5 +147,7 @@ ThermoShift 0.1 is a local-first, multi-scale temperature converter with a canon
 - `5043275` — `docs(adr): record shared Tauri desktop and mobile runtime decision`
 - `6f8202c` — `docs: advance roadmap for cross-platform native delivery`
 - `f23da6c` — `docs: record cross-platform native and mobile PWA improvements`
+- `83d1cb1` — `docs: update cross-platform implementation handoff`
+- `421c409` — merge commit for pull request #12
 
-This file is the authoritative continuation checkpoint. GitHub history remains the source of truth for exact final hashes, pull-request state, and the eventual merge commit.
+This file is the authoritative continuation checkpoint. GitHub history remains the source of truth for exact final hashes and workflow results.
