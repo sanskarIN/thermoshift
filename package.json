@@ -25,10 +25,13 @@
     "desktop:build": "npm --workspace @thermoshift/desktop run build",
     "android:init": "npm --workspace @thermoshift/desktop run android:init",
     "android:dev": "npm --workspace @thermoshift/desktop run android:dev",
+    "android:dev:host": "npm --workspace @thermoshift/desktop run android:dev:host",
     "android:build": "npm --workspace @thermoshift/desktop run android:build",
     "android:run": "npm --workspace @thermoshift/desktop run android:run",
     "ios:init": "npm --workspace @thermoshift/desktop run ios:init",
     "ios:dev": "npm --workspace @thermoshift/desktop run ios:dev",
+    "ios:dev:host": "npm --workspace @thermoshift/desktop run ios:dev:host",
+    "ios:dev:tunnel": "npm --workspace @thermoshift/desktop run ios:dev:tunnel",
     "ios:build": "npm --workspace @thermoshift/desktop run ios:build",
     "ios:build:simulator": "npm --workspace @thermoshift/desktop run ios:build:simulator",
     "ios:run": "npm --workspace @thermoshift/desktop run ios:run"
