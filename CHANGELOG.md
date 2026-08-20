@@ -38,6 +38,7 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Dedicated Android/iOS native verification workflow: Android ARM64 APK/AAB build evidence on Ubuntu and an iOS Apple Silicon simulator build on macOS.
 - Exact-candidate mobile workflow checkout plus candidate-identity records and SHA-qualified Android/iOS build-evidence artifacts.
 - A complete mobile development guide documenting Android SDK/NDK, Xcode/CocoaPods, Rust targets, local/device-host commands, CI behavior, real-device evidence, and signing boundaries.
+- Regression coverage ensuring the exported WASM engine version remains equal to the crate/package version while using a wasm-bindgen-compatible owned string return.
 - Dependency-free internal Markdown link checker.
 - Production web asset budget checker with raw and gzip limits.
 - Dedicated real-product Playwright screenshot configuration and exact PNG evidence validator.
@@ -80,8 +81,9 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Stable tagged releases install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
 - Tauri `beforeDevCommand`/`beforeBuildCommand` web-workspace prefixes now resolve from the actual native npm/Tauri CLI working directory (`apps/desktop`), while `frontendDist` remains resolved relative to `src-tauri/tauri.conf.json`; the static native config checker verifies both coordinate systems.
 - The first hosted Android native build successfully initialized the Tauri Android project and exposed the previous frontend-hook working-directory bug before package compilation; the path and regression checker were corrected rather than weakening the native build gate.
+- After the path correction, hosted Android verification progressed into the real WASM production build and exposed a current wasm-bindgen incompatibility with returning `&'static str` from the exported `engine_version()` function; the export now returns an owned `String` while preserving the JavaScript-facing value.
 - Normal CI and tagged web-release preflight now validate Android/iOS target configuration and the shared mobile-capable runtime in addition to desktop configuration.
-- Mobile pull-request verification explicitly checks out the PR head SHA instead of GitHub's synthetic merge commit and names native evidence artifacts with that candidate SHA.
+- Mobile pull-request verification explicitly checks out the PR head SHA instead of GitHub's synthetic merge commit, names native evidence artifacts with that candidate SHA, and runs for every PR candidate change so documentation-only final commits cannot bypass exact-head mobile evidence.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
 - CI, cross-browser, and dependency-security workflows fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
 - Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
@@ -117,7 +119,7 @@ The following are not considered complete merely because supporting workflows or
 - generated and committed verified product screenshots;
 - current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
 - successful unsigned native package evidence for Windows, macOS, and Linux;
-- successful Android APK/AAB and iOS simulator native-build evidence for the exact final candidate after the frontend-path correction;
+- successful Android APK/AAB and iOS simulator native-build evidence for the exact final candidate after the frontend-path and WASM-export corrections;
 - representative Android and iOS simulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence;
 - representative real-device/browser PWA install/offline/update verification required by the release plan;
 - owner-controlled desktop/mobile signing/notarization/store publication evidence and final stable tag/release evidence.
