@@ -7,6 +7,7 @@ import { FormulaPanel } from './components/FormulaPanel';
 import { HistoryPanel } from './components/HistoryPanel';
 import { ReferenceCards } from './components/ReferenceCards';
 import { SettingsPanel } from './components/SettingsPanel';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
 import { en } from './i18n/en';
 import { getTemperatureEngine, type TemperatureEngine } from './lib/engine';
 import { clearStoredData, DEFAULT_SETTINGS, loadHistory, loadSettings, saveHistory, saveSettings } from './lib/storage';
@@ -22,6 +23,7 @@ function App() {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [history, setHistory] = useState<HistoryEntry[]>(loadHistory);
   const [online, setOnline] = useState(navigator.onLine);
+  const { canInstall, install } = useInstallPrompt();
   const referenceUnit: UnitId = 'celsius';
 
   useEffect(() => {
@@ -83,9 +85,12 @@ function App() {
       <a className="skip-link" href="#main-content">Skip to content</a>
       <header className="topbar">
         <div className="brand"><img src="/logo.svg" width="40" height="40" alt="" /><div><strong>{en.appName}</strong><span>{en.tagline}</span></div></div>
-        <nav aria-label="Primary">
-          {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => setPage(item)} aria-current={page === item ? 'page' : undefined}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
-        </nav>
+        <div className="topbar-actions">
+          {canInstall && <button type="button" className="install-button" onClick={() => void install()}>{en.installApp}</button>}
+          <nav aria-label="Primary">
+            {PAGES.map((item, index) => <button key={item} type="button" className={page === item ? 'active' : ''} onClick={() => setPage(item)} aria-current={page === item ? 'page' : undefined}>{en.nav[item]} <kbd>Alt+{index + 1}</kbd></button>)}
+          </nav>
+        </div>
       </header>
 
       {!online && <div className="offline-banner" role="status">{en.states.offline}</div>}
