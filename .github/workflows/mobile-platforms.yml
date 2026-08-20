@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -71,7 +71,7 @@ jobs:
 
   ios:
     name: iOS simulator build
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     env:
       CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -89,8 +89,12 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - name: Verify Xcode toolchain
-        run: xcodebuild -version
+      - name: Verify Xcode 16+ toolchain
+        shell: bash
+        run: |
+          xcodebuild -version
+          XCODE_MAJOR="$(xcodebuild -version | awk '/Xcode/{split($2,v,"."); print v[1]}')"
+          test "$XCODE_MAJOR" -ge 16 || { echo "Tauri-generated project requires Xcode 16 or newer; found Xcode $XCODE_MAJOR."; exit 1; }
       - name: Verify CocoaPods
         run: pod --version
       - name: Install locked JavaScript dependencies
