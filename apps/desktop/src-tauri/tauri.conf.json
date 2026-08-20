@@ -30,7 +30,7 @@
     "active": true,
     "targets": "all",
     "shortDescription": "Precise offline temperature conversion",
-    "longDescription": "ThermoShift is a private, offline-first temperature converter for modern desktop and web platforms.",
+    "longDescription": "ThermoShift is a private, offline-first temperature converter for modern web, desktop, and mobile platforms.",
     "copyright": "Copyright © 2026 Sanskar"
   }
 }
