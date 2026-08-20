@@ -9,6 +9,16 @@ permissions:
   contents: read
 
 jobs:
+  repository-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify native cross-platform invariants
+        run: npm run verify:native-config
+
   rust-core:
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +56,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    needs: [rust-core, web]
+    needs: [repository-config, rust-core, web]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
