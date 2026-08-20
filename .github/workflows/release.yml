@@ -10,21 +10,79 @@ permissions:
 jobs:
   web-artifact:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
+          components: rustfmt, clippy
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
-      - run: npm --workspace @thermoshift/web run build
-      - run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
+      - name: Require exact release inputs and verified screenshots
+        run: npm run check:release-inputs:screenshots
+      - name: Check manifest versions
+        run: npm run check:versions
+      - name: Check desktop frontend configuration
+        run: npm run check:desktop-config
+      - name: Check mobile platform configuration
+        run: npm run check:mobile-config
+      - name: Check internal documentation links
+        run: npm run check:docs
+      - name: Check tag matches package version
+        run: |
+          EXPECTED_TAG="v$(node -p "JSON.parse(require('fs').readFileSync('package.json','utf8')).version")"
+          test "$GITHUB_REF_NAME" = "$EXPECTED_TAG" || { echo "Tag $GITHUB_REF_NAME does not match $EXPECTED_TAG"; exit 1; }
+      - name: Install JavaScript dependencies reproducibly
+        run: npm ci --ignore-scripts
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Test canonical Rust engine
+        run: cargo test --locked -p thermoshift-core
+      - name: Lint Rust core and WASM bridge
+        run: cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+      - name: Type-check web application
+        run: npm --workspace @thermoshift/web run typecheck
+      - name: Lint web application
+        run: npm --workspace @thermoshift/web run lint
+      - name: Run web unit/component coverage
+        run: npm --workspace @thermoshift/web run test
+      - name: Build production PWA
+        run: npm --workspace @thermoshift/web run build
+      - name: Enforce production asset budget
+        run: npm run check:web-budget
+      - name: Verify committed screenshot evidence
+        run: npm run check:screenshots
+      - name: Install release browser engines
+        run: npx playwright install --with-deps chromium firefox webkit
+      - name: Run release browser E2E and accessibility checks
+        run: npm --workspace @thermoshift/web run e2e
+      - name: Run cross-browser compatibility gate
+        run: npm --workspace @thermoshift/web run e2e:cross-browser
+      - name: Package web build
+        run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
+      - name: Generate web archive SHA-256 checksum
+        run: sha256sum thermoshift-web-${{ github.ref_name }}.tar.gz > thermoshift-web-${{ github.ref_name }}.tar.gz.sha256
+      - name: Generate release provenance manifest
+        run: >-
+          npm run release:manifest --
+          --archive thermoshift-web-${{ github.ref_name }}.tar.gz
+          --checksum thermoshift-web-${{ github.ref_name }}.tar.gz.sha256
+          --output thermoshift-release-${{ github.ref_name }}.manifest.json
+      - name: Generate provenance manifest checksum
+        run: sha256sum thermoshift-release-${{ github.ref_name }}.manifest.json > thermoshift-release-${{ github.ref_name }}.manifest.json.sha256
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: thermoshift-web-${{ github.ref_name }}.tar.gz
+          files: |
+            thermoshift-web-${{ github.ref_name }}.tar.gz
+            thermoshift-web-${{ github.ref_name }}.tar.gz.sha256
+            thermoshift-release-${{ github.ref_name }}.manifest.json
+            thermoshift-release-${{ github.ref_name }}.manifest.json.sha256

@@ -1,0 +1,75 @@
+name: Verified Product Screenshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    if: github.repository == 'sanskarIN/thermoshift'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Require exact release inputs
+        run: npm run check:release-inputs
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture real product screenshots
+        run: npm --workspace @thermoshift/web run screenshots
+      - name: Verify screenshot set
+        run: npm run check:screenshots
+      - name: Upload verified screenshot evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-verified-screenshots-${{ github.sha }}
+          path: docs/screenshots/*.png
+          if-no-files-found: error
+          retention-days: 14
+      - name: Commit screenshots when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/screenshots && git ls-files --error-unmatch docs/screenshots/*.png >/dev/null 2>&1; then
+            echo "Verified screenshots are already current."
+            exit 0
+          fi
+
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add docs/screenshots/*.png
+          git commit -m "docs: refresh verified product screenshots"
+
+          # Product captures are evidence for the exact UI revision that rendered
+          # them. If source advanced, fail and rerun instead of rebasing stale
+          # screenshots onto a newer candidate.
+          git fetch origin "${GITHUB_REF_NAME}"
+          EXPECTED_PARENT="$(git rev-parse HEAD^)"
+          REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
+          if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
+            echo "Branch advanced from $EXPECTED_PARENT to $REMOTE_HEAD; rerun screenshot capture on the new head."
+            exit 1
+          fi
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"

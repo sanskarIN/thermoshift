@@ -1,37 +1,241 @@
 # Setup
 
+ThermoShift combines a Rust domain engine, a WebAssembly bridge, a React/TypeScript PWA, and a shared Tauri 2 native runtime for Windows, macOS, Linux, Android, and iOS.
+
 ## Common prerequisites
 
-- Git.
-- Current stable Rust with `rustfmt`, `clippy`, and target `wasm32-unknown-unknown`.
-- Node.js 22 or newer and npm.
+Install:
+
+- Git;
+- Node.js 22 or newer and npm;
+- current stable Rust through `rustup`;
+- Rust components `rustfmt` and `clippy`;
+- Rust target `wasm32-unknown-unknown`;
 - `wasm-pack`.
+
+Verify the installed tools:
+
+```bash
+git --version
+node --version
+npm --version
+rustc --version
+cargo --version
+wasm-pack --version
+```
+
+Install the Rust components/target and `wasm-pack` when needed:
 
 ```bash
 rustup component add rustfmt clippy
 rustup target add wasm32-unknown-unknown
 cargo install wasm-pack --locked
-npm install
 ```
 
-## Web/PWA
+## Clone and install JavaScript dependencies
+
+```bash
+git clone https://github.com/sanskarIN/thermoshift.git
+cd thermoshift
+npm ci --ignore-scripts
+```
+
+The `2.8.2` candidate commits both `package-lock.json` and `Cargo.lock`. Use `npm ci --ignore-scripts` and Cargo `--locked` for normal verification so local work consumes the same committed dependency graphs as CI, security, desktop/mobile, screenshot, and release workflows. Intentional dependency-resolution refreshes are documented in [`dependency-lockfiles.md`](dependency-lockfiles.md).
+
+## Repository metadata checks
+
+These checks do not require the web application to be running:
+
+```bash
+npm run check:versions
+npm run check:desktop-config
+npm run check:mobile-config
+npm run check:docs
+```
+
+They verify application version alignment, Tauri frontend paths/security/icon configuration, generated desktop icon presence, the shared mobile-capable Tauri runtime, Android/iOS platform configuration and scripts, mobile-device Vite host wiring, and internal Markdown file links.
+
+The Tauri CLI is launched from `apps/desktop`, so `beforeDevCommand` and `beforeBuildCommand` prefixes are validated relative to that workspace. `frontendDist` remains a Tauri-config-relative path. Do not make those two path types share an incorrect base directory.
+
+## Web/PWA development
+
+Start the application:
 
 ```bash
 npm run dev
 ```
 
-The `predev` script builds the Rust WebAssembly bridge before Vite starts.
+The web workspace builds the Rust WebAssembly bridge before Vite starts. Vite normally serves the app at `http://localhost:5173`.
 
-## Desktop
+Build the production PWA and enforce its asset budget:
 
-Install the current Tauri 2 system prerequisites for your operating system. These typically include WebView2 on supported Windows systems, Xcode command-line tooling on macOS, and WebKitGTK/build packages on Linux. Use the official Tauri prerequisites documentation for platform-version-specific package names because distro packages evolve.
+```bash
+npm --workspace @thermoshift/web run build
+npm run check:web-budget
+```
 
-From the repository root, run:
+## Tests and linting
+
+```bash
+cargo fmt --all -- --check
+cargo test --locked -p thermoshift-core
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+npm --workspace @thermoshift/web run typecheck
+npm --workspace @thermoshift/web run lint
+npm --workspace @thermoshift/web run test
+```
+
+For browser E2E/accessibility checks, install Chromium once:
+
+```bash
+npx playwright install chromium
+npm --workspace @thermoshift/web run e2e
+```
+
+The E2E suite uses the production/WASM-backed build and includes conversion, local persistence, offline reload, keyboard navigation, Settings/update surfaces, and axe accessibility checks.
+
+## Verified product screenshot capture
+
+The screenshot suite is separate from regression E2E so release captures remain intentional:
+
+```bash
+npm --workspace @thermoshift/web run screenshots
+npm run check:screenshots
+```
+
+The capture command writes product screenshots under `docs/screenshots/`; the verifier requires the exact expected PNG set and validates image headers, minimum size, and dimensions. The hosted `Verified Product Screenshots` workflow provides the same capture path for maintainers.
+
+## Desktop development
+
+Install the current Tauri 2 native prerequisites for your operating system. These include platform toolchains such as Microsoft C++/WebView components on Windows, Xcode command-line tooling on macOS, and WebKitGTK/build dependencies on Linux. Use current Tauri platform prerequisite documentation because package names vary by OS/distribution version.
+
+Verify the repository-side native configuration first:
+
+```bash
+npm run check:desktop-config
+npm run check:mobile-config
+cargo check --locked -p thermoshift-desktop
+```
+
+Then run:
 
 ```bash
 npm run desktop:dev
 ```
 
-## Environment
+Build the current desktop platform package with:
 
-No production secret is required. Copy `.env.example` only when adding deployment-specific, non-secret configuration. Never put credentials in tracked files.
+```bash
+npm run desktop:build
+```
+
+The manual `Desktop Platform Verification` workflow provides unsigned Windows/macOS/Linux CI build evidence. Signing/notarization is intentionally separate and requires owner-controlled credentials outside source control.
+
+## Android development
+
+Android development can be performed from Windows, macOS, or Linux when the Tauri/Android prerequisites are installed. In addition to the common tools, configure Android Studio, the Android SDK/Platform-Tools/Build-Tools/Command-line Tools, Android NDK, a supported Java runtime, `ANDROID_HOME`, and `NDK_HOME`.
+
+Install the Rust Android targets:
+
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+Then initialize and run:
+
+```bash
+npm run check:desktop-config
+npm run check:mobile-config
+npm run android:init
+npm run android:dev
+```
+
+For a physical/LAN device that needs the development server exposed through Tauri's selected host, use:
+
+```bash
+npm run android:dev:host
+```
+
+When `TAURI_DEV_HOST` is supplied, Vite listens on that host at port `5173` with strict port selection and uses port `5174` for HMR.
+
+Build APK/AAB outputs with:
+
+```bash
+npm run android:build
+```
+
+The repository configures Android minimum SDK 24. The dedicated `Mobile Platform Verification` workflow checks out the exact candidate head, performs an Android ARM64 build, records candidate identity, and uploads native package evidence when the hosted job succeeds.
+
+## iOS development
+
+iOS development is macOS-only. Install the full Xcode application and CocoaPods in addition to the common prerequisites.
+
+Install the Rust iOS targets:
+
+```bash
+rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+```
+
+Initialize and run:
+
+```bash
+npm run check:desktop-config
+npm run check:mobile-config
+npm run ios:init
+npm run ios:dev
+```
+
+For physical-device development, use the explicit host flow:
+
+```bash
+npm run ios:dev:host
+```
+
+If automatic host selection is unsuitable, force the Tauri IP-selection prompt with:
+
+```bash
+npm run ios:dev:tunnel
+```
+
+Build the Apple Silicon simulator target with:
+
+```bash
+npm run ios:build:simulator
+```
+
+A device/archive build uses:
+
+```bash
+npm run ios:build
+```
+
+The generated Apple project/build area is under `apps/desktop/src-tauri/gen/apple`. The hosted mobile workflow checks out the exact candidate head and uploads candidate-qualified iOS simulator build evidence when successful.
+
+The repository configures iOS minimum system version 14.0. Apple development-team selection, signing certificates, provisioning profiles, and store credentials are intentionally not committed; supply them only through the owner-controlled build environment when a signed build is required.
+
+See [`mobile.md`](mobile.md) for the complete mobile workflow and evidence requirements.
+
+## Desktop branding
+
+The editable source logo is `apps/web/public/logo.svg`. The candidate commits the generated Tauri platform icon set, including the primary PNG files plus Windows `icon.ico` and macOS `icon.icns`. `npm run check:desktop-config` verifies that the primary generated files remain non-empty.
+
+Regenerate icons intentionally with:
+
+```bash
+npm --workspace @thermoshift/desktop run icons
+```
+
+The hosted `Refresh Desktop Icons` workflow is manual-only and provides the reproducible maintainer path without rewriting branding on ordinary pushes.
+
+## Environment and secrets
+
+Core ThermoShift conversion requires no production secret. `.env.example` contains placeholders only. Never put credentials, signing keys, tokens, private endpoints, real user data, Android keystores, Apple certificates, provisioning profiles, or store credentials in tracked files.
+
+## Additional references
+
+- [`development.md`](development.md) — code-change workflow and architecture boundaries.
+- [`mobile.md`](mobile.md) — Android/iOS prerequisites, commands, CI verification, and evidence model.
+- [`testing.md`](testing.md) — test strategy.
+- [`release.md`](release.md) — release process.
+- [`release-evidence.md`](release-evidence.md) — exact-candidate evidence template.
+- [`troubleshooting.md`](troubleshooting.md) — common setup/runtime problems.

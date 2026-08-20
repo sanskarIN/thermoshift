@@ -1,23 +1,210 @@
 # Testing Strategy
 
-ThermoShift uses layered tests.
+ThermoShift uses layered verification so formula correctness, state safety, UI behavior, accessibility, documentation integrity, production size, reproducibility, and web/desktop/mobile platform packaging fail independently and produce useful diagnostics.
 
 ## Rust unit/domain tests
 
-`cargo test -p thermoshift-core` verifies canonical reference points, all-scale round trips, absolute zero, and non-finite rejection. Domain regressions belong here first.
+`cargo test --locked -p thermoshift-core` verifies:
 
-## Web unit/component tests
+- canonical reference points;
+- all-scale round trips;
+- absolute-zero boundaries;
+- below-absolute-zero and non-finite rejection;
+- a dense 0–5000 K grid across every source/destination scale pair;
+- expected scale direction, including the intentionally reversed Delisle scale.
 
-Vitest checks formatting, persistence hardening, and React startup behavior. The application engine is mocked only in presentation tests; formula correctness remains owned by Rust tests.
+Domain regressions belong here first. TypeScript UI tests and platform-native shells must not become a second executable source of truth for conversion formulas.
+
+## Web utility/infrastructure tests
+
+Vitest covers behavior including:
+
+- precision and rounding;
+- local-settings/history sanitization;
+- duplicate history identifiers and retention limits;
+- storage read/write failure resilience;
+- onboarding persistence;
+- versioned backup round trips;
+- malformed, unsupported, and oversized backup rejection;
+- typed `BackupValidationError` failures for trusted user-facing validation cases;
+- CSV/history JSON serialization and browser download lifecycle;
+- temporary anchor/object-URL cleanup when browser download dispatch throws;
+- PWA update-service states;
+- structured diagnostic redaction and bounded metadata.
+
+## Web component/application tests
+
+Testing Library exercises:
+
+- instant conversion and invalid-input semantics;
+- copy/share/save outcomes;
+- clipboard success/unavailable/failure behavior;
+- native Web Share success, user cancellation, generic failure handling, and clipboard fallback success/failure;
+- redacted logging for rejected clipboard/share operations without raw browser error text in the UI;
+- batch rows, line-level errors, and bounded batch input safeguards;
+- localized/redacted download-failure handling for batch CSV, history JSON, and full-backup exports;
+- reference-scale switching;
+- history search/filter/delete/clear/undo;
+- Settings precision bounds and destructive reset confirmation;
+- validated backup restore and invalid/oversized restore errors;
+- unexpected backup file-read failure handling that keeps raw operational error details out of the UI;
+- first-run onboarding choices;
+- Quick Actions filtering/navigation;
+- dialog initial focus, Escape behavior, forward/backward Tab wrapping, escaped-focus recapture, and focus restoration;
+- formula derivation and About/support identity surfaces;
+- application update controls;
+- top-level keyboard navigation (`Alt+1` through `Alt+6`, `Ctrl/⌘+K`);
+- page-change live-region announcements, document titles, and `aria-keyshortcuts` metadata.
+
+The application engine is mocked only at the presentation boundary in UI tests; formula correctness remains owned by Rust tests.
+
+The dedicated `ConverterPanel.interactions.test.tsx` suite isolates browser capability behavior so clipboard/share promise outcomes can be exercised without turning ordinary converter-domain tests into browser-API fixtures. `ExportInteractions.test.tsx` similarly isolates browser download-dispatch failures across the three product export surfaces.
 
 ## End-to-end and accessibility
 
-Playwright verifies a real conversion in the built PWA. axe scans the primary flow for automatically detectable accessibility violations.
+`npm --workspace @thermoshift/web run e2e` uses Playwright against the production/WASM-backed app. Current journeys cover:
+
+- first-run onboarding;
+- a real 100 °C → 212 °F conversion;
+- keyboard Quick Actions navigation;
+- saved-history persistence across reload;
+- service-worker-controlled offline reload followed by a working conversion;
+- Settings installed-version/update controls;
+- axe scans for the primary converter, onboarding, and Settings surfaces.
+
+The primary Playwright configuration defines desktop Chromium and Pixel 7 mobile-emulation projects, so these journeys execute at both configured form factors.
+
+### Cross-browser compatibility smoke suite
+
+A separate compatibility configuration keeps browser-engine coverage focused and independently diagnosable:
+
+```bash
+npm run e2e:cross-browser
+# or
+make e2e-cross-browser
+```
+
+`apps/web/playwright.cross-browser.config.ts` runs `apps/web/e2e/cross-browser.spec.ts` against:
+
+- Chromium;
+- Firefox;
+- WebKit.
+
+Each engine verifies a real WASM-backed reference conversion, saved-history persistence across reload, and an axe scan of the primary converter. The `Cross-browser E2E` GitHub Actions workflow runs those engines as independent matrix jobs and uploads the Playwright report when an engine fails.
+
+A workflow definition is not passing evidence. For release decisions, record the exact candidate SHA and the actual completed engine results rather than assuming compatibility from source configuration alone.
+
+A successful emulation or browser-engine run is not a substitute for all real-device evidence. Stable release evidence may add further devices as defined by `release-evidence.md`.
+
+## Screenshot evidence tests
+
+Product screenshots use a separate Playwright configuration so release captures are intentional rather than test-failure artifacts:
+
+```bash
+npm --workspace @thermoshift/web run screenshots
+npm run check:screenshots
+```
+
+The capture suite builds the real application and captures onboarding, converter, Settings, and About at desktop/mobile sizes.
+
+`check:screenshots` then enforces:
+
+- exactly eight expected PNG files;
+- valid PNG signatures;
+- nontrivial file size;
+- sane desktop/mobile dimensions.
+
+The hosted `Verified Product Screenshots` workflow follows the same path and may commit verified captures. Do not call screenshots complete merely because the workflow file exists; the PNG files themselves must exist and pass validation.
+
+## Static repository checks
+
+The dependency-free repository checks are part of the quality gate:
+
+```bash
+npm run check:versions
+npm run check:desktop-config
+npm run check:mobile-config
+npm run check:docs
+```
+
+They verify version alignment, Tauri frontend/security paths, required generated primary desktop icon artifacts, shared mobile-compatible crate/runtime shape, Android/iOS commands and platform configuration, and relative Markdown link targets.
+
+## Production asset budget
+
+After a production build:
+
+```bash
+npm run check:web-budget
+```
+
+The checker measures runtime assets and enforces documented raw/gzip totals plus per-JavaScript/per-WASM limits. See `performance.md`.
+
+## Coverage gates
+
+The web test command uses V8 coverage and currently requires at least:
+
+- 75% lines;
+- 70% functions;
+- 65% branches;
+- 75% statements.
+
+Do not reduce thresholds merely to make CI green. Add behavior-focused tests, remove dead code, or document a justified exclusion when generated/platform-only code cannot be meaningfully exercised.
+
+## Security verification
+
+Source-controlled security automation includes:
+
+- CodeQL JavaScript/TypeScript analysis;
+- Gitleaks repository secret scanning;
+- RustSec audit of the committed Cargo graph;
+- npm audit of the committed npm graph at high severity or greater;
+- Dependabot dependency maintenance.
+
+Security verification fails closed if the committed lockfile required for an audit disappears. A security workflow definition is not evidence that the current candidate passed; review the current workflow result before marking the release-evidence row successful.
+
+## Desktop platform verification
+
+Repository-side checks include `npm run check:desktop-config`, `npm run check:mobile-config`, and `cargo check --locked -p thermoshift-desktop` when the platform toolchain is installed. The desktop-config check also fails when required primary generated icon artifacts are missing or empty.
+
+The manual `Desktop Platform Verification` workflow defines unsigned native package jobs on Linux, Windows, and macOS and uploads each native bundle directory as workflow evidence. Each operating-system job must succeed independently; one operating system cannot stand in for another.
+
+## Mobile platform verification
+
+`npm run check:mobile-config` is the dependency-free structural guard for Android/iOS support. It verifies lifecycle commands, the application identifier, Android SDK baseline, iOS system baseline, shared native library crate types, the Tauri mobile entry point, desktop delegation to the shared runtime, and the rule against committing an Apple development-team identifier.
+
+The `Mobile Platform Verification` workflow provides platform-native compilation/package evidence:
+
+- Android runs on Ubuntu with Java/Android NDK tooling, initializes the Tauri target, builds ARM64 APK/AAB outputs, and uploads the generated package directory using the candidate SHA in the artifact name;
+- iOS runs on macOS, verifies Xcode and CocoaPods, initializes the Tauri target, and builds the Apple Silicon iOS simulator target.
+
+Each job must complete for the exact candidate SHA. Workflow source alone is not passing evidence, and iOS simulator compilation is not App Store signing evidence.
+
+Before a release is described as mobile-verified, also record a representative Android emulator/device launch and an iOS simulator/device launch. Smoke evidence must include a real conversion, local persistence, offline conversion, responsive/touch behavior, and the exact candidate/device environment.
 
 ## CI expectations
 
-Pull requests should fail when formatting, Clippy, TypeScript checking, ESLint, tests, coverage thresholds, PWA build, or E2E checks fail. Security analysis runs separately through CodeQL and dependency-audit workflows.
+Pull requests should fail when applicable lockfile, formatting, desktop/mobile configuration, generated-icon, documentation-link, Clippy, TypeScript, ESLint, unit/component coverage, production build, asset-budget, E2E, browser-engine compatibility, accessibility, or native mobile verification checks fail. Security analysis runs through CodeQL and the dependency/security workflow.
+
+When fixing a surfaced defect, add or retain a regression test when the failure represents real application behavior rather than only a transient infrastructure problem.
 
 ## Manual release checks
 
-Keyboard-only navigation, screen-reader labels, contrast, offline launch, installability, copy/share fallbacks, local history, exports, and each target desktop package must be manually smoke-tested before stable releases.
+Before a stable release, manually or platform-specifically verify what automation cannot fully establish:
+
+1. clean installation from an exact candidate checkout using the committed dependency graphs;
+2. keyboard-only navigation and visible focus;
+3. screen-reader labels/dialog behavior, including focus recapture if focus is moved outside an active modal;
+4. 200% zoom, high contrast, and reduced motion;
+5. real browser/device PWA installation and offline/update behavior as required by the release plan;
+6. copy/share success, cancellation, unavailable-capability, and fallback behavior without raw operational errors surfacing to users;
+7. batch/history/backup export success and controlled generic failure behavior when browser download dispatch is unavailable/rejected;
+8. history management and local persistence;
+9. full backup export/restore including invalid/oversized rejection and generic handling of unexpected file-read failures;
+10. native Windows/macOS/Linux package outputs;
+11. Android APK/AAB native build plus emulator/device launch/conversion/persistence/offline smoke evidence;
+12. iOS simulator native build plus simulator/device launch/conversion/persistence/offline smoke evidence;
+13. platform branding/icons;
+14. real screenshots captured from verified builds;
+15. release archive checksum validation.
+
+Automated green checks are necessary but not sufficient evidence for a stable release. Record exact-candidate results in [`release-evidence.md`](release-evidence.md).

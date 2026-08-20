@@ -119,6 +119,36 @@ mod tests {
     }
 
     #[test]
+    fn dense_grid_preserves_kelvin_across_all_scale_pairs() {
+        for step in 0..=1000 {
+            let kelvin = f64::from(step) * 5.0;
+            for source in Unit::ALL {
+                let source_value = from_kelvin(kelvin, source);
+                for target in Unit::ALL {
+                    let target_value = convert(source_value, source, target).unwrap();
+                    let back_to_kelvin = convert(target_value, target, Unit::Kelvin).unwrap();
+                    approx_eq(back_to_kelvin, kelvin);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn scale_direction_is_consistent_with_definitions() {
+        let colder = 250.0;
+        let warmer = 350.0;
+        for unit in Unit::ALL {
+            let colder_value = from_kelvin(colder, unit);
+            let warmer_value = from_kelvin(warmer, unit);
+            if unit == Unit::Delisle {
+                assert!(warmer_value < colder_value, "Delisle must decrease as temperature rises");
+            } else {
+                assert!(warmer_value > colder_value, "{unit:?} must increase as temperature rises");
+            }
+        }
+    }
+
+    #[test]
     fn absolute_zero_is_valid_on_all_scales() {
         for unit in Unit::ALL {
             let minimum = absolute_zero_in(unit);

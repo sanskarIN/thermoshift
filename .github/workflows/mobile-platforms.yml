@@ -1,0 +1,122 @@
+name: Mobile Platform Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-platforms-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: Android native build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown,aarch64-linux-android
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Resolve Android NDK
+        shell: bash
+        run: |
+          NDK_DIR="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
+          if [ -z "$NDK_DIR" ] && [ -d "$ANDROID_HOME/ndk" ]; then
+            NDK_DIR="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          fi
+          test -n "$NDK_DIR" && test -d "$NDK_DIR" || { echo 'Android NDK was not found on the runner.'; exit 1; }
+          echo "NDK_HOME=$NDK_DIR" >> "$GITHUB_ENV"
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify native configuration
+        run: |
+          npm run check:desktop-config
+          npm run check:mobile-config
+      - name: Initialize Android shell
+        run: npm run android:init
+      - name: Build Android APK and AAB
+        run: npm --workspace @thermoshift/desktop run android:build -- --target aarch64
+      - name: Record Android candidate identity
+        shell: bash
+        run: |
+          printf 'candidate_sha=%s\nref=%s\nplatform=android-aarch64\n' "$CANDIDATE_SHA" "$GITHUB_REF" > THERMOSHIFT_ANDROID_BUILD.txt
+      - name: Upload Android build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-android-${{ env.CANDIDATE_SHA }}
+          path: |
+            THERMOSHIFT_ANDROID_BUILD.txt
+            apps/desktop/src-tauri/gen/android/app/build/outputs/**
+          if-no-files-found: error
+          retention-days: 14
+
+  ios:
+    name: iOS simulator build
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown,aarch64-apple-ios,aarch64-apple-ios-sim
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Verify Xcode 16+ toolchain
+        shell: bash
+        run: |
+          xcodebuild -version
+          XCODE_MAJOR="$(xcodebuild -version | awk '/Xcode/{split($2,v,"."); print v[1]}')"
+          test "$XCODE_MAJOR" -ge 16 || { echo "Tauri-generated project requires Xcode 16 or newer; found Xcode $XCODE_MAJOR."; exit 1; }
+      - name: Verify CocoaPods
+        run: pod --version
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify native configuration
+        run: |
+          npm run check:desktop-config
+          npm run check:mobile-config
+      - name: Initialize iOS shell
+        run: npm run ios:init
+      - name: Build unsigned iOS simulator target
+        run: npm run ios:build:simulator
+      - name: Record iOS candidate identity
+        shell: bash
+        run: |
+          printf 'candidate_sha=%s\nref=%s\nplatform=ios-aarch64-sim\n' "$CANDIDATE_SHA" "$GITHUB_REF" > THERMOSHIFT_IOS_BUILD.txt
+      - name: Upload iOS simulator build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-ios-simulator-${{ env.CANDIDATE_SHA }}
+          path: |
+            THERMOSHIFT_IOS_BUILD.txt
+            apps/desktop/src-tauri/gen/apple/build/**
+          if-no-files-found: error
+          retention-days: 14

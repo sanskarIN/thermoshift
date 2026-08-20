@@ -8,9 +8,39 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Require committed dependency lockfiles
+        shell: bash
+        run: |
+          test -s package-lock.json || { echo 'Missing package-lock.json'; exit 1; }
+          test -s Cargo.lock || { echo 'Missing Cargo.lock'; exit 1; }
+      - name: Check version consistency
+        run: npm run check:versions
+      - name: Check desktop frontend configuration
+        run: npm run check:desktop-config
+      - name: Check mobile platform configuration
+        run: npm run check:mobile-config
+      - name: Check internal documentation links
+        run: npm run check:docs
+      - name: Test release preflight and provenance tooling
+        run: npm run test:release-tools
+
   rust-core:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -20,44 +50,52 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Test canonical engine
-        run: cargo test -p thermoshift-core
+        run: cargo test --locked -p thermoshift-core
       - name: Lint canonical engine and WASM bridge
-        run: cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+        run: cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
       - run: npm --workspace @thermoshift/web run wasm:build
       - run: npm --workspace @thermoshift/web run typecheck
       - run: npm --workspace @thermoshift/web run lint
       - run: npm --workspace @thermoshift/web run test
       - run: npm --workspace @thermoshift/web run build:web
+      - name: Enforce production asset budget
+        run: npm run check:web-budget
 
   e2e:
     runs-on: ubuntu-latest
-    needs: [rust-core, web]
+    timeout-minutes: 30
+    needs: [metadata, rust-core, web]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - name: Install locked JavaScript dependencies
+        run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
       - run: npm --workspace @thermoshift/web run e2e

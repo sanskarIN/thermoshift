@@ -1,0 +1,73 @@
+name: Refresh Desktop Icons
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-icons-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: github.repository == 'sanskarIN/thermoshift'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked workspace dependencies
+        run: npm ci --ignore-scripts
+      - name: Generate platform icons from editable SVG
+        run: npm --workspace @thermoshift/desktop run icons
+      - name: Verify required desktop icon set
+        shell: bash
+        run: |
+          for icon in \
+            apps/desktop/src-tauri/icons/32x32.png \
+            apps/desktop/src-tauri/icons/128x128.png \
+            apps/desktop/src-tauri/icons/128x128@2x.png \
+            apps/desktop/src-tauri/icons/icon.icns \
+            apps/desktop/src-tauri/icons/icon.ico; do
+            test -s "$icon" || { echo "Missing generated icon: $icon"; exit 1; }
+          done
+      - name: Upload generated icon evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: thermoshift-desktop-icons-${{ github.sha }}
+          path: apps/desktop/src-tauri/icons/**
+          if-no-files-found: error
+          retention-days: 14
+      - name: Commit generated icons when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- apps/desktop/src-tauri/icons && git ls-files --error-unmatch apps/desktop/src-tauri/icons/icon.ico apps/desktop/src-tauri/icons/icon.icns >/dev/null 2>&1; then
+            echo "Desktop icons are already current."
+            exit 0
+          fi
+
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add apps/desktop/src-tauri/icons
+          git commit -m "build(desktop): refresh generated app icons"
+
+          # Generated branding must match the exact source revision (including
+          # logo.svg) that produced it. Never rebase old icons onto newer source.
+          git fetch origin "${GITHUB_REF_NAME}"
+          EXPECTED_PARENT="$(git rev-parse HEAD^)"
+          REMOTE_HEAD="$(git rev-parse FETCH_HEAD)"
+          if [ "$REMOTE_HEAD" != "$EXPECTED_PARENT" ]; then
+            echo "Branch advanced from $EXPECTED_PARENT to $REMOTE_HEAD; rerun icon generation on the new head."
+            exit 1
+          fi
+
+          git push origin "HEAD:${GITHUB_REF_NAME}"

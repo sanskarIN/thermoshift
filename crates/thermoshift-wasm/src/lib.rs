@@ -20,6 +20,16 @@ pub fn absolute_zero_for(unit: &str) -> Result<f64, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn engine_version() -> &'static str {
-    env!("CARGO_PKG_VERSION")
+pub fn engine_version() -> String {
+    env!("CARGO_PKG_VERSION").to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::engine_version;
+
+    #[test]
+    fn exported_engine_version_matches_crate_version() {
+        assert_eq!(engine_version(), env!("CARGO_PKG_VERSION"));
+    }
 }
