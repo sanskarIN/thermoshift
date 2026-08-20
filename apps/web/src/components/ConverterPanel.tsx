@@ -35,7 +35,7 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
     }
   }, [engine, from, input, to]);
 
-  const minimum = useMemo(() => engine.absoluteZero(from), [engine, from]);
+  const absoluteZero = useMemo(() => engine.absoluteZero(from), [engine, from]);
   const formatted = result === null ? '—' : formatNumber(result, settings.precision, settings.roundingMode);
 
   const swap = () => {
@@ -62,10 +62,11 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
   const share = async () => {
     if (result === null) return;
     const text = `${input} ${unitById(from).symbol} = ${formatted} ${unitById(to).symbol}`;
+    const canShare = typeof navigator.share === 'function';
     try {
-      if (navigator.share) await navigator.share({ title: 'ThermoShift conversion', text });
+      if (canShare) await navigator.share({ title: 'ThermoShift conversion', text });
       else await copyText(text);
-      setNotice(navigator.share ? 'Share sheet opened.' : 'Share text copied.');
+      setNotice(canShare ? 'Share sheet opened.' : 'Share text copied.');
     } catch (caught) {
       setNotice(caught instanceof Error ? caught.message : 'Share failed.');
     }
@@ -106,7 +107,7 @@ export function ConverterPanel({ engine, settings, onSave }: Props) {
         </label>
       </div>
 
-      <p id="absolute-zero-note" className="helper">Minimum physical value: {formatNumber(minimum, 4, 'half-up')} {unitById(from).symbol}</p>
+      <p id="absolute-zero-note" className="helper">Absolute zero: {formatNumber(absoluteZero, 4, 'half-up')} {unitById(from).symbol}</p>
       {error && <p id="conversion-error" className="error" role="alert">{error}</p>}
       {notice && <p className="helper" role="status">{notice}</p>}
 
