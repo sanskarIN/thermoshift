@@ -8,9 +8,9 @@
 - Base branch: `main`
 - Source version: `2.8.2`
 - Intended stable tag: `v2.8.2`
-- Release state: untagged release candidate; source/configuration support is broader than the currently completed release evidence
+- Release state: untagged release candidate
 
-Do not tag or describe `v2.8.2` as stable until the exact-candidate hosted/security/browser/native/device/screenshot gates in `docs/release-evidence.md` are satisfied.
+Do not tag, merge as a stable release, or describe `v2.8.2` as release-verified until the exact-candidate hosted/security/browser/native/device/screenshot gates in `docs/release-evidence.md` are satisfied.
 
 ## Current platform target set
 
@@ -24,123 +24,194 @@ ThermoShift now has one source architecture targeting:
 - Android through Tauri 2;
 - iOS through Tauri 2.
 
-The browser and native products continue to use the canonical Rust temperature domain model. Android and iOS did not receive a second implementation of conversion formulas.
+The browser and native products continue to use the canonical Rust temperature domain model. Android and iOS do not contain a second conversion-formula implementation.
 
-## Cross-platform native runtime completed
+## Shared native runtime
 
 The previous desktop-only Tauri entry point was refactored into a reusable native library:
 
-- `apps/desktop/src-tauri/src/lib.rs` now owns Tauri command registration and `run()`;
+- `apps/desktop/src-tauri/src/lib.rs` owns Tauri command registration and `run()`;
 - `run()` carries `#[cfg_attr(mobile, tauri::mobile_entry_point)]`;
 - `apps/desktop/src-tauri/Cargo.toml` exposes `staticlib`, `cdylib`, and `rlib` crate types under `thermoshift_lib`;
 - `apps/desktop/src-tauri/src/main.rs` delegates to `thermoshift_lib::run()` for desktop execution;
-- the shared native commands continue to call `thermoshift-core` for conversion and absolute-zero behavior.
+- native commands continue to call `thermoshift-core` for conversion and absolute-zero behavior.
 
-This gives desktop and mobile targets one Rust native runtime boundary instead of parallel platform implementations.
+Windows, macOS, Linux, Android, and iOS therefore share the same Rust native runtime boundary.
 
-## Android target completed in source/configuration
+## Android source/configuration support
 
-Added:
+Added and enforced:
 
 - `apps/desktop/src-tauri/tauri.android.conf.json`;
-- explicit Android minimum SDK 24;
+- Android minimum SDK 24;
 - `android:init`;
 - `android:dev`;
+- `android:dev:host` for physical/LAN-device development;
 - `android:build` producing APK/AAB output;
 - `android:run`;
-- root workspace wrappers for the same commands;
-- Android setup/development/release documentation;
-- hosted Android native verification using Java/Android NDK/Rust ARM64 tooling.
+- root workspace wrappers and Make targets;
+- Android Studio/SDK/NDK/Java/Rust-target setup documentation;
+- hosted Android native verification using Java, Android NDK, Rust ARM64 tooling, and the exact candidate head SHA.
 
-The hosted Android workflow initializes the Tauri Android shell from the exact candidate and builds ARM64 package output. It uploads candidate-SHA-qualified package evidence only when the job actually succeeds.
+## iOS source/configuration support
 
-## iOS target completed in source/configuration
-
-Added:
+Added and enforced:
 
 - `apps/desktop/src-tauri/tauri.ios.conf.json`;
-- explicit iOS minimum system version 14.0;
+- iOS minimum system version 14.0;
 - `ios:init`;
 - `ios:dev`;
+- `ios:dev:host` for explicit physical-device host development;
+- `ios:dev:tunnel` using the forced IP-selection flow;
 - `ios:build`;
 - `ios:build:simulator` using the Apple Silicon simulator target;
 - `ios:run`;
-- root workspace wrappers for the same commands;
-- iOS/Xcode/CocoaPods/Rust-target setup documentation;
-- hosted macOS iOS-simulator native verification.
+- root workspace wrappers and Make targets;
+- Xcode/CocoaPods/Rust-target setup documentation;
+- hosted macOS iOS-simulator native verification using the exact candidate head SHA.
 
-Apple development-team IDs, signing certificates, provisioning profiles, private keys, and store credentials are intentionally not committed. Signed Apple distribution remains an owner-controlled release gate.
+Apple development-team IDs, signing certificates, provisioning profiles, private keys, and store credentials are intentionally not committed. Signed Apple distribution remains owner-controlled.
 
-## Cross-platform configuration guard
+## Mobile development-server support
 
-`scripts/check-mobile-config.mjs` is now a fail-closed structural gate. It verifies:
+`apps/web/vite.config.ts` now reads `TAURI_DEV_HOST` for mobile development.
 
-- required Android/iOS lifecycle scripts in the native npm workspace;
-- required top-level workspace wrappers;
-- `check:mobile-config` itself remains wired;
-- Tauri identifier remains `in.sanskar.thermoshift`;
-- Android minimum SDK remains 24;
-- iOS minimum system version remains 14.0;
-- no Apple `developmentTeam` value is committed in iOS config;
-- `thermoshift_lib` remains exposed as a library target;
-- `staticlib`, `cdylib`, and `rlib` crate types remain present;
-- the mobile Tauri entry-point attribute remains present;
-- the shared `run()` function remains public;
-- the desktop binary still delegates to the shared runtime.
+When a mobile host is supplied:
 
-This check is now consumed by normal CI, tagged web-release preflight, manual lockfile refresh, documentation/development guidance, and the dedicated mobile workflow.
+- Vite listens on that host;
+- application port remains fixed at `5173`;
+- `strictPort` is enabled;
+- HMR uses the same host on port `5174`.
 
-## Hosted mobile verification workflow
+Ordinary browser/desktop development remains local by default. `scripts/check-mobile-config.mjs` guards these device-host settings so physical-device support cannot silently disappear.
 
-`.github/workflows/mobile-platforms.yml` was added with separate Android and iOS jobs.
+## Native frontend-path failure discovered and fixed
+
+The first real hosted Android run was valuable because it reached actual Tauri target initialization instead of failing in setup.
+
+Old exact-head Android job successfully completed:
+
+- checkout;
+- Node setup;
+- Java setup;
+- Rust target setup;
+- Android NDK resolution;
+- locked `npm ci`;
+- `check:mobile-config`;
+- `tauri android init`.
+
+The generated Android Studio project was created successfully. The build then failed before package compilation because Tauri executed:
+
+```text
+npm --prefix ../../web run build
+```
+
+from the native npm/Tauri CLI working directory `apps/desktop`. That incorrectly resolved to repository-level `/web/package.json`, which does not exist.
+
+The real failure was therefore a frontend-hook working-directory bug, not an Android SDK/NDK or target-initialization failure.
+
+Fixes:
+
+- `beforeDevCommand` is now `npm --prefix ../web run dev:web`;
+- `beforeBuildCommand` is now `npm --prefix ../web run build`;
+- `frontendDist` remains `../../web/dist` because Tauri resolves that configuration path relative to `src-tauri/tauri.conf.json`;
+- `scripts/check-desktop-config.mjs` now models these two different path bases explicitly and verifies the target `package.json` exists.
+
+Do not revert both path classes to one base directory; they follow different runtime/configuration resolution rules.
+
+## Cross-platform configuration guards
+
+`npm run check:desktop-config` verifies, among other things:
+
+- frontend distribution path;
+- actual native-workspace-relative frontend hook prefixes;
+- Tauri development URL;
+- minimal capability scope;
+- CSP bounds;
+- required generated desktop icons.
+
+`npm run check:mobile-config` verifies:
+
+- Android/iOS lifecycle scripts;
+- physical-device host/IP-selection scripts;
+- root workspace wrappers;
+- Tauri identifier `in.sanskar.thermoshift`;
+- Android minimum SDK;
+- iOS minimum system version;
+- no committed Apple `developmentTeam` value;
+- `thermoshift_lib` library target;
+- `staticlib`, `cdylib`, and `rlib` crate types;
+- Tauri mobile entry-point attribute;
+- public shared `run()`;
+- desktop delegation to the shared runtime;
+- Vite `TAURI_DEV_HOST`, strict fixed-port, and HMR host configuration.
+
+Both native guards run in the dedicated mobile workflow before platform initialization/building.
+
+## Exact-candidate mobile verification
+
+`.github/workflows/mobile-platforms.yml` has separate Android and iOS jobs.
+
+The workflow now runs for every pull-request candidate change instead of using path filters. This is intentional: release evidence is tied to the exact candidate SHA, so documentation-only candidate changes must not bypass native verification.
+
+For pull requests each job sets:
+
+```text
+CANDIDATE_SHA = github.event.pull_request.head.sha
+```
+
+and explicitly checks out that SHA instead of GitHub's synthetic merge commit.
 
 Android job:
 
 - Ubuntu 24.04;
 - Node.js 22;
-- Temurin Java 17;
-- Android NDK resolution from hosted-runner environment;
-- Rust `wasm32-unknown-unknown` + `aarch64-linux-android` targets;
+- Java 17;
+- Android NDK resolution;
+- Rust WASM + `aarch64-linux-android` targets;
 - locked npm install;
-- mobile config guard;
+- desktop/mobile config guards;
 - Tauri Android init;
 - ARM64 APK/AAB build;
-- candidate-SHA-qualified package evidence upload.
+- `THERMOSHIFT_ANDROID_BUILD.txt` candidate identity record;
+- candidate-SHA-qualified native artifact upload.
 
 iOS job:
 
-- macOS 14 runner;
+- macOS 14;
 - Node.js 22;
 - Rust WASM + iOS device/simulator targets;
 - Xcode verification;
 - CocoaPods verification;
 - locked npm install;
-- mobile config guard;
+- desktop/mobile config guards;
 - Tauri iOS init;
-- Apple Silicon simulator build.
+- Apple Silicon simulator build;
+- `THERMOSHIFT_IOS_BUILD.txt` candidate identity record;
+- candidate-SHA-qualified `gen/apple/build` artifact upload.
 
-Workflow source is not proof that those builds passed. Review the exact-head jobs before changing Android/iOS evidence from Pending.
+Workflow source is not passing evidence. Only completed jobs for the exact final candidate SHA may be recorded as Passed.
 
 ## Dependency and lockfile state
 
-The generated `2.8.2` dependency locks have landed and are no longer waiting for the earlier version migration refresh.
+The generated `2.8.2` dependency locks have landed.
 
 Confirmed in the branch:
 
 - `package-lock.json` root version is `2.8.2`;
 - web workspace lock metadata is `2.8.2`;
-- native/desktop workspace lock metadata is `2.8.2`;
+- native workspace lock metadata is `2.8.2`;
 - `Cargo.lock` records `thermoshift-core` `2.8.2`;
 - `Cargo.lock` records `thermoshift-desktop` `2.8.2`;
 - `Cargo.lock` records `thermoshift-wasm` `2.8.2`.
 
-The cross-platform continuation changed scripts, Tauri platform configs, source layout, docs, and crate output types but did not add/change Rust or npm dependency declarations. Do not hand-edit the lockfiles merely to move their commit timestamp to the latest documentation/source SHA.
+The cross-platform continuation changed scripts, Tauri platform configs, source layout, crate output types, Vite/native workflow configuration, and documentation, but did not add/change npm or Rust dependency declarations. Do not hand-edit package-manager integrity metadata merely to make the lockfile commit newer.
 
-The temporary PR-triggered lockfile generator has been removed. `.github/workflows/lockfiles.yml` is restored to a manual-only maintenance workflow and now also runs `check:mobile-config` before committing an intentional dependency refresh.
+`.github/workflows/lockfiles.yml` is restored to manual-only maintenance and runs version, desktop config, mobile config, and documentation checks before committing an intentional dependency refresh. Its configured Git identity remains Sanskar / `sanskarin@outlook.in`.
 
-## Release/preflight hardening for mobile targets
+## Release/preflight hardening
 
-`scripts/check-release-inputs.mjs` now requires the committed cross-platform source/configuration inputs, including:
+`scripts/check-release-inputs.mjs` requires the committed cross-platform inputs, including:
 
 - Android config;
 - iOS config;
@@ -149,13 +220,13 @@ The temporary PR-triggered lockfile generator has been removed. `.github/workflo
 - mobile verification workflow;
 - mobile development documentation.
 
-`.github/workflows/release.yml` now runs `npm run check:mobile-config` before a tagged web artifact can publish.
+Normal CI and the tagged web-release workflow run `check:mobile-config`; mobile hosted verification additionally runs `check:desktop-config` because Tauri frontend path correctness is required on every native target.
 
-This does not make the web release job a substitute for native platform verification. Windows/macOS/Linux/Android/iOS build evidence remains recorded separately for the exact candidate.
+`docs/release-evidence.md` now requires candidate-SHA-qualified Android and iOS evidence and explicitly prevents old failed/passed SHAs from being reused after the candidate changes.
 
-## Developer workflow/documentation completed
+## Developer/documentation integration
 
-Updated/added cross-platform guidance includes:
+Cross-platform guidance is maintained in:
 
 - `README.md`;
 - `docs/mobile.md`;
@@ -169,7 +240,7 @@ Updated/added cross-platform guidance includes:
 - `Makefile`;
 - this handoff.
 
-The Makefile now exposes `mobile-check`, Android init/dev/build, and iOS init/dev/simulator-build entry points while its metadata target includes the mobile configuration guard.
+The Makefile now exposes desktop/mobile checks, Android init/dev/device-host/build, and iOS init/dev/device-host/IP-selection/simulator-build targets.
 
 ## Existing product/reliability work retained
 
@@ -196,7 +267,7 @@ The earlier 2.8.2 candidate work remains intact, including:
 
 ## Cross-platform continuation commits
 
-Meaningful commits in this continuation include:
+Initial Android/iOS integration:
 
 - `8421b4a658ae73dc6d204e1747222a2f84fced05` — `feat(mobile): expose Tauri library targets`
 - `b0938fc97fe0d586a36afa879a531f1037b6f79c` — `feat(mobile): add shared Tauri runtime entry point`
@@ -222,35 +293,54 @@ Meaningful commits in this continuation include:
 - `bbf1ced7db8b357131279321ef5beeb4d5abd2fa` — `build(make): expose cross-platform native targets`
 - `fb0abe804da7b438a9614baca20afa2082fd41d1` — `docs(roadmap): add Android and iOS release gates`
 - `4c4d2d83214ed789810ce744ec8b79b41019a9f8` — `docs(testing): cover Android and iOS native verification`
+- `901f1e7a2d37b536963d91c19440bd6bf3d4fcab` — `docs(handoff): record 2.8.2 cross-platform checkpoint`
+
+Hosted-build-driven hardening and physical-device support:
+
+- `ac3538a7cbc86577c0cc8ab5a1e994232f807140` — `fix(native): resolve web build from Tauri command cwd`
+- `e85a3dcab72f01e844895ff6b57d0f0c2ac586e3` — `test(native): validate command paths from workspace cwd`
+- `60e33ca4f12cd1cbe560c8562d292dc08dca6045` — `ci(mobile): verify exact candidate native builds`
+- `4785bb22b4df472f1549bf9f7188780d4de5e8dc` — `feat(mobile): expose Vite dev server to Tauri devices`
+- `b241b8e8fb291f6f558c4310cff36a8d65e9b3c8` — `feat(mobile): add physical-device dev commands`
+- `10831c96990a1fa6a9c7fbb1e8c6a2c1a30554c1` — `feat(workspace): expose physical mobile dev modes`
+- `f9e66c5375fa64c73b70b66e1eacabcecc2dda66` — `test(mobile): guard device-host development config`
+- `6ab57efb5072fa8cace4f6ad067af001f7972965` — `build(make): add physical mobile dev modes`
+- `2f132488f36d3f4bffdd58c8a01dc4f8aa1a4007` — `docs(mobile): document device-host and exact-head workflows`
+- `ac41951c0a266ab66c69cd559f582fe3e8c9ada3` — `docs(release): tighten exact-head mobile evidence`
+- `830f69d05dc853e8d3cae0b135810bfb1dd18d4d` — `docs(development): add physical-device native workflow`
+- `d9c79258648f1509fd7dd7881d2c28dd5cd25586` — `docs(setup): add physical-device mobile setup`
+- `e53ae0e1d301ff5ee7c6f14e17f0d43c5b78d28a` — `docs(changelog): record native path and device-host fixes`
+- `d01aba5ae51549953f5469ea241024859734a04c` — `ci(mobile): verify every PR candidate head`
 
 ## Exact-candidate evidence still open
 
-The source architecture/configuration is now cross-platform, but these release gates still require real evidence for the final candidate SHA:
+The source architecture/configuration is cross-platform, but these release gates still require evidence for the final candidate SHA:
 
 1. CI metadata/Rust/web/E2E completion.
 2. Chromium/Firefox/WebKit compatibility completion.
-3. CodeQL, Gitleaks, RustSec, and npm audit completion.
+3. CodeQL, Gitleaks, RustSec, and npm-audit completion.
 4. Verified real product screenshot capture/commit.
 5. Unsigned Windows native bundle evidence.
 6. Unsigned macOS native bundle evidence.
 7. Unsigned Linux native bundle evidence.
-8. Android native APK/AAB workflow success.
-9. iOS simulator native-build workflow success.
+8. Android native APK/AAB workflow success on the final candidate after the frontend-path fix.
+9. iOS simulator native-build workflow success on the final candidate.
 10. Representative Android emulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence.
 11. Representative iOS simulator/device launch, conversion, persistence, responsive/touch/accessibility, and offline smoke evidence.
 12. Required PWA real browser/device install/offline/update evidence.
-13. Owner-controlled native signing/notarization/store publication configuration where distribution requires it.
-14. Repository administration/ruleset review where required.
-15. Stable tag/publication only after the exact-candidate evidence table is satisfied.
+13. Review/fix any actual current dependency-security findings; do not automatically force-upgrade around audit output without understanding the dependency impact.
+14. Owner-controlled native signing/notarization/store publication configuration where distribution requires it.
+15. Repository administration/ruleset review where required.
+16. Stable tag/publication only after the exact-candidate evidence table is satisfied.
 
 ## Continuation order
 
-1. Treat the current source/documentation head as frozen unless an actual check failure requires a patch.
-2. Review exact-head GitHub Actions runs, including `Mobile Platform Verification`.
-3. If a hosted job fails, inspect its concrete job steps/logs and patch the real cause with focused regression/config coverage.
-4. Re-run and record exact-head verification after any source fix.
-5. Capture/review/commit verified product screenshots from the real app.
-6. Produce/review Windows/macOS/Linux/Android/iOS native evidence.
+1. Freeze the current head unless an actual exact-head check failure requires a source/configuration fix.
+2. Review `Mobile Platform Verification` for the exact candidate SHA.
+3. If Android/iOS fails, inspect concrete job steps/logs and patch the real cause; do not weaken the gate.
+4. Review CI, Cross-browser E2E, CodeQL, Gitleaks, RustSec, and npm audit for the same SHA.
+5. Capture/review/commit verified product screenshots from the real app; because this changes the candidate SHA, allow all exact-head PR checks including mobile verification to run again.
+6. Produce/review Windows/macOS/Linux native evidence for the final SHA.
 7. Record representative Android/iOS/PWA device evidence.
 8. Update `docs/release-evidence.md` only with completed evidence tied to the final SHA.
 9. Create/push `v2.8.2` only after all required gates are satisfied.
