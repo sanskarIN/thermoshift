@@ -53,7 +53,20 @@ Platform config is layered automatically by Tauri:
 - Android: `tauri.android.conf.json`;
 - iOS: `tauri.ios.conf.json`.
 
-Run `npm run check:mobile-config` after changing the native crate shape, Android/iOS scripts, identifier, or platform configuration.
+Tauri frontend hooks are executed from the native npm workspace (`apps/desktop`) because the CLI is launched there, while `frontendDist` is resolved relative to `src-tauri/tauri.conf.json`. `check:desktop-config` verifies both coordinate systems. This distinction matters for desktop and mobile builds and is covered by a regression guard after the first hosted Android build exposed the previous incorrect assumption.
+
+Run both native guards after changing the crate shape, frontend hook paths, Android/iOS scripts, application identifier, or platform configuration:
+
+```bash
+npm run check:desktop-config
+npm run check:mobile-config
+```
+
+## Mobile development-server contract
+
+`apps/web/vite.config.ts` reads `TAURI_DEV_HOST`. When Tauri supplies that variable for device development, Vite listens on the selected host with application port `5173`, `strictPort`, and HMR on the same host at port `5174`.
+
+Ordinary web/desktop development remains local by default. Use the explicit mobile host/IP-selection commands only when a simulator/device must reach the development machine.
 
 ## Local persistence and backup contracts
 
@@ -144,7 +157,7 @@ npm --workspace @thermoshift/web run e2e:cross-browser
 
 The primary E2E suite covers the fuller Chromium desktop/mobile journey. The cross-browser compatibility suite separately exercises real conversion, history persistence, and axe checks in Chromium, Firefox, and WebKit so one browser engine cannot silently stand in for all supported web targets.
 
-The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `e2e-cross-browser`, `screenshots`, `desktop-check`, `mobile-check`, `android-init`, `android-build`, `ios-init`, and `ios-build-simulator`.
+The top-level Makefile mirrors these concepts with targets such as `metadata`, `lint`, `test`, `budget`, `e2e`, `e2e-cross-browser`, `screenshots`, `desktop-check`, `mobile-check`, `android-init`, `android-dev-host`, `android-build`, `ios-init`, `ios-dev-host`, `ios-dev-tunnel`, and `ios-build-simulator`.
 
 ## Screenshot development
 
@@ -191,9 +204,16 @@ Follow [`mobile.md`](mobile.md) for Android Studio, SDK/NDK, Java, environment-v
 Initialize and run the Tauri Android target with:
 
 ```bash
+npm run check:desktop-config
 npm run check:mobile-config
 npm run android:init
 npm run android:dev
+```
+
+For a physical/LAN device that must reach the Vite development server through Tauri's selected host:
+
+```bash
+npm run android:dev:host
 ```
 
 Build APK/AAB outputs with:
@@ -211,16 +231,28 @@ iOS target development is macOS-only and requires full Xcode plus CocoaPods. Fol
 Initialize and run with:
 
 ```bash
+npm run check:desktop-config
 npm run check:mobile-config
 npm run ios:init
 npm run ios:dev
 ```
+
+For physical-device development, expose/select the host with either:
+
+```bash
+npm run ios:dev:host
+npm run ios:dev:tunnel
+```
+
+Use the tunnel/IP-prompt variant when automatic host selection is unsuitable.
 
 For CI-friendly native compilation use the Apple Silicon simulator target:
 
 ```bash
 npm run ios:build:simulator
 ```
+
+The generated Apple project/build area is under `apps/desktop/src-tauri/gen/apple`.
 
 Use `npm run ios:build` only when the host environment is prepared for the intended device/archive build. Do not commit Apple development-team identifiers, signing certificates, provisioning profiles, or store credentials.
 
