@@ -1,4 +1,4 @@
-.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check mobile-check android-init android-dev android-build ios-init ios-dev ios-build-simulator check dev
+.PHONY: setup wasm web test lint metadata release-preflight release-preflight-screenshots budget e2e e2e-cross-browser screenshots desktop-check mobile-check android-init android-dev android-dev-host android-build ios-init ios-dev ios-dev-host ios-dev-tunnel ios-build-simulator check dev
 
 setup:
 	npm ci --ignore-scripts
@@ -58,6 +58,9 @@ android-init: mobile-check
 android-dev: mobile-check
 	npm run android:dev
 
+android-dev-host: mobile-check
+	npm run android:dev:host
+
 android-build: mobile-check
 	npm run android:build
 
@@ -66,6 +69,12 @@ ios-init: mobile-check
 
 ios-dev: mobile-check
 	npm run ios:dev
+
+ios-dev-host: mobile-check
+	npm run ios:dev:host
+
+ios-dev-tunnel: mobile-check
+	npm run ios:dev:tunnel
 
 ios-build-simulator: mobile-check
 	npm run ios:build:simulator
