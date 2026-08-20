@@ -30,6 +30,12 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - A dedicated cross-browser GitHub Actions matrix with engine-specific failure reports and post-merge `main` verification.
 - Cross-manifest version consistency checker.
 - Static Tauri frontend path/configuration checker with primary generated-icon integrity checks.
+- Cross-platform Tauri configuration guard covering the shared native runtime plus Android/iOS commands and platform-specific configuration.
+- A shared Tauri library entry point compiled as `staticlib`, `cdylib`, and `rlib`, with the Tauri mobile entry-point attribute required by Android/iOS shells.
+- Android Tauri configuration with explicit minimum SDK 24 plus workspace commands for target initialization, development, run, APK/AAB builds, and device workflows.
+- iOS Tauri configuration with explicit minimum system version 14.0 plus workspace commands for target initialization, development, simulator/device builds, and run workflows.
+- Dedicated Android/iOS native verification workflow: Android ARM64 APK/AAB build evidence on Ubuntu and an iOS Apple Silicon simulator build on macOS.
+- A complete mobile development guide documenting Android SDK/NDK, Xcode/CocoaPods, Rust targets, local commands, CI behavior, real-device evidence, and signing boundaries.
 - Dependency-free internal Markdown link checker.
 - Production web asset budget checker with raw and gzip limits.
 - Dedicated real-product Playwright screenshot configuration and exact PNG evidence validator.
@@ -40,14 +46,16 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Generated and committed npm/Cargo dependency lockfiles for reproducible application verification.
 - Generated-artifact evidence uploads for lockfile, desktop-icon, and screenshot workflows before branch commit attempts.
 - Repository secret scanning alongside CodeQL and dependency vulnerability checks.
-- Tagged-release version/tag consistency checks, documentation/configuration gates, browser E2E/axe verification, asset budgets, and SHA-256 web artifact checksum publication.
-- Release-evidence template covering exact-candidate web, security, screenshot, offline, native-platform, branding, and artifact verification.
+- Tagged-release version/tag consistency checks, desktop/mobile configuration gates, documentation gates, browser E2E/axe verification, asset budgets, and SHA-256 web artifact checksum publication.
+- Release-evidence template covering exact-candidate web, security, screenshot, offline, desktop/mobile native-platform, branding, device-smoke, and artifact verification.
 - Repository-settings guidance for branch protection, Discussions, labels, milestones, merge policy, and security features.
 - ADRs for versioned local backups and externalized product copy.
 
 ### Changed
 
 - Product/package version metadata is aligned to `2.8.2` across the root npm workspace, web workspace, desktop npm workspace, Rust core crate, WASM crate, Tauri Rust crate, and Tauri product configuration.
+- The native Tauri runtime now lives in a reusable library and the desktop binary delegates to that same runtime, so Windows, macOS, Linux, Android, and iOS share one Rust command path instead of introducing a mobile-only conversion implementation.
+- Tauri bundle documentation now describes web, desktop, and mobile targets rather than desktop-only delivery.
 - Local persistence sanitization validates timestamps, enforces retention limits, deduplicates history identifiers, handles browser-storage write failures gracefully, and stores onboarding state separately.
 - Backup restore rejects malformed settings, invalid/missing export timestamps, duplicate conversion identifiers, oversized payloads, invalid records, unsupported schemas, and over-limit histories rather than silently normalizing imported corruption.
 - Unexpected backup file-read/runtime failures no longer expose raw browser error messages in Settings; they are recorded only through the redacted local diagnostic boundary while the UI shows a generic restore failure.
@@ -69,14 +77,15 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Client-side page navigation synchronizes the document title, announces the active page through a polite live region, and exposes `aria-keyshortcuts` while keeping visible `<kbd>` hints out of accessible button names.
 - Stable tagged releases install and gate on Chromium, Firefox, and WebKit compatibility in addition to the fuller primary Chromium E2E/axe suite.
 - Tauri pre-development/pre-build web workspace paths resolve to `apps/web` from `src-tauri` and are statically verified.
+- Normal CI and tagged web-release preflight now validate Android/iOS target configuration and the shared mobile-capable runtime in addition to desktop configuration.
 - Pull-request CI/security workflows cancel superseded runs created from the concurrency-aware definitions.
 - CI, cross-browser, and dependency-security workflows fail closed on missing committed lockfiles and consume locked dependency graphs rather than generating/floating fallbacks.
 - Lockfile and desktop-icon regeneration workflows are manual-only maintenance paths after their generated outputs have landed.
 - Lockfile, desktop-icon, and screenshot generator workflows refuse to rebase generated evidence onto a branch that advanced after generation; they fail and require regeneration from the new exact head.
 - Release provenance generation requires a full 40- or 64-character hexadecimal Git object ID and a non-empty single-line candidate ref before publishing identity metadata.
-- CI metadata enforces version consistency, Tauri frontend configuration, generated desktop icon presence, and internal documentation-link integrity.
+- CI metadata enforces version consistency, Tauri desktop/mobile configuration, generated desktop icon presence, and internal documentation-link integrity.
 - Release workflow runs the full web release gate rather than bypassing Rust format/Clippy, docs/config checks, E2E/axe, browser-engine compatibility, or the production asset budget.
-- Makefile, setup, development, testing, release, performance, contribution, and pull-request guidance match the `2.8.2` quality/evidence model.
+- Makefile, setup, development, mobile, testing, release, performance, contribution, and pull-request guidance match the `2.8.2` quality/evidence model.
 - Removed an unused persistence hook to keep the frontend surface smaller and coverage meaningful.
 
 ### Security and privacy
@@ -93,20 +102,23 @@ No changes are intentionally queued beyond the current `2.8.2` release candidate
 - Generated release evidence is prevented from silently drifting to a newer candidate via automatic rebase.
 - Provenance manifests reject malformed candidate Git identities before release metadata is written.
 - Security automation includes CodeQL, Gitleaks repository secret scanning, RustSec audit, and npm audit.
-- Desktop signing/notarization remains explicitly outside source control and requires owner-controlled credentials.
+- Native signing/notarization/store credentials remain explicitly outside source control and require owner-controlled secrets.
+- Apple development-team selection is not hard-coded in the repository; signed Apple builds receive signing identity through the build environment.
 
 ### Release evidence still pending
 
 The following are not considered complete merely because supporting workflows or generated inputs exist:
 
-- regenerated `2.8.2` npm/Cargo lock metadata and exact-head locked verification;
+- exact-head locked npm/Cargo verification for the final candidate;
 - generated and committed verified product screenshots;
 - current-head hosted CI/Cross-browser E2E/CodeQL/Gitleaks/dependency-security success;
-- successful unsigned native package evidence for every intended desktop platform;
+- successful unsigned native package evidence for Windows, macOS, and Linux;
+- successful Android APK/AAB and iOS simulator native-build evidence for the exact candidate;
+- representative Android and iOS simulator/device launch, conversion, persistence, and offline smoke evidence;
 - representative real-device/browser PWA install/offline/update verification required by the release plan;
-- owner-controlled signing/notarization and final stable tag/release evidence.
+- owner-controlled desktop/mobile signing/notarization/store publication evidence and final stable tag/release evidence.
 
-Committed icon assets remain release inputs, but their presence does not by itself prove the remaining candidate checks passed.
+Committed configuration, workflow definitions, locks, and icon assets remain release inputs, but their presence does not by itself prove the remaining candidate checks passed.
 
 ## 0.1 development baseline
 
@@ -118,5 +130,3 @@ Committed icon assets remain release inputs, but their presence does not by itse
 - React/TypeScript PWA with converter, batch mode, history, formulas, settings, About, export, copy, and share flows.
 - Offline PWA configuration and responsive accessible design system.
 - Tauri desktop shell for Windows, macOS, and Linux.
-- Unit, UI, storage, E2E, and automated accessibility test foundations.
-- CI, CodeQL, dependency auditing, Dependabot, release workflow, issue templates, and project documentation.
