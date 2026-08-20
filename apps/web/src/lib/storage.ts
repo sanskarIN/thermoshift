@@ -52,7 +52,17 @@ const safeRemoveItem = (key: string): void => {
   }
 };
 
+const usesDefaultSettings = (settings: Settings): boolean => settings.precision === DEFAULT_SETTINGS.precision
+  && settings.roundingMode === DEFAULT_SETTINGS.roundingMode
+  && settings.theme === DEFAULT_SETTINGS.theme
+  && settings.highContrast === DEFAULT_SETTINGS.highContrast
+  && settings.reducedMotion === DEFAULT_SETTINGS.reducedMotion;
+
 export const saveSettings = (settings: Settings): void => {
+  if (usesDefaultSettings(settings)) {
+    safeRemoveItem(SETTINGS_KEY);
+    return;
+  }
   safeSetItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
@@ -85,6 +95,10 @@ export const loadHistory = (): HistoryEntry[] => {
 };
 
 export const saveHistory = (history: HistoryEntry[]): void => {
+  if (history.length === 0) {
+    safeRemoveItem(HISTORY_KEY);
+    return;
+  }
   safeSetItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
 };
 
