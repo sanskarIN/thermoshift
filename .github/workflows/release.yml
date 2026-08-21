@@ -22,7 +22,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - run: npm --workspace @thermoshift/web run build
       - run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - uses: softprops/action-gh-release@v2
