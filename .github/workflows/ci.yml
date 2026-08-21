@@ -35,9 +35,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
       - name: Test canonical engine
-        run: cargo test -p thermoshift-core
+        run: cargo test --locked -p thermoshift-core
       - name: Lint canonical engine and WASM bridge
-        run: cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+        run: cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 
   web:
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - run: npm --workspace @thermoshift/web run wasm:build
       - run: npm --workspace @thermoshift/web run typecheck
       - run: npm --workspace @thermoshift/web run lint
@@ -75,6 +75,6 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps chromium
       - run: npm --workspace @thermoshift/web run e2e
