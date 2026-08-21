@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,6 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -43,6 +45,19 @@ jobs:
             Cargo.lock
           if-no-files-found: error
           retention-days: 1
+      - name: Materialize generated lockfiles on same-repository pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        shell: bash
+        run: |
+          status="$(git status --porcelain -- package-lock.json Cargo.lock)"
+          if [[ -z "$status" ]]; then
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add package-lock.json Cargo.lock
+          git commit -m "build: commit reproducible dependency lockfiles"
+          git push origin "HEAD:${GITHUB_HEAD_REF}"
       - name: Verify committed lockfiles are current
         shell: bash
         run: |
