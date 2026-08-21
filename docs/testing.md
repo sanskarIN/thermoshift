@@ -4,7 +4,7 @@ ThermoShift uses layered tests.
 
 ## Rust unit/domain tests
 
-`cargo test -p thermoshift-core` verifies canonical reference points, all-scale round trips, absolute zero, and non-finite rejection. Domain regressions belong here first.
+`cargo test --locked -p thermoshift-core` verifies canonical reference points, all-scale round trips, absolute zero, and non-finite rejection while requiring the committed Cargo dependency graph. Domain regressions belong here first.
 
 ## Web unit/component tests
 
@@ -16,7 +16,7 @@ Playwright verifies a real conversion in the built PWA on desktop Chromium and a
 
 ## Repository and lockfile invariants
 
-`npm run verify:native-config` checks the shared Tauri desktop/Android/iOS structure without requiring native SDKs. The Lockfile Verification workflow regenerates `package-lock.json` and `Cargo.lock`, uploads the generated files for review, and fails when committed lockfiles no longer match dependency manifests.
+`npm run verify:native-config` checks the shared Tauri desktop/Android/iOS structure without requiring native SDKs. `package-lock.json` and `Cargo.lock` are committed source-control inputs. Normal CI consumes them with `npm ci` and Cargo `--locked`; the Lockfile Verification workflow independently regenerates both lockfiles and fails if dependency manifests would change either reviewed resolution.
 
 ## CI expectations
 
