@@ -36,8 +36,34 @@ export const loadSettings = (): Settings => {
   }
 };
 
+const safeSetItem = (key: string, value: string): void => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Persistence is best-effort. Keep the in-memory app usable when storage is denied or full.
+  }
+};
+
+const safeRemoveItem = (key: string): void => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // A failed cleanup must not make the settings screen or app unusable.
+  }
+};
+
+const usesDefaultSettings = (settings: Settings): boolean => settings.precision === DEFAULT_SETTINGS.precision
+  && settings.roundingMode === DEFAULT_SETTINGS.roundingMode
+  && settings.theme === DEFAULT_SETTINGS.theme
+  && settings.highContrast === DEFAULT_SETTINGS.highContrast
+  && settings.reducedMotion === DEFAULT_SETTINGS.reducedMotion;
+
 export const saveSettings = (settings: Settings): void => {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  if (usesDefaultSettings(settings)) {
+    safeRemoveItem(SETTINGS_KEY);
+    return;
+  }
+  safeSetItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 const isUnitId = (value: unknown): value is UnitId => typeof value === 'string' && UNIT_IDS.has(value as UnitId);
@@ -46,7 +72,9 @@ const isHistoryEntry = (value: unknown): value is HistoryEntry => {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<HistoryEntry>;
   return typeof candidate.id === 'string'
+    && candidate.id.trim().length > 0
     && typeof candidate.createdAt === 'string'
+    && Number.isFinite(Date.parse(candidate.createdAt))
     && typeof candidate.input === 'number'
     && Number.isFinite(candidate.input)
     && typeof candidate.output === 'number'
@@ -67,10 +95,14 @@ export const loadHistory = (): HistoryEntry[] => {
 };
 
 export const saveHistory = (history: HistoryEntry[]): void => {
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
+  if (history.length === 0) {
+    safeRemoveItem(HISTORY_KEY);
+    return;
+  }
+  safeSetItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
 };
 
 export const clearStoredData = (): void => {
-  localStorage.removeItem(SETTINGS_KEY);
-  localStorage.removeItem(HISTORY_KEY);
+  safeRemoveItem(SETTINGS_KEY);
+  safeRemoveItem(HISTORY_KEY);
 };

@@ -3,7 +3,7 @@ import type { ConversionResult, HistoryEntry } from '../types';
 
 const escapeCsv = (value: string | number): string => {
   const text = String(value);
-  return /[\",\n]/.test(text) ? `\"${text.replaceAll('\"', '\"\"')}\"` : text;
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 };
 
 export const conversionsToCsv = (rows: ConversionResult[]): string => {

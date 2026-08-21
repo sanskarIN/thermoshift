@@ -11,17 +11,18 @@ jobs:
   web-artifact:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
+          package-manager-cache: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
       - uses: taiki-e/install-action@v2
         with:
           tool: wasm-pack
-      - run: npm install --ignore-scripts
+      - run: npm ci --ignore-scripts
       - run: npm --workspace @thermoshift/web run build
       - run: tar -czf thermoshift-web-${{ github.ref_name }}.tar.gz -C apps/web/dist .
       - uses: softprops/action-gh-release@v2

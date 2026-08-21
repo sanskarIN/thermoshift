@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 import App from './App';
 
 vi.mock('./lib/engine', () => ({
-  getTemperatureEngine: async () => ({
+  getTemperatureEngine: () => Promise.resolve({
     convert: (value: number, from: string, to: string) => from === to ? value : value + 32,
     absoluteZero: () => -273.15,
     version: () => 'test',
