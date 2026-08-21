@@ -5,12 +5,12 @@ ThermoShift treats source-level target support and verified release support as s
 ## Release checklist
 
 1. Start from a clean checkout of `main`.
-2. Install dependencies and build the WASM bridge.
+2. Install the committed dependency graph with `npm ci` and use Cargo commands with `--locked`; build the WASM bridge.
 3. Run `npm run verify:native-config`.
 4. Run formatting, linting, type checks, Rust tests, web tests, E2E tests, and production builds.
 5. Review dependency/security alerts and ensure no blocker/high issues remain.
 6. Update `CHANGELOG.md`, `ROADMAP.md`, and `what_changed.md`.
-7. Update package/crate/Tauri versions consistently.
+7. Update package/crate/Tauri versions consistently and regenerate/review both lockfiles if dependency manifests changed.
 8. Capture real screenshots from verified release builds.
 9. Create an annotated semantic version tag such as `v0.1.0` and push it.
 10. Verify the GitHub web release workflow and artifact contents.
@@ -23,10 +23,11 @@ ThermoShift treats source-level target support and verified release support as s
 Build:
 
 ```bash
+npm ci
 npm --workspace @thermoshift/web run build
 ```
 
-Tagged `vX.Y.Z` pushes currently publish the web artifact through `.github/workflows/release.yml`.
+Tagged `vX.Y.Z` pushes currently publish the web artifact through `.github/workflows/release.yml`, and that workflow uses `npm ci` so the released web bundle is built from the reviewed lockfile.
 
 Verify at minimum:
 
