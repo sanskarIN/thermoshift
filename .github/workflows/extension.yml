@@ -1,0 +1,59 @@
+name: Browser Extension
+
+on:
+  pull_request:
+    paths:
+      - 'apps/extension/**'
+      - 'crates/thermoshift-core/**'
+      - 'crates/thermoshift-wasm/**'
+      - 'scripts/build-browser-extension.mjs'
+      - 'scripts/verify-extension-config.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/extension.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+      - name: Install reviewed JavaScript dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify extension source invariants
+        run: npm run verify:extension-config
+      - name: Build extension package
+        run: npm run extension:build
+      - name: Verify packaged manifest remains permission-free
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('apps/extension/dist/manifest.json', 'utf8'));
+          if (manifest.permissions?.length) throw new Error('Packaged extension unexpectedly requests permissions.');
+          if (manifest.host_permissions?.length) throw new Error('Packaged extension unexpectedly requests host permissions.');
+          NODE
+      - name: Upload unsigned extension package evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: thermoshift-extension-${{ github.event.pull_request.head.sha || github.sha }}
+          path: apps/extension/dist/
+          if-no-files-found: error
+          retention-days: 7
