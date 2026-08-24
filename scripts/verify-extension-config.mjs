@@ -37,6 +37,15 @@ assert(
   /<script\s+type=["']module["']\s+src=["']popup\.js["']\s*><\/script>/i.test(popupHtml),
   'Extension popup must load popup.js as a local ES module.',
 );
+
+for (const id of ['converter', 'value', 'from-unit', 'to-unit', 'swap', 'result', 'error', 'engine-version']) {
+  assert(new RegExp(`\\bid=["']${id}["']`, 'i').test(popupHtml), `Extension popup is missing required #${id} control.`);
+}
+assert(
+  /<input[^>]+id=["']value["'][^>]+type=["']number["']/i.test(popupHtml)
+    || /<input[^>]+type=["']number["'][^>]+id=["']value["']/i.test(popupHtml),
+  'Extension value control must remain a numeric input.',
+);
 assert(
   popupJavaScript.includes("./generated/thermoshift_wasm.js")
     && popupJavaScript.includes('convert_temperature')
