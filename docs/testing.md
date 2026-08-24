@@ -16,7 +16,7 @@ Playwright verifies a real conversion in the built PWA on desktop Chromium and a
 
 ## Repository and lockfile invariants
 
-`npm run verify:native-config` checks the shared Tauri desktop/Android/iOS structure without requiring native SDKs. `package-lock.json` and `Cargo.lock` are committed source-control inputs. Normal CI consumes them with `npm ci` and Cargo `--locked`; the Lockfile Verification workflow independently regenerates both lockfiles and fails if dependency manifests would change either reviewed resolution.
+`npm run verify:native-config` checks the shared Tauri desktop/Android/iOS structure without requiring native SDKs. `package-lock.json` and `Cargo.lock` are committed source-control inputs. Normal CI consumes them with `npm ci` and Cargo `--locked`; the Lockfile Verification workflow independently proves that the committed npm and Cargo lockfiles still satisfy their manifests without upgrading or rewriting the reviewed dependency graph.
 
 ## CI expectations
 
