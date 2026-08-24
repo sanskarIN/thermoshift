@@ -15,7 +15,7 @@ npm ci
 npm run verify:native-config
 ```
 
-`npm ci` installs exactly the dependency graph recorded in the committed `package-lock.json`; use `npm install` only when intentionally changing npm dependencies and review the resulting lockfile diff. Rust CI similarly uses the committed `Cargo.lock` with `--locked`. `npm run verify:native-config` checks the repository's desktop/Android/iOS Tauri invariants without requiring a platform SDK. The lockfile verification workflow regenerates npm and Cargo resolutions on dependency-manifest changes and rejects unreviewed drift.
+`npm ci` installs exactly the dependency graph recorded in the committed `package-lock.json`; use `npm install` only when intentionally changing npm dependencies and review the resulting lockfile diff. Rust CI similarly uses the committed `Cargo.lock` with `--locked`. `npm run verify:native-config` checks the repository's desktop/Android/iOS Tauri invariants without requiring a platform SDK. The lockfile verification workflow validates that both committed lockfiles still satisfy their manifests without upgrading or rewriting the reviewed dependency graph.
 
 ## Web/PWA
 
