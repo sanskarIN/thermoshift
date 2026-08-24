@@ -48,3 +48,5 @@ jobs:
           git add package-lock.json Cargo.lock
           git commit -m "build(release): refresh lockfiles for 1.5.0 metadata"
           git push origin HEAD:release/v1.5.0-prep
+
+# This branch-scoped workflow is intentionally temporary and must be removed after the lockfile refresh lands.
