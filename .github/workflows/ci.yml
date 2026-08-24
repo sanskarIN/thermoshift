@@ -61,6 +61,7 @@ jobs:
       - run: npm --workspace @thermoshift/web run lint
       - run: npm --workspace @thermoshift/web run test
       - run: npm --workspace @thermoshift/web run build:web
+      - run: npm run verify:web-budget
 
   e2e:
     runs-on: ubuntu-latest
