@@ -15,6 +15,7 @@ const UNITS = [
   ['romer', 'Rømer', '°Rø'],
 ];
 
+const converterForm = document.querySelector('#converter');
 const valueInput = document.querySelector('#value');
 const fromSelect = document.querySelector('#from-unit');
 const toSelect = document.querySelector('#to-unit');
@@ -43,22 +44,30 @@ function formatNumber(value) {
   }).format(value);
 }
 
-function showError(message) {
+function showError(message, inputInvalid = false) {
   errorOutput.textContent = message;
   errorOutput.hidden = false;
   resultOutput.textContent = 'Conversion unavailable';
+  valueInput.toggleAttribute('aria-invalid', inputInvalid);
 }
 
 function clearError() {
   errorOutput.textContent = '';
   errorOutput.hidden = true;
+  valueInput.removeAttribute('aria-invalid');
 }
 
 function convert() {
   clearError();
-  const value = Number(valueInput.value);
+  const rawValue = valueInput.value.trim();
+  if (rawValue === '') {
+    resultOutput.textContent = 'Enter a temperature to convert.';
+    return;
+  }
+
+  const value = Number(rawValue);
   if (!Number.isFinite(value)) {
-    showError('Enter a finite numeric value.');
+    showError('Enter a finite numeric value.', true);
     return;
   }
 
@@ -66,8 +75,12 @@ function convert() {
     const converted = convert_temperature(value, fromSelect.value, toSelect.value);
     resultOutput.textContent = `${formatNumber(value)} ${unitSymbol(fromSelect.value)} = ${formatNumber(converted)} ${unitSymbol(toSelect.value)}`;
   } catch (error) {
-    const absoluteZero = absolute_zero_for(fromSelect.value);
-    showError(`Value is outside the physical range for ${fromSelect.selectedOptions[0]?.textContent ?? 'this scale'}. Absolute zero is ${formatNumber(absoluteZero)} ${unitSymbol(fromSelect.value)}.`);
+    try {
+      const absoluteZero = absolute_zero_for(fromSelect.value);
+      showError(`Value is outside the physical range for ${fromSelect.selectedOptions[0]?.textContent ?? 'this scale'}. Absolute zero is ${formatNumber(absoluteZero)} ${unitSymbol(fromSelect.value)}.`, true);
+    } catch {
+      showError('ThermoShift could not validate this conversion.', true);
+    }
     console.debug('ThermoShift conversion rejected input', error);
   }
 }
@@ -92,6 +105,10 @@ async function start() {
     fromSelect.addEventListener('change', convert);
     toSelect.addEventListener('change', convert);
     swapButton.addEventListener('click', swapUnits);
+    converterForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      convert();
+    });
     convert();
   } catch (error) {
     showError('ThermoShift could not load its local conversion engine.');
