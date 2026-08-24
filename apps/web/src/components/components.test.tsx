@@ -44,7 +44,7 @@ describe('ConverterPanel', () => {
     render(<ConverterPanel engine={engine} settings={DEFAULT_SETTINGS} onSave={onSave} />);
 
     fireEvent.change(screen.getByLabelText('Value'), { target: { value: '100' } });
-    expect(screen.getByText('212.00')).toBeInTheDocument();
+    expect(screen.getByText('212')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save to history' }));
     expect(onSave).toHaveBeenCalledWith({ input: 100, output: 212, from: 'celsius', to: 'fahrenheit' });
 
@@ -67,7 +67,7 @@ describe('ConverterPanel', () => {
     expect(screen.getByLabelText('From')).toHaveValue('fahrenheit');
     expect(screen.getByLabelText('To')).toHaveValue('celsius');
     expect(screen.getByLabelText('Value')).toHaveValue('212');
-    expect(screen.getByText('100.00')).toBeInTheDocument();
+    expect(screen.getByText('100')).toBeInTheDocument();
   });
 
   it('copies and shares the current result through browser capabilities', async () => {
@@ -79,11 +79,11 @@ describe('ConverterPanel', () => {
     render(<ConverterPanel engine={engine} settings={DEFAULT_SETTINGS} onSave={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Result copied.'));
-    expect(writeText).toHaveBeenCalledWith('32.00 °F');
+    expect(writeText).toHaveBeenCalledWith('32 °F');
 
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Share sheet opened.'));
-    expect(share).toHaveBeenCalledWith({ title: 'ThermoShift conversion', text: '0 °C = 32.00 °F' });
+    expect(share).toHaveBeenCalledWith({ title: 'ThermoShift conversion', text: '0 °C = 32 °F' });
   });
 
   it('reports clipboard failures without breaking conversion', async () => {
@@ -162,7 +162,8 @@ describe('informational panels', () => {
   it('renders reference points through the canonical engine', () => {
     render(<ReferenceCards engine={engine} settings={DEFAULT_SETTINGS} unit="celsius" />);
     expect(screen.getByRole('heading', { name: 'Reference points' })).toBeInTheDocument();
-    expect(screen.getByText('0.00 °C')).toBeInTheDocument();
+    const freezingCard = screen.getByText('Water freezes').closest('article');
+    expect(freezingCard).toHaveTextContent('0 °C');
   });
 
   it('renders formula education', () => {
