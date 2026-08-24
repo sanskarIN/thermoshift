@@ -16,6 +16,8 @@
     "typecheck": "npm --workspace @thermoshift/web run typecheck",
     "e2e": "npm --workspace @thermoshift/web run e2e",
     "verify:native-config": "node scripts/verify-native-config.mjs",
+    "verify:extension-config": "node scripts/verify-extension-config.mjs",
+    "extension:build": "node scripts/build-browser-extension.mjs",
     "native:info": "npm --workspace @thermoshift/desktop run info",
     "desktop:dev": "npm --workspace @thermoshift/desktop run dev",
     "desktop:build": "npm --workspace @thermoshift/desktop run build",
