@@ -60,12 +60,12 @@ Prerequisites: current stable Rust, Node.js 22+, npm, and `wasm-pack`.
 ```bash
 git clone https://github.com/sanskarIN/thermoshift.git
 cd thermoshift
-npm install
+npm ci
 cargo install wasm-pack --locked
 npm run dev
 ```
 
-Then open the URL shown by Vite (normally `http://localhost:5173`).
+Then open the URL shown by Vite (normally `http://localhost:5173`). Use `npm install` only when intentionally changing JavaScript dependencies and reviewing the resulting lockfile diff.
 
 ## Development setup
 
@@ -77,9 +77,9 @@ Then open the URL shown by Vite (normally `http://localhost:5173`).
 Useful commands:
 
 ```bash
-cargo test -p thermoshift-core
+cargo test --locked -p thermoshift-core
 cargo fmt --all -- --check
-cargo clippy -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
+cargo clippy --locked -p thermoshift-core -p thermoshift-wasm --all-targets -- -D warnings
 npm run verify:native-config
 npm --workspace @thermoshift/web run typecheck
 npm --workspace @thermoshift/web run lint
