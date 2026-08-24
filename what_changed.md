@@ -5,6 +5,8 @@
 **Version:** 0.1.0 development baseline  
 **Phase:** Core/web/native implementation is cross-platform at source/configuration level for browsers/PWA, Windows, macOS, Linux, Android, and iOS/iPadOS. The cross-platform continuation is merged to `main`; pull request #13 is hardening clean CI, dependency reproducibility, browser compatibility, and release automation before the first public release.
 
+The repository's active mainline/version files still declare `0.1.0`. Pull request #11 contains an older unmerged `2.8.2` release-candidate line; that branch version is not the current `main` version and must not be presented as the current stable release.
+
 ## Merge checkpoint
 
 - Cross-platform pull request **#12** was merged to `main` on 2026-08-20.
@@ -26,14 +28,17 @@ Pull request **#13** (`fix/ci-security-hardening`) remains open until its final 
 - Removed the vulnerable optional PWA asset-generator dependency path and moved `vite-plugin-pwa` to the 1.3.x line.
 - Expanded typed ESLint coverage to the Vite/Playwright TypeScript project and included E2E specs in the tooling tsconfig.
 - Fixed strict async lint violations in presentation/install-prompt tests and removed unnecessary CSV quote escapes.
+- Removed four invalid `await act(...)` calls around synchronous install-prompt event dispatches, while retaining asynchronous `act` only for the actual install promise.
 - Lowered the production browser build target to ES2020/Safari 14 so the Web/PWA artifact aligns with the configured iOS/iPadOS 14 minimum.
 
 ### Reproducible dependency inputs completed
 
 - Declared the supported Node 22/npm 10.9 toolchain through `packageManager`, `engines`, `.nvmrc`, and npm configuration.
 - Generated and committed both `package-lock.json` and `Cargo.lock` from a clean GitHub-hosted workflow run.
-- The lockfile materialization run regenerated npm/Cargo resolutions, uploaded the generated artifacts, committed them to the same-repository repair branch, and then passed its lockfile-currentness check.
+- The one-time lockfile materialization run regenerated npm/Cargo resolutions, uploaded the generated artifacts, committed them to the same-repository repair branch, and then passed its lockfile-currentness check.
 - Restored the lockfile verifier to read-only repository permissions immediately after materialization.
+- Corrected the steady-state lockfile verifier so it validates the reviewed lockfiles without upgrading compatible dependencies: npm uses `npm ci --ignore-scripts`, while Cargo uses `cargo metadata --locked --format-version 1 --no-deps`.
+- The verifier also checks that validation leaves `package-lock.json` and `Cargo.lock` unchanged.
 - Switched normal Web/E2E CI installs to `npm ci --ignore-scripts`.
 - Switched canonical Rust tests and Clippy in CI to Cargo `--locked`.
 - Switched dependency-security checks to audit the committed dependency graph instead of silently generating a new one.
@@ -44,6 +49,7 @@ Pull request **#13** (`fix/ci-security-hardening`) remains open until its final 
 - Updated `actions/checkout` and `actions/setup-node` to their v5 Node-24-runtime action lines.
 - Added per-ref workflow concurrency so superseded CI, CodeQL, dependency-audit, and lockfile runs cancel automatically.
 - Preserved read-only permissions for ordinary CI/verification jobs and write permission only where a tagged release actually requires release publication.
+- Removed steady-state generated-lockfile artifact production from verification. Reviewed lockfiles are release inputs; routine validation must not silently replace them with newer compatible resolutions.
 
 ### Verification evidence so far
 
@@ -58,10 +64,11 @@ Hosted runs on repair-branch heads have already demonstrated:
 - RustSec dependency audit: passed on an earlier repair head.
 - `npm audit --audit-level=high`: passed on an earlier repair head.
 - native cross-platform configuration invariant check: passed.
-- CodeQL JavaScript/TypeScript analysis: passed on an earlier repair head.
-- Lockfile generation/materialization/currentness workflow: passed and committed both lockfiles.
+- CodeQL JavaScript/TypeScript analysis: passed, including the 2026-08-24 run for source head `147aba5c41dcab5981474e3a8e5005e1f9b6d7c4`.
+- One-time lockfile generation/materialization/currentness workflow: passed and committed both lockfiles.
+- The 2026-08-24 steady-state verifier exposed that `cargo generate-lockfile` upgrades compatible crates even when the existing lockfile is valid; the workflow has been corrected to validate pinned inputs instead of treating "latest compatible" as "current".
 
-The final documentation/locked-install head still requires its own complete GitHub Actions result before merge. Earlier green results are evidence for the individual repaired layers, not a substitute for final-head verification.
+The final documentation/workflow head still requires its own complete GitHub Actions result before merge. Earlier green results are evidence for the individual repaired layers, not a substitute for final-head verification.
 
 ## Completed foundation
 
@@ -141,7 +148,7 @@ A configured native target is not called release-verified until its real package
 - Playwright real conversion smoke test.
 - Playwright + axe primary-screen accessibility test.
 - Dependency-free native configuration invariant check.
-- Lockfile regeneration/currentness verification.
+- Non-mutating npm/Cargo lockfile-manifest validation.
 
 ## Verification boundary in this continuation
 
@@ -152,15 +159,17 @@ A configured native target is not called release-verified until its real package
 
 ## Known release blockers / remaining verification
 
-1. Complete CI, CodeQL, Dependency Security, and Lockfile Verification successfully on the final pull request #13 head after all locked-install/documentation commits.
+1. Complete CI, CodeQL, Dependency Security, and Lockfile Verification successfully on the final pull request #13 head after all workflow/documentation commits.
 2. Run the newly reachable Vitest coverage, production Web build, and Playwright desktop/Pixel accessibility flows successfully in hosted CI; repair any failures they expose.
-3. Run `tauri android init` on a configured Android development machine, then build/test APK and AAB outputs on emulator and real hardware.
-4. Run `tauri ios init` on macOS with Xcode, then build/test simulator/device outputs and verify signing/provisioning separately.
-5. Build and smoke-test Tauri packages on Windows, macOS, and Linux.
-6. Capture real screenshots and package evidence from verified builds; do not use fabricated screenshots as release proof.
-7. Configure owner-controlled signing/notarization/store credentials before publishing signed native packages.
-8. Configure branch protection/required checks if repository settings allow it.
-9. Prepare `v0.1.0` only after the platform verification matrix is complete enough for the claims in its release notes.
+3. Reconcile the older open pull request #11 (`2.8.2` candidate) against the hardened current mainline instead of treating its branch version as the active repository version.
+4. Run `tauri android init` on a configured Android development machine, then build/test APK and AAB outputs on emulator and real hardware.
+5. Run `tauri ios init` on macOS with Xcode, then build/test simulator/device outputs and verify signing/provisioning separately.
+6. Build and smoke-test Tauri packages on Windows, macOS, and Linux.
+7. Capture real screenshots and package evidence from verified builds; do not use fabricated screenshots as release proof.
+8. Configure owner-controlled signing/notarization/store credentials before publishing signed native packages.
+9. Configure branch protection/required checks if repository settings allow it.
+10. Prepare `v0.1.0` only after the platform verification matrix is complete enough for the claims in its release notes.
+11. Prepare the next-version browser-extension architecture only after the current release-hardening line is clean, so the extension reuses the canonical conversion engine and reviewed dependency baseline rather than forking unstable logic.
 
 ## Migration notes
 
@@ -189,6 +198,10 @@ ThermoShift 0.1 is a local-first, multi-scale temperature converter with a canon
 - `9c8c8fb` — `docs(setup): prefer reproducible lockfile installs`
 - `07a377e` — `docs(release): require locked dependency inputs`
 - `c148e04` — `docs(changelog): record reproducibility and CI repairs`
+- `147aba5` — `fix(web): remove non-promise awaits from install prompt tests`
+- `8e4f014` — `ci: validate pinned lockfiles without upgrading dependencies`
+- `2a6ae1d` — `docs(testing): describe non-mutating lockfile validation`
+- `bcea55f` — `docs(setup): clarify pinned lockfile verification`
 
 ## Cross-platform continuation commit checkpoint
 
