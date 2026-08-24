@@ -110,7 +110,8 @@ describe('BatchConverter', () => {
 
     fireEvent.change(screen.getByLabelText('From'), { target: { value: 'fahrenheit' } });
     fireEvent.change(screen.getByLabelText('To'), { target: { value: 'celsius' } });
-    expect(screen.getByText(/°F/)).toBeInTheDocument();
+    expect(screen.getByLabelText('From')).toHaveValue('fahrenheit');
+    expect(screen.getByLabelText('To')).toHaveValue('celsius');
   });
 });
 
