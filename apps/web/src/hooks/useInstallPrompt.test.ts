@@ -18,7 +18,7 @@ describe('useInstallPrompt', () => {
     const { result } = renderHook(() => useInstallPrompt());
     const { event, prompt } = installPromptEvent();
 
-    await act(() => {
+    act(() => {
       window.dispatchEvent(event);
     });
     expect(result.current.canInstall).toBe(true);
@@ -35,7 +35,7 @@ describe('useInstallPrompt', () => {
     const { result } = renderHook(() => useInstallPrompt());
     const { event } = installPromptEvent('dismissed');
 
-    await act(() => {
+    act(() => {
       window.dispatchEvent(event);
     });
 
@@ -46,16 +46,16 @@ describe('useInstallPrompt', () => {
     expect(result.current.canInstall).toBe(true);
   });
 
-  it('marks the app installed when the browser emits appinstalled', async () => {
+  it('marks the app installed when the browser emits appinstalled', () => {
     const { result } = renderHook(() => useInstallPrompt());
     const { event } = installPromptEvent();
 
-    await act(() => {
+    act(() => {
       window.dispatchEvent(event);
     });
     expect(result.current.canInstall).toBe(true);
 
-    await act(() => {
+    act(() => {
       window.dispatchEvent(new Event('appinstalled'));
     });
     expect(result.current.installed).toBe(true);
