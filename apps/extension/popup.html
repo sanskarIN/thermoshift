@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>ThermoShift</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup-shell">
+      <header class="brand">
+        <strong>ThermoShift</strong>
+        <span>Private offline conversion</span>
+      </header>
+
+      <form id="converter" novalidate>
+        <label for="value">Value</label>
+        <input id="value" name="value" type="number" inputmode="decimal" step="any" value="0" required />
+
+        <div class="unit-grid">
+          <label for="from-unit">From</label>
+          <label for="to-unit">To</label>
+          <select id="from-unit" name="from-unit"></select>
+          <select id="to-unit" name="to-unit"></select>
+        </div>
+
+        <button type="button" id="swap">Swap units</button>
+        <output id="result" for="value from-unit to-unit" aria-live="polite">Loading conversion engine…</output>
+        <p id="error" class="error" role="alert" hidden></p>
+      </form>
+
+      <footer>
+        <span id="engine-version"></span>
+        <span>Made by the Sanskar</span>
+      </footer>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
