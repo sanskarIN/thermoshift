@@ -30,7 +30,11 @@ export const downloadText = (filename: string, text: string, type: string): void
   anchor.href = url;
   anchor.download = filename;
   document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+
+  try {
+    anchor.click();
+  } finally {
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
 };
