@@ -66,8 +66,9 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save to history' }));
     fireEvent.click(screen.getByRole('button', { name: /^History/ }));
 
-    expect(screen.getByText('100.00 °C')).toBeInTheDocument();
-    expect(screen.getByText('212.00 °F')).toBeInTheDocument();
+    const savedRow = screen.getByRole('listitem');
+    expect(savedRow).toHaveTextContent('100 °C');
+    expect(savedRow).toHaveTextContent('212 °F');
   });
 
   it('announces offline state changes', async () => {
