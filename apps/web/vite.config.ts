@@ -64,6 +64,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/generated/**',
+        'src/main.tsx',
+        'src/types.ts',
+        'src/vite-env.d.ts',
+      ],
       thresholds: {
         lines: 75,
         functions: 70,
