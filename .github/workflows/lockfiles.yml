@@ -1,0 +1,45 @@
+name: Lockfile Verification
+
+on:
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'crates/**/Cargo.toml'
+      - 'apps/desktop/src-tauri/Cargo.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'apps/**/package.json'
+      - '.github/workflows/lockfiles.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-lockfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify npm lockfile matches manifests
+        run: npm ci --ignore-scripts
+      - name: Verify Cargo lockfile matches manifests
+        run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
+      - name: Verify lockfiles remain unchanged
+        shell: bash
+        run: |
+          status="$(git status --porcelain -- package-lock.json Cargo.lock)"
+          if [[ -n "$status" ]]; then
+            echo "Lockfile validation modified the committed dependency graph:" >&2
+            printf '%s\n' "$status" >&2
+            exit 1
+          fi

@@ -10,6 +10,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { useInstallPrompt } from './hooks/useInstallPrompt';
 import { en } from './i18n/en';
 import { getTemperatureEngine, type TemperatureEngine } from './lib/engine';
+import { createId } from './lib/id';
 import { clearStoredData, DEFAULT_SETTINGS, loadHistory, loadSettings, saveHistory, saveSettings } from './lib/storage';
 import type { ConversionResult, HistoryEntry, Settings, UnitId } from './types';
 
@@ -62,7 +63,7 @@ function App() {
   }, []);
 
   const saveConversion = (result: ConversionResult) => {
-    const entry: HistoryEntry = { ...result, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+    const entry: HistoryEntry = { ...result, id: createId(), createdAt: new Date().toISOString() };
     setHistory((current) => [entry, ...current].slice(0, 50));
   };
 

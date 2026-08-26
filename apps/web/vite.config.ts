@@ -52,16 +52,27 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2022',
+    target: ['es2020', 'safari14'],
     sourcemap: true,
     chunkSizeWarningLimit: 650,
   },
   test: {
     environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/generated/**',
+        'src/main.tsx',
+        'src/types.ts',
+        'src/vite-env.d.ts',
+      ],
       thresholds: {
         lines: 75,
         functions: 70,

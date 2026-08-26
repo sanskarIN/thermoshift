@@ -20,7 +20,7 @@ impl Temperature {
             return Err(TemperatureError::BelowAbsoluteZero {
                 value,
                 unit,
-                minimum: absolute_zero_in(unit),
+                absolute_zero: absolute_zero_in(unit),
             });
         }
 
@@ -121,16 +121,16 @@ mod tests {
     #[test]
     fn absolute_zero_is_valid_on_all_scales() {
         for unit in Unit::ALL {
-            let minimum = absolute_zero_in(unit);
-            approx_eq(convert(minimum, unit, Unit::Kelvin).unwrap(), 0.0);
+            let boundary = absolute_zero_in(unit);
+            approx_eq(convert(boundary, unit, Unit::Kelvin).unwrap(), 0.0);
         }
     }
 
     #[test]
-    fn values_below_absolute_zero_are_rejected() {
+    fn temperatures_below_absolute_zero_are_rejected_on_all_scales() {
         for unit in Unit::ALL {
-            let minimum = absolute_zero_in(unit);
-            let error = Temperature::new(minimum - 0.001, unit).unwrap_err();
+            let invalid_value = from_kelvin(-0.001, unit);
+            let error = Temperature::new(invalid_value, unit).unwrap_err();
             assert!(matches!(error, TemperatureError::BelowAbsoluteZero { .. }));
         }
     }

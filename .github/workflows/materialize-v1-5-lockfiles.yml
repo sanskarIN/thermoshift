@@ -1,0 +1,52 @@
+name: Materialize 1.5.0 Lockfiles
+
+on:
+  push:
+    branches:
+      - release/v1.5.0-prep
+    paths:
+      - '.github/workflows/materialize-v1-5-lockfiles.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-local-package-metadata:
+    if: github.repository == 'sanskarIN/thermoshift' && github.ref == 'refs/heads/release/v1.5.0-prep'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: release/v1.5.0-prep
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Refresh npm workspace metadata without install scripts
+        run: npm install --ignore-scripts --package-lock-only
+      - name: Refresh Cargo local workspace metadata
+        run: cargo metadata --format-version 1 --no-deps > /dev/null
+      - name: Verify only lockfiles changed
+        shell: bash
+        run: |
+          unexpected="$(git status --porcelain | grep -vE '^[ MARCUD?!]{2} (package-lock\.json|Cargo\.lock)$' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected files changed during lockfile materialization:" >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+      - name: Commit reviewed lockfile metadata refresh
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json Cargo.lock; then
+            echo "Lockfiles already match 1.5.0 metadata."
+            exit 0
+          fi
+          git config user.name "Sanskar"
+          git config user.email "sanskarin@outlook.in"
+          git add package-lock.json Cargo.lock
+          git commit -m "build(release): refresh lockfiles for 1.5.0 metadata"
+          git push origin HEAD:release/v1.5.0-prep
+
+# This branch-scoped workflow is intentionally temporary and must be removed after the lockfile refresh lands.

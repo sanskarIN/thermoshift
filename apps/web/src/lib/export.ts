@@ -3,7 +3,7 @@ import type { ConversionResult, HistoryEntry } from '../types';
 
 const escapeCsv = (value: string | number): string => {
   const text = String(value);
-  return /[\",\n]/.test(text) ? `\"${text.replaceAll('\"', '\"\"')}\"` : text;
+  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 };
 
 export const conversionsToCsv = (rows: ConversionResult[]): string => {
@@ -30,7 +30,11 @@ export const downloadText = (filename: string, text: string, type: string): void
   anchor.href = url;
   anchor.download = filename;
   document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+
+  try {
+    anchor.click();
+  } finally {
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
 };
