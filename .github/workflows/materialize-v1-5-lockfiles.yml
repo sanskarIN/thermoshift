@@ -15,7 +15,7 @@ jobs:
     if: github.repository == 'sanskarIN/thermoshift' && github.ref == 'refs/heads/release/v1.5.0-prep'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: release/v1.5.0-prep
       - uses: actions/setup-node@v5
